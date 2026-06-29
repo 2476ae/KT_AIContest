@@ -27,7 +27,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
     <main className="app-shell">
       <div className="app-page">
         <header className="topbar">
-          <button className="brand-lockup" type="button" onClick={() => actions.setActiveTab("home")}>
+          <button className="brand-lockup" type="button" onClick={() => actions.setActiveTab("home")} data-testid="brand-home-button">
             <img className="brand-mark" src={appIconSrc} alt="" aria-hidden="true" />
             <span className="brand-copy">
               <span className="brand-title">머니루틴</span>
@@ -36,14 +36,20 @@ export function AppShell({ children, state, actions }: AppShellProps) {
           </button>
 
           <div className="top-actions">
-            <button className="chip-button" type="button" onClick={() => actions.setActiveTab("goals")}>
+            <button className="chip-button" type="button" onClick={() => actions.setActiveTab("goals")} data-testid="top-goal-button">
               <Target size={15} />
               <span>{formatMonthLabel(state.calendarMonth).replace("2026년 ", "")}</span>
             </button>
-            <button className="icon-button" type="button" onClick={() => actions.setActiveTab("settings")} aria-label="신뢰 안내">
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => actions.setActiveTab("settings")}
+              aria-label="신뢰 안내"
+              data-testid="top-trust-button"
+            >
               <ShieldCheck size={17} />
             </button>
-            <button className="icon-button" type="button" aria-label="알림">
+            <button className="icon-button" type="button" aria-label="알림" data-testid="top-notification-button">
               <Bell size={17} />
               {state.hasLoadedSample && <span className="notification-dot" />}
             </button>
@@ -63,6 +69,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
               type="button"
               onClick={() => actions.setActiveTab(id)}
               aria-current={isActive ? "page" : undefined}
+              data-testid={`nav-${id}`}
             >
               <span className="bottom-nav-icon">
                 <Icon size={18} />

@@ -21,7 +21,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
             </div>
             <h1 className="hero-amount">{hasData ? formatWon(summary.totalSpent) : "0원"}</h1>
           </div>
-          <button className="goal-chip" type="button" onClick={() => actions.setActiveTab("goals")}>
+          <button className="goal-chip" type="button" onClick={() => actions.setActiveTab("goals")} data-testid="home-goal-chip">
             월 목표 {formatWon(state.goal.spendingLimit)}
           </button>
         </div>
@@ -30,7 +30,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
           <div className="empty-hero">
             <strong>샘플 소비로 바로 보기</strong>
             <p>금융 인증 없이 예시 데이터로 체험할 수 있어요.</p>
-            <button className="primary-button" type="button" onClick={actions.loadSample}>
+            <button className="primary-button" type="button" onClick={actions.loadSample} data-testid="home-load-sample">
               <WalletCards size={18} />
               샘플 데이터 불러오기
             </button>
@@ -76,25 +76,25 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
       </section>
 
       <section className="quick-action-grid" aria-label="빠른 실행">
-        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("add")}>
+        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("add")} data-testid="quick-add-transaction">
           <span className="quick-action-icon">
             <Plus size={18} />
           </span>
           <span className="quick-action-label">내역 추가</span>
         </button>
-        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("add")}>
+        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("add")} data-testid="quick-connect-file">
           <span className="quick-action-icon">
             <FileUp size={18} />
           </span>
           <span className="quick-action-label">파일 연결</span>
         </button>
-        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("goals")}>
+        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("goals")} data-testid="quick-edit-goal">
           <span className="quick-action-icon">
             <Target size={18} />
           </span>
           <span className="quick-action-label">목표 수정</span>
         </button>
-        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("coach")}>
+        <button className="quick-action" type="button" onClick={() => actions.setActiveTab("coach")} data-testid="quick-open-coach">
           <span className="quick-action-icon">
             <CalendarClock size={18} />
           </span>
@@ -147,7 +147,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
 
       <div className="section-title">
         <h2>최근 소비</h2>
-        <button className="text-button" type="button" onClick={() => actions.setActiveTab("calendar")}>
+        <button className="text-button" type="button" onClick={() => actions.setActiveTab("calendar")} data-testid="home-view-all-transactions">
           전체 보기
         </button>
       </div>

@@ -39,11 +39,11 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
       </section>
 
       <section className="month-switcher card" aria-label="월 이동">
-        <button type="button" onClick={() => actions.moveCalendarMonth(-1)} aria-label="이전 달">
+        <button type="button" onClick={() => actions.moveCalendarMonth(-1)} aria-label="이전 달" data-testid="calendar-prev-month">
           <ChevronLeft size={18} />
         </button>
         <strong>{formatMonthLabel(state.calendarMonth)}</strong>
-        <button type="button" onClick={() => actions.moveCalendarMonth(1)} aria-label="다음 달">
+        <button type="button" onClick={() => actions.moveCalendarMonth(1)} aria-label="다음 달" data-testid="calendar-next-month">
           <ChevronRight size={18} />
         </button>
       </section>
@@ -70,6 +70,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
             className={`filter-chip${filter === item.id ? " is-active" : ""}`}
             type="button"
             onClick={() => setFilter(item.id)}
+            data-testid={`calendar-filter-${item.id}`}
           >
             {item.label}
           </button>

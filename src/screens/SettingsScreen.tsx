@@ -20,7 +20,7 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
       </section>
 
       <section className="settings-actions">
-        <button className="action-row card" type="button" onClick={actions.loadSample}>
+        <button className="action-row card" type="button" onClick={actions.loadSample} data-testid="settings-load-sample">
           <span className="action-icon">
             <WalletCards size={20} />
           </span>
@@ -29,7 +29,13 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
             <small>{state.transactions.length}건 · 현재 지출 {computed.summary.totalSpent.toLocaleString("ko-KR")}원</small>
           </span>
         </button>
-        <button className="action-row card" type="button" onClick={downloadCsv} disabled={state.transactions.length === 0}>
+        <button
+          className="action-row card"
+          type="button"
+          onClick={downloadCsv}
+          disabled={state.transactions.length === 0}
+          data-testid="settings-export-csv"
+        >
           <span className="action-icon">
             <Download size={20} />
           </span>
@@ -38,7 +44,7 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
             <small>현재 화면 데이터를 파일로 저장</small>
           </span>
         </button>
-        <button className="action-row card" type="button" onClick={actions.resetAll}>
+        <button className="action-row card" type="button" onClick={actions.resetAll} data-testid="settings-reset-all">
           <span className="action-icon">
             <RotateCcw size={20} />
           </span>

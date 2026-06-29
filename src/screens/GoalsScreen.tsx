@@ -114,6 +114,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
               setGoalMessage("");
             }}
             inputMode="numeric"
+            data-testid="goal-income-input"
           />
         </label>
         <label>
@@ -125,6 +126,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
               setGoalMessage("");
             }}
             inputMode="numeric"
+            data-testid="goal-spending-limit-input"
           />
         </label>
         <label>
@@ -136,6 +138,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
               setGoalMessage("");
             }}
             inputMode="numeric"
+            data-testid="goal-saving-input"
           />
         </label>
         <label>
@@ -147,6 +150,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
               setGoalMessage("");
             }}
             inputMode="numeric"
+            data-testid="goal-subscription-limit-input"
           />
         </label>
         {visibleErrors.length > 0 && (
@@ -164,15 +168,21 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
         )}
         {goalMessage && <div className="success-line">{goalMessage}</div>}
         <div className="form-actions">
-          <button className="primary-button" type="button" onClick={saveGoal} disabled={!isDirty && validation.errors.length === 0}>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={saveGoal}
+            disabled={!isDirty && validation.errors.length === 0}
+            data-testid="goal-save-button"
+          >
             <Save size={18} />
             목표 저장
           </button>
-          <button className="secondary-button" type="button" onClick={discardGoal} disabled={!isDirty}>
+          <button className="secondary-button" type="button" onClick={discardGoal} disabled={!isDirty} data-testid="goal-discard-button">
             <Undo2 size={16} />
             되돌리기
           </button>
-          <button className="secondary-button" type="button" onClick={resetGoal}>
+          <button className="secondary-button" type="button" onClick={resetGoal} data-testid="goal-reset-button">
             <RotateCcw size={16} />
             기본값
           </button>

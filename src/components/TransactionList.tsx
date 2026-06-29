@@ -24,7 +24,7 @@ export function TransactionList({
   return (
     <section className="transaction-list">
       {transactions.map((transaction) => (
-        <article className="transaction-row" key={transaction.id}>
+        <article className="transaction-row" key={transaction.id} data-testid={`transaction-row-${transaction.id}`}>
           <span className="tx-avatar">{transaction.merchant.slice(0, 1)}</span>
           <span className="tx-main">
             <strong>{transaction.merchant}</strong>
@@ -45,6 +45,7 @@ export function TransactionList({
                         onCategoryChange(transaction, event.target.value as Category)
                       }
                       aria-label={`${transaction.merchant} 카테고리`}
+                      data-testid={`transaction-category-${transaction.id}`}
                     >
                       {categories.map((category) => (
                         <option key={category} value={category}>
@@ -55,7 +56,13 @@ export function TransactionList({
                   </label>
                 )}
                 {onDelete && (
-                  <button className="ghost-icon" type="button" onClick={() => onDelete(transaction.id)} aria-label={`${transaction.merchant} 삭제`}>
+                  <button
+                    className="ghost-icon"
+                    type="button"
+                    onClick={() => onDelete(transaction.id)}
+                    aria-label={`${transaction.merchant} 삭제`}
+                    data-testid={`transaction-delete-${transaction.id}`}
+                  >
                     <Trash2 size={14} />
                   </button>
                 )}

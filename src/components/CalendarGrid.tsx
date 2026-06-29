@@ -53,6 +53,7 @@ export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all" 
               onClick={() => onSelectDate(day.date)}
               aria-pressed={day.date === selectedDate}
               aria-label={`${day.date} ${formatWon(day.amount)} ${topCategory ?? ""}`}
+              data-testid={`calendar-day-${day.date}`}
             >
               <span className="calendar-day-number">{day.day}</span>
               <span className="calendar-day-meta">{day.isCurrentMonth ? label : ""}</span>

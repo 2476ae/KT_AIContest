@@ -146,7 +146,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
         <h1>소비 추가</h1>
       </section>
 
-      <form className="entry-form card" onSubmit={submitTransaction}>
+      <form className="entry-form card" onSubmit={submitTransaction} data-testid="transaction-form">
         <label className="amount-field">
           <span>금액</span>
           <input
@@ -158,6 +158,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             inputMode="numeric"
             placeholder="0"
             required
+            data-testid="transaction-amount-input"
           />
         </label>
 
@@ -172,6 +173,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
               }}
               placeholder="예: 스타벅스"
               required
+              data-testid="transaction-merchant-input"
             />
           </label>
           <label>
@@ -188,6 +190,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
               }}
               type="date"
               required
+              data-testid="transaction-date-input"
             />
           </label>
         </div>
@@ -201,6 +204,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
               setFormErrors([]);
             }}
             placeholder="예: 등교 전 커피"
+            data-testid="transaction-memo-input"
           />
         </label>
 
@@ -230,10 +234,15 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             <strong>구독 결제</strong>
             <small>월 고정비로 표시</small>
           </span>
-          <input checked={isSubscription} onChange={(event) => setIsSubscription(event.target.checked)} type="checkbox" />
+          <input
+            checked={isSubscription}
+            onChange={(event) => setIsSubscription(event.target.checked)}
+            type="checkbox"
+            data-testid="transaction-subscription-checkbox"
+          />
         </label>
 
-        <button className="primary-button" type="submit" disabled={isSaving}>
+        <button className="primary-button" type="submit" disabled={isSaving} data-testid="transaction-save-button">
           {isSaving ? <Loader2 className="spin-icon" size={18} /> : <Save size={18} />}
           저장
         </button>
@@ -263,13 +272,14 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             </small>
           </span>
         </div>
-        <input type="file" accept=".csv,text/csv" onChange={handleCsvFileChange} />
+        <input type="file" accept=".csv,text/csv" onChange={handleCsvFileChange} data-testid="csv-file-input" />
         {csvFileName && <div className="file-name-line">{csvFileName}</div>}
         <div className="segmented-control" aria-label="CSV 반영 방식">
           <button
             className={importMode === "replace" ? "is-active" : ""}
             type="button"
             onClick={() => setImportMode("replace")}
+            data-testid="csv-mode-replace"
           >
             교체
           </button>
@@ -277,6 +287,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             className={importMode === "merge" ? "is-active" : ""}
             type="button"
             onClick={() => setImportMode("merge")}
+            data-testid="csv-mode-merge"
           >
             병합
           </button>
@@ -303,7 +314,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
         {preview.length > 0 && (
           <div className="upload-result">
             <span>총 {formatWon(preview.reduce((sum, item) => sum + item.amount, 0))}</span>
-            <button className="secondary-button" type="button" onClick={applyCsv} disabled={!canImportCsv}>
+            <button className="secondary-button" type="button" onClick={applyCsv} disabled={!canImportCsv} data-testid="csv-apply-button">
               화면에 반영
             </button>
           </div>
