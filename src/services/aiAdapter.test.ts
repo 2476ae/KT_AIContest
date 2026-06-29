@@ -3,8 +3,10 @@ import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
 import {
   classifyTransactionResponse,
+  classifyTransactionResponseAsync,
   createCoachReport,
   createCoachReportResponse,
+  createCoachReportResponseAsync,
   getAiProvider,
   getAiProviderMetadata,
   localAiProvider,
@@ -86,6 +88,56 @@ describe("ai adapter", () => {
       expect(classification.data.category).toBe("구독");
       expect(report.status).toBe("fallback");
       expect(report.data.headline).toContain("하루");
+    } finally {
+      setAiProvider(previous);
+    }
+  });
+
+  it("supports async provider responses for AI handoff", async () => {
+    const previous = getAiProvider();
+
+    try {
+      setAiProvider(
+        {
+          classifyTransaction: async () => ({
+            category: "카페/간식",
+            reason: "async classification",
+          }),
+          createCoachReport: async () => ({
+            headline: "비동기 AI 결과",
+            status: "watch",
+            dailyBudget: 12000,
+            savingPossibility: "보통",
+            todayAction: "비동기 액션",
+            insights: ["비동기 인사이트"],
+            missions: [],
+            subscriptionAdvice: [],
+            basis: "async",
+          }),
+        },
+        {
+          id: "async-provider",
+          label: "비동기 AI",
+          mode: "external",
+        },
+      );
+
+      const classification = await classifyTransactionResponseAsync({
+        merchant: "테스트 카페",
+        memo: "커피",
+        isSubscription: false,
+      });
+      const report = await createCoachReportResponseAsync({
+        transactions: loadSampleTransactions(),
+        goal: DEFAULT_GOAL,
+        monthId: DEMO_MONTH.id,
+      });
+
+      expect(classification.status).toBe("ready");
+      expect(classification.provider.label).toBe("비동기 AI");
+      expect(classification.data.reason).toBe("async classification");
+      expect(report.status).toBe("ready");
+      expect(report.data.headline).toBe("비동기 AI 결과");
     } finally {
       setAiProvider(previous);
     }

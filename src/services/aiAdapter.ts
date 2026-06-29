@@ -19,6 +19,8 @@ export interface CoachReportInput {
   monthId: string;
 }
 
+export type MaybePromise<T> = T | Promise<T>;
+
 export type AiProviderMode = "local" | "external";
 
 export type AiResponseStatus = "ready" | "loading" | "fallback" | "error";
@@ -38,8 +40,8 @@ export interface AiResponse<T> {
 }
 
 export interface AiProvider {
-  classifyTransaction(input: ClassificationInput): ClassificationResult;
-  createCoachReport(input: CoachReportInput): CoachReport;
+  classifyTransaction(input: ClassificationInput): MaybePromise<ClassificationResult>;
+  createCoachReport(input: CoachReportInput): MaybePromise<CoachReport>;
 }
 
 export const localAiProviderMetadata: AiProviderMetadata = {
@@ -48,12 +50,20 @@ export const localAiProviderMetadata: AiProviderMetadata = {
   mode: "local",
 };
 
+function classifyTransactionLocal(input: ClassificationInput): ClassificationResult {
+  return classifyWithRules(input.merchant, input.memo, input.isSubscription);
+}
+
+function createCoachReportLocal(input: CoachReportInput): CoachReport {
+  return getCoachReport(input.transactions, input.goal, input.monthId);
+}
+
 export const localAiProvider: AiProvider = {
   classifyTransaction(input) {
-    return classifyWithRules(input.merchant, input.memo, input.isSubscription);
+    return classifyTransactionLocal(input);
   },
   createCoachReport(input) {
-    return getCoachReport(input.transactions, input.goal, input.monthId);
+    return createCoachReportLocal(input);
   },
 };
 
@@ -64,7 +74,11 @@ function toErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : "AI provider 응답을 처리하지 못했습니다.";
 }
 
-function createResponse<T>(data: T, provider: AiProviderMetadata, status: AiResponseStatus, error?: string): AiResponse<T> {
+function isPromiseLike<T>(value: MaybePromise<T>): value is Promise<T> {
+  return Boolean(value) && typeof (value as Promise<T>).then === "function";
+}
+
+export function createAiResponse<T>(data: T, provider: AiProviderMetadata, status: AiResponseStatus, error?: string): AiResponse<T> {
   return {
     data,
     error,
@@ -93,10 +107,15 @@ export function getAiProviderMetadata() {
 
 export function classifyTransactionResponse(input: ClassificationInput): AiResponse<ClassificationResult> {
   try {
-    return createResponse(activeProvider.classifyTransaction(input), activeProviderMetadata, "ready");
+    const result = activeProvider.classifyTransaction(input);
+    if (isPromiseLike(result)) {
+      throw new Error("Async AI provider requires classifyTransactionResponseAsync.");
+    }
+
+    return createAiResponse<ClassificationResult>(result, activeProviderMetadata, "ready");
   } catch (error) {
-    return createResponse(
-      localAiProvider.classifyTransaction(input),
+    return createAiResponse(
+      classifyTransactionLocal(input),
       localAiProviderMetadata,
       "fallback",
       toErrorMessage(error),
@@ -106,15 +125,54 @@ export function classifyTransactionResponse(input: ClassificationInput): AiRespo
 
 export function createCoachReportResponse(input: CoachReportInput): AiResponse<CoachReport> {
   try {
-    return createResponse(activeProvider.createCoachReport(input), activeProviderMetadata, "ready");
+    const result = activeProvider.createCoachReport(input);
+    if (isPromiseLike(result)) {
+      throw new Error("Async AI provider requires createCoachReportResponseAsync.");
+    }
+
+    return createAiResponse<CoachReport>(result, activeProviderMetadata, "ready");
   } catch (error) {
-    return createResponse(
-      localAiProvider.createCoachReport(input),
+    return createAiResponse(
+      createCoachReportLocal(input),
       localAiProviderMetadata,
       "fallback",
       toErrorMessage(error),
     );
   }
+}
+
+export async function classifyTransactionResponseAsync(input: ClassificationInput): Promise<AiResponse<ClassificationResult>> {
+  try {
+    return createAiResponse<ClassificationResult>(await activeProvider.classifyTransaction(input), activeProviderMetadata, "ready");
+  } catch (error) {
+    return createAiResponse(
+      classifyTransactionLocal(input),
+      localAiProviderMetadata,
+      "fallback",
+      toErrorMessage(error),
+    );
+  }
+}
+
+export async function createCoachReportResponseAsync(input: CoachReportInput): Promise<AiResponse<CoachReport>> {
+  try {
+    return createAiResponse<CoachReport>(await activeProvider.createCoachReport(input), activeProviderMetadata, "ready");
+  } catch (error) {
+    return createAiResponse(
+      createCoachReportLocal(input),
+      localAiProviderMetadata,
+      "fallback",
+      toErrorMessage(error),
+    );
+  }
+}
+
+export function createCoachReportLoadingResponse(input: CoachReportInput, previousReport?: CoachReport): AiResponse<CoachReport> {
+  return createAiResponse<CoachReport>(
+    previousReport ?? createCoachReportLocal(input),
+    activeProviderMetadata,
+    "loading",
+  );
 }
 
 export function classifyTransaction(input: ClassificationInput) {

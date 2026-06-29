@@ -1,8 +1,12 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
 import { getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
-import { createCoachReportResponse } from "../services/aiAdapter";
+import {
+  createCoachReportLoadingResponse,
+  createCoachReportResponse,
+  createCoachReportResponseAsync,
+} from "../services/aiAdapter";
 import { addMonths, firstDateOfMonth, getMonthId } from "../services/date";
 import { parseTransactionsCsvWithValidation, transactionsToCsv } from "../services/csv";
 import type { AppState, Goal, TabId, Transaction } from "../types";
@@ -38,6 +42,13 @@ function persistState(state: AppState) {
 
 export function useMoneyRoutine() {
   const [state, setState] = useState<AppState>(() => readStoredState());
+  const [coachResponse, setCoachResponse] = useState(() =>
+    createCoachReportResponse({
+      transactions: [],
+      goal: initialState.goal,
+      monthId: initialState.calendarMonth,
+    }),
+  );
 
   const updateState = useCallback((updater: (current: AppState) => AppState) => {
     setState((current) => {
@@ -184,14 +195,12 @@ export function useMoneyRoutine() {
 
   const exportCsv = useCallback(() => transactionsToCsv(state.transactions), [state.transactions]);
 
-  const computed = useMemo(() => {
+  const baseComputed = useMemo(() => {
     const monthTransactions = state.transactions.filter((transaction) => getMonthId(transaction.date) === state.calendarMonth);
     const summary = getSummary(monthTransactions, state.goal, state.calendarMonth);
     const calendarDays = getCalendarDays(monthTransactions, state.goal, state.calendarMonth);
     const categorySummaries = getCategorySummaries(monthTransactions);
     const subscriptionCandidates = getSubscriptionCandidates(monthTransactions);
-    const coachResponse = createCoachReportResponse({ transactions: monthTransactions, goal: state.goal, monthId: state.calendarMonth });
-    const coachReport = coachResponse.data;
     const selectedDay = calendarDays.find((day) => day.date === state.selectedDate) ?? calendarDays.find((day) => day.isCurrentMonth);
     const recentTransactions = [...monthTransactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
 
@@ -202,11 +211,39 @@ export function useMoneyRoutine() {
       selectedDay,
       categorySummaries,
       subscriptionCandidates,
-      coachResponse,
-      coachReport,
       recentTransactions,
     };
   }, [state.calendarMonth, state.goal, state.selectedDate, state.transactions]);
+
+  useEffect(() => {
+    const input = {
+      transactions: baseComputed.monthTransactions,
+      goal: state.goal,
+      monthId: state.calendarMonth,
+    };
+    let isCurrent = true;
+
+    setCoachResponse((previous) => createCoachReportLoadingResponse(input, previous.data));
+
+    void createCoachReportResponseAsync(input).then((response) => {
+      if (isCurrent) {
+        setCoachResponse(response);
+      }
+    });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [baseComputed.monthTransactions, state.calendarMonth, state.goal]);
+
+  const computed = useMemo(
+    () => ({
+      ...baseComputed,
+      coachResponse,
+      coachReport: coachResponse.data,
+    }),
+    [baseComputed, coachResponse],
+  );
 
   return {
     state,

@@ -54,6 +54,7 @@ AI 채팅에 넘길 핵심 기준:
 
 - 프론트 컴포넌트가 OpenAI API를 직접 호출하지 않는다.
 - 연결 지점은 `src/services/aiAdapter.ts`로 유지한다.
+- 프론트는 `Promise` 기반 provider, `loading`, `ready`, `fallback`, `error` 표시 흐름을 이미 받을 수 있다.
 - 실패 시 화면 전체가 깨지면 안 된다.
 - `ready`, `loading`, `fallback`, `error` 상태가 코치 화면에 자연스럽게 표시되어야 한다.
 - 거래 저장은 AI 실패와 독립적으로 완료되어야 한다.

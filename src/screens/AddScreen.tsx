@@ -2,7 +2,7 @@ import { FileUp, Loader2, Save, Wand2 } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { CATEGORIES } from "../constants";
 import { formatWon } from "../services/analytics";
-import { classifyTransactionResponse } from "../services/aiAdapter";
+import { classifyTransactionResponseAsync } from "../services/aiAdapter";
 import { parseTransactionsCsvWithValidation } from "../services/csv";
 import { formatMoneyInput, parseMoneyInput, validateTransactionDraft } from "../services/formValidation";
 import type { Category } from "../types";
@@ -54,7 +54,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
     setFormErrors([]);
 
     const parsedAmount = parseMoneyInput(amount);
-    const response = classifyTransactionResponse({ merchant, memo, isSubscription });
+    const response = await classifyTransactionResponseAsync({ merchant, memo, isSubscription });
     const classified = response.data;
     const resolvedCategory = category === "auto" ? classified.category : category;
 

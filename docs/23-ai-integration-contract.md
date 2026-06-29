@@ -1,5 +1,13 @@
 # AI 기능 인계 계약
 
+## 2026-06-29 프론트 준비 상태
+
+- `AiProvider`는 동기 결과와 `Promise` 결과를 모두 받을 수 있다.
+- 직접 입력 화면은 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
+- 코치 화면은 `useMoneyRoutine`에서 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
+- 기존 동기 API(`classifyTransactionResponse`, `createCoachReportResponse`)는 로컬/테스트 호환용으로 유지한다.
+- 외부 AI provider가 실패하면 로컬 규칙 기반 결과로 fallback되어 거래 저장과 화면 렌더링이 계속된다.
+
 ## 목적
 
 이 문서는 기능 채팅에서 실제 AI provider를 연결할 때 프론트엔드가 기대하는 입력, 출력, 실패 처리 계약을 정리한다.
