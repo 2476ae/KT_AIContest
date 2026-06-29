@@ -175,6 +175,14 @@ export function createCoachReportLoadingResponse(input: CoachReportInput, previo
   );
 }
 
+export function createCoachReportPreviewResponse(input: CoachReportInput): AiResponse<CoachReport> {
+  return createAiResponse<CoachReport>(
+    createCoachReportLocal(input),
+    localAiProviderMetadata,
+    "ready",
+  );
+}
+
 export function classifyTransaction(input: ClassificationInput) {
   return classifyTransactionResponse(input).data;
 }

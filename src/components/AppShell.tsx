@@ -1,6 +1,7 @@
 import { Bell, Bot, CalendarDays, Home, Plus, Settings, ShieldCheck, Target } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
+import { useState } from "react";
 import { formatMonthLabel } from "../services/date";
 import type { AppState, TabId } from "../types";
 
@@ -23,6 +24,18 @@ const bottomTabs: Array<{ id: TabId; label: string; icon: LucideIcon }> = [
 const appIconSrc = `${import.meta.env.BASE_URL}money-routine-icon-v2-192.png`;
 
 export function AppShell({ children, state, actions }: AppShellProps) {
+  const [openPanel, setOpenPanel] = useState<"alerts" | "trust" | null>(null);
+  const hasMonthlyAlerts = state.hasLoadedSample || state.transactions.length > 0;
+
+  function togglePanel(panel: "alerts" | "trust") {
+    setOpenPanel((current) => (current === panel ? null : panel));
+  }
+
+  function moveFromPanel(tab: TabId) {
+    actions.setActiveTab(tab);
+    setOpenPanel(null);
+  }
+
   return (
     <main className="app-shell">
       <div className="app-page">
@@ -43,17 +56,61 @@ export function AppShell({ children, state, actions }: AppShellProps) {
             <button
               className="icon-button"
               type="button"
-              onClick={() => actions.setActiveTab("settings")}
+              onClick={() => togglePanel("trust")}
               aria-label="신뢰 안내"
+              aria-controls="top-trust-panel"
+              aria-expanded={openPanel === "trust"}
               data-testid="top-trust-button"
             >
               <ShieldCheck size={17} />
             </button>
-            <button className="icon-button" type="button" aria-label="알림" data-testid="top-notification-button">
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => togglePanel("alerts")}
+              aria-label="월간 알림"
+              aria-controls="top-alerts-panel"
+              aria-expanded={openPanel === "alerts"}
+              data-testid="top-notification-button"
+            >
               <Bell size={17} />
-              {state.hasLoadedSample && <span className="notification-dot" />}
+              {hasMonthlyAlerts && <span className="notification-dot" />}
             </button>
           </div>
+
+          {openPanel === "trust" && (
+            <section className="top-popover" id="top-trust-panel" aria-live="polite" data-testid="top-trust-panel">
+              <span className="top-popover-icon">
+                <ShieldCheck size={19} />
+              </span>
+              <span className="top-popover-copy">
+                <strong>금융 인증정보 미수집</strong>
+                <small>샘플 데이터, 직접 입력, CSV 파일만 사용하며 계좌나 카드 인증을 요청하지 않습니다.</small>
+              </span>
+              <button className="top-popover-action" type="button" onClick={() => moveFromPanel("settings")}>
+                설정
+              </button>
+            </section>
+          )}
+
+          {openPanel === "alerts" && (
+            <section className="top-popover" id="top-alerts-panel" aria-live="polite" data-testid="top-alerts-panel">
+              <span className="top-popover-icon">
+                <Bell size={19} />
+              </span>
+              <span className="top-popover-copy">
+                <strong>{hasMonthlyAlerts ? "월간 소비 알림" : "확인할 알림 없음"}</strong>
+                <small>
+                  {hasMonthlyAlerts
+                    ? `${formatMonthLabel(state.calendarMonth)} 데이터 ${state.transactions.length}건이 반영되어 코치 분석을 확인할 수 있습니다.`
+                    : "거래를 추가하거나 샘플 데이터를 불러오면 목표 진행 알림이 표시됩니다."}
+                </small>
+              </span>
+              <button className="top-popover-action" type="button" onClick={() => moveFromPanel(hasMonthlyAlerts ? "coach" : "add")}>
+                {hasMonthlyAlerts ? "코치" : "추가"}
+              </button>
+            </section>
+          )}
         </header>
 
         {children}

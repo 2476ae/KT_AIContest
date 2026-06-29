@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
 import { getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
@@ -18,13 +18,17 @@ import {
   updateTransactionState,
 } from "../services/appState";
 import {
+  type AiResponse,
+  type CoachReportInput,
   createCoachReportLoadingResponse,
-  createCoachReportResponse,
   createCoachReportResponseAsync,
+  createCoachReportPreviewResponse,
+  getAiProviderMetadata,
 } from "../services/aiAdapter";
+import { COACH_AI_DEBOUNCE_MS, createCoachReportCacheKey, shouldRequestCoachReportAi } from "../services/aiRequestPolicy";
 import { transactionsToCsv } from "../services/csv";
 import { getMonthId } from "../services/date";
-import type { AppState, Goal, TabId, Transaction } from "../types";
+import type { AppState, CoachReport, Goal, TabId, Transaction } from "../types";
 
 function readStoredState(): AppState {
   const stored = window.localStorage.getItem(DEMO_MONTH.storageKey);
@@ -45,8 +49,9 @@ function persistState(state: AppState) {
 
 export function useMoneyRoutine() {
   const [state, setState] = useState<AppState>(() => readStoredState());
+  const coachResponseCache = useRef(new Map<string, AiResponse<CoachReport>>());
   const [coachResponse, setCoachResponse] = useState(() =>
-    createCoachReportResponse({
+    createCoachReportPreviewResponse({
       transactions: [],
       goal: INITIAL_APP_STATE.goal,
       monthId: INITIAL_APP_STATE.calendarMonth,
@@ -155,26 +160,52 @@ export function useMoneyRoutine() {
     };
   }, [state.calendarMonth, state.goal, state.selectedDate, state.transactions]);
 
-  useEffect(() => {
-    const input = {
+  const coachInput: CoachReportInput = useMemo(
+    () => ({
       transactions: baseComputed.monthTransactions,
       goal: state.goal,
       monthId: state.calendarMonth,
-    };
+    }),
+    [baseComputed.monthTransactions, state.calendarMonth, state.goal],
+  );
+
+  const coachCacheKey = useMemo(
+    () => createCoachReportCacheKey(coachInput, getAiProviderMetadata().id),
+    [coachInput],
+  );
+
+  useEffect(() => {
+    const cachedResponse = coachResponseCache.current.get(coachCacheKey);
+
+    if (!shouldRequestCoachReportAi(state.activeTab)) {
+      setCoachResponse(cachedResponse ?? createCoachReportPreviewResponse(coachInput));
+      return;
+    }
+
+    if (cachedResponse) {
+      setCoachResponse(cachedResponse);
+      return;
+    }
+
     let isCurrent = true;
+    const timeoutId = window.setTimeout(() => {
+      setCoachResponse((previous) => createCoachReportLoadingResponse(coachInput, previous.data));
 
-    setCoachResponse((previous) => createCoachReportLoadingResponse(input, previous.data));
+      void createCoachReportResponseAsync(coachInput).then((response) => {
+        if (!isCurrent) {
+          return;
+        }
 
-    void createCoachReportResponseAsync(input).then((response) => {
-      if (isCurrent) {
+        coachResponseCache.current.set(coachCacheKey, response);
         setCoachResponse(response);
-      }
-    });
+      });
+    }, COACH_AI_DEBOUNCE_MS);
 
     return () => {
       isCurrent = false;
+      window.clearTimeout(timeoutId);
     };
-  }, [baseComputed.monthTransactions, state.calendarMonth, state.goal]);
+  }, [coachCacheKey, coachInput, state.activeTab]);
 
   const computed = useMemo(
     () => ({

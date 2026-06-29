@@ -88,6 +88,7 @@ button:disabled {
 
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -177,6 +178,66 @@ button:disabled {
   height: 6px;
   border-radius: 50%;
   background: var(--danger);
+}
+
+.top-popover {
+  display: grid;
+  flex: 1 0 100%;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 66px;
+  padding: 10px;
+  border: 1px solid rgba(214, 224, 238, 0.9);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-action);
+}
+
+.top-popover-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: var(--radius);
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.top-popover-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.top-popover-copy strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 13px;
+  font-weight: 930;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.top-popover-copy small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.35;
+}
+
+.top-popover-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 11px;
+  border-radius: var(--radius);
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
 }
 
 .card {
@@ -1517,7 +1578,8 @@ button:disabled {
   .category-pill,
   .month-switcher button,
   .segmented-control button,
-  .text-button {
+  .text-button,
+  .top-popover-action {
     min-height: 44px;
   }
 
@@ -1539,6 +1601,15 @@ button:disabled {
   .app-page {
     padding-right: 14px;
     padding-left: 14px;
+  }
+
+  .top-popover {
+    grid-template-columns: 36px minmax(0, 1fr);
+  }
+
+  .top-popover-action {
+    grid-column: 2;
+    justify-self: start;
   }
 
   .brand-title {

@@ -22,7 +22,7 @@ npm run build:github-pages
 npm run verify
 ```
 
-2026-06-29 기준 `npm run verify`는 Vitest 5개 파일, 22개 테스트와 Vite production build를 통과합니다. GitHub Pages 제출 번들은 `npm run build:github-pages`로 확인합니다.
+2026-06-29 기준 `npm run verify`는 Vitest 6개 파일, 24개 테스트와 Vite production build를 통과합니다. GitHub Pages 제출 번들은 `npm run build:github-pages`로 확인합니다.
 
 ## 배포
 
