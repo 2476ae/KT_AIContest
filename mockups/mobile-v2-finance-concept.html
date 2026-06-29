@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>머니루틴 캘린더 v2 모바일 금융앱 콘셉트</title>
+    <style>
+      :root {
+        --bg: #f6f7f9;
+        --surface: #ffffff;
+        --ink: #17191c;
+        --muted: #7a818a;
+        --line: #e6e9ee;
+        --blue: #2878ff;
+        --blue-soft: #eaf2ff;
+        --mint: #00a878;
+        --mint-soft: #e7f7f1;
+        --yellow: #ffe843;
+        --coral: #ff665a;
+        --coral-soft: #fff0ee;
+        --navy: #151820;
+        --card-shadow: 0 12px 30px rgba(28, 34, 44, 0.08);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #dfe4ea;
+        color: var(--ink);
+        font-family:
+          Pretendard,
+          "Noto Sans KR",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      .phone {
+        width: min(430px, 100vw);
+        min-height: 100vh;
+        margin: 0 auto;
+        background: var(--bg);
+        overflow: hidden;
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 18px 18px 92px;
+      }
+
+      .status {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 24px;
+        margin-bottom: 18px;
+        color: #050608;
+        font-size: 15px;
+        font-weight: 800;
+      }
+
+      .icons {
+        display: flex;
+        gap: 7px;
+        color: #111;
+        font-size: 12px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border-radius: 8px;
+        background: linear-gradient(135deg, #1fb3ff, #2878ff);
+        color: #fff;
+        font-size: 19px;
+        font-weight: 900;
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 22px;
+        line-height: 1;
+      }
+
+      .brand span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 25px;
+      }
+
+      .coach-bubble {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: fit-content;
+        max-width: 330px;
+        margin: 0 auto 16px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 12px 16px;
+        background: var(--surface);
+        box-shadow: var(--card-shadow);
+      }
+
+      .spark {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-weight: 900;
+      }
+
+      .coach-bubble p {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 800;
+        line-height: 1.35;
+      }
+
+      .main-card {
+        border-radius: var(--radius);
+        padding: 20px;
+        background: var(--surface);
+        box-shadow: var(--card-shadow);
+      }
+
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .label {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .amount {
+        display: block;
+        margin-top: 6px;
+        font-size: 34px;
+        font-weight: 900;
+        letter-spacing: 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pill {
+        display: inline-flex;
+        min-height: 28px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 10px;
+        background: var(--mint-soft);
+        color: #087b5b;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .budget-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .mini-card {
+        border-radius: var(--radius);
+        padding: 13px;
+        background: #f8fafc;
+      }
+
+      .mini-card strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 18px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 14px 0;
+      }
+
+      .action {
+        min-height: 72px;
+        border: 0;
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: 0 6px 18px rgba(28, 34, 44, 0.05);
+        color: var(--ink);
+        font-weight: 800;
+      }
+
+      .action span {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 22px;
+      }
+
+      .section {
+        margin-top: 20px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
+
+      .section h2 {
+        margin: 0;
+        font-size: 20px;
+      }
+
+      .section a {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+        text-decoration: none;
+      }
+
+      .calendar-card {
+        border-radius: var(--radius);
+        padding: 16px;
+        background: var(--navy);
+        color: #fff;
+        box-shadow: var(--card-shadow);
+      }
+
+      .calendar-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+      }
+
+      .calendar-top strong {
+        font-size: 19px;
+      }
+
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 10px 7px;
+      }
+
+      .day,
+      .weekday {
+        text-align: center;
+      }
+
+      .weekday {
+        color: #828793;
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .day {
+        min-height: 44px;
+        border-radius: 8px;
+        padding-top: 5px;
+      }
+
+      .day strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .day span {
+        display: block;
+        margin-top: 2px;
+        color: #8ea2c2;
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .day em {
+        display: block;
+        color: #a8adb8;
+        font-size: 10px;
+        font-style: normal;
+      }
+
+      .day.hot {
+        background: #2a2230;
+      }
+
+      .day.hot em {
+        color: #ff6d85;
+      }
+
+      .day.selected {
+        background: #fff;
+        color: var(--navy);
+      }
+
+      .day.selected span {
+        color: var(--blue);
+      }
+
+      .mission-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        border-radius: var(--radius);
+        padding: 16px;
+        background: var(--surface);
+        box-shadow: var(--card-shadow);
+      }
+
+      .mission-card + .mission-card {
+        margin-top: 10px;
+      }
+
+      .mission-card p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .mission-card strong {
+        font-size: 16px;
+      }
+
+      .save {
+        color: var(--blue);
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .subscription-card {
+        border-radius: var(--radius);
+        padding: 17px;
+        background: #eaf5ff;
+      }
+
+      .subscription-card p {
+        margin: 5px 0 14px;
+        color: #4e657a;
+        font-size: 13px;
+      }
+
+      .sub-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid rgba(40, 120, 255, 0.15);
+        padding: 10px 0 0;
+      }
+
+      .recent-card {
+        border-radius: var(--radius);
+        padding: 16px;
+        background: var(--surface);
+        box-shadow: var(--card-shadow);
+      }
+
+      .recent-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 0;
+      }
+
+      .recent-row + .recent-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .merchant {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .logo-dot {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border-radius: 8px;
+        background: #edf2f7;
+        font-weight: 900;
+      }
+
+      .merchant strong,
+      .merchant span {
+        display: block;
+      }
+
+      .merchant span {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .spent {
+        color: #1f2329;
+        font-size: 15px;
+        font-weight: 900;
+      }
+
+      .bottom-nav {
+        position: fixed;
+        right: max(14px, calc((100vw - 430px) / 2 + 14px));
+        bottom: 14px;
+        left: max(14px, calc((100vw - 430px) / 2 + 14px));
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1px solid rgba(214, 218, 225, 0.9);
+        border-radius: var(--radius);
+        padding: 8px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 14px 36px rgba(28, 34, 44, 0.14);
+        backdrop-filter: blur(14px);
+      }
+
+      .bottom-nav button {
+        min-height: 46px;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: var(--muted);
+        font-weight: 850;
+      }
+
+      .bottom-nav button.active {
+        color: var(--blue);
+        background: var(--blue-soft);
+      }
+
+      @media (max-width: 420px) {
+        .app {
+          padding-right: 14px;
+          padding-left: 14px;
+        }
+
+        .amount {
+          font-size: 31px;
+        }
+
+        .actions {
+          gap: 8px;
+        }
+
+        .action {
+          min-height: 66px;
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone">
+      <div class="app">
+        <div class="status">
+          <span>5:20</span>
+          <span class="icons">● ● ◐ 51</span>
+        </div>
+
+        <header class="topbar">
+          <div class="brand">
+            <div class="brand-mark">M</div>
+            <div>
+              <strong>머니루틴</strong>
+              <span>AI 소비 캘린더</span>
+            </div>
+          </div>
+          <div class="top-actions" aria-label="상단 기능">
+            <span>⌕</span>
+            <span>◔</span>
+            <span>☰</span>
+          </div>
+        </header>
+
+        <section class="coach-bubble" aria-label="AI 코치 한 줄 판단">
+          <div class="spark">✦</div>
+          <p>이번 주 카페 2번만 줄이면 저축 목표에 가까워져요</p>
+        </section>
+
+        <section class="main-card" aria-label="이번 달 소비 상태">
+          <div class="card-head">
+            <div>
+              <span class="label">이번 달 쓴 돈</span>
+              <strong class="amount">326,790원</strong>
+            </div>
+            <span class="pill">목표 43%</span>
+          </div>
+          <div class="budget-row">
+            <div class="mini-card">
+              <span class="label">오늘부터 하루</span>
+              <strong>35,267원</strong>
+            </div>
+            <div class="mini-card">
+              <span class="label">저축 가능성</span>
+              <strong>보통</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="actions" aria-label="빠른 실행">
+          <button class="action" type="button"><span>＋</span>입력</button>
+          <button class="action" type="button"><span>▦</span>CSV</button>
+          <button class="action" type="button"><span>◎</span>목표</button>
+          <button class="action" type="button"><span>✦</span>AI</button>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>6월 소비 캘린더</h2>
+            <a href="#">전체보기</a>
+          </div>
+          <div class="calendar-card">
+            <div class="calendar-top">
+              <strong>6월</strong>
+              <span class="label">수입 파랑 · 지출 회색 · 초과 빨강</span>
+            </div>
+            <div class="calendar-grid">
+              <div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div>
+              <div class="day"><strong>1</strong><span>+80만</span><em>-4.1만</em></div>
+              <div class="day"><strong>2</strong><span>+1.1만</span><em>-4.4만</em></div>
+              <div class="day"><strong>3</strong><span>+0</span><em>-2.0만</em></div>
+              <div class="day"><strong>4</strong><span>+0</span><em>-7.2만</em></div>
+              <div class="day"><strong>5</strong><span>+2.8만</span><em>-2.4만</em></div>
+              <div class="day"><strong>6</strong><span>+0</span><em>-1.3만</em></div>
+              <div class="day"><strong>7</strong><span>+0</span><em>-2.8만</em></div>
+              <div class="day"><strong>8</strong><span>+0</span><em>-4.4만</em></div>
+              <div class="day hot"><strong>9</strong><span>+0</span><em>-16.8만</em></div>
+              <div class="day"><strong>10</strong><span>+1.6만</span><em>-14.8만</em></div>
+              <div class="day"><strong>11</strong><span>+0</span><em>-3.0만</em></div>
+              <div class="day"><strong>12</strong><span>+0</span><em>-4.2만</em></div>
+              <div class="day"><strong>13</strong><span>+0</span><em>-4.3만</em></div>
+              <div class="day selected"><strong>14</strong><span>+0</span><em>-1.0만</em></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>AI 절약 미션</h2>
+            <a href="#">리포트</a>
+          </div>
+          <article class="mission-card">
+            <div>
+              <strong>카페 2회 줄이기</strong>
+              <p>평일 커피를 3회에서 1회로 줄여보세요</p>
+            </div>
+            <span class="save">12,000원</span>
+          </article>
+          <article class="mission-card">
+            <div>
+              <strong>배달 하루 쉬기</strong>
+              <p>주말 하루는 8,000원 식비로 대체해요</p>
+            </div>
+            <span class="save">18,000원</span>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="subscription-card">
+            <span class="label">구독 점검</span>
+            <h2 style="margin: 6px 0 0">고정 구독 4건, 월 55,800원</h2>
+            <p>최근 사용 빈도가 낮은 음악 구독부터 확인해보세요.</p>
+            <div class="sub-row">
+              <strong>스포티파이</strong>
+              <span class="save">10,900원 점검</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>최근 소비</h2>
+            <a href="#">전체</a>
+          </div>
+          <div class="recent-card">
+            <div class="recent-row">
+              <div class="merchant">
+                <span class="logo-dot">☕</span>
+                <div><strong>스타벅스</strong><span>카페/간식 · 오늘</span></div>
+              </div>
+              <span class="spent">-5,900원</span>
+            </div>
+            <div class="recent-row">
+              <div class="merchant">
+                <span class="logo-dot">B</span>
+                <div><strong>배달의민족</strong><span>식비 · 어제</span></div>
+              </div>
+              <span class="spent">-17,600원</span>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <nav class="bottom-nav" aria-label="하단 탭">
+        <button class="active" type="button">홈</button>
+        <button type="button">캘린더</button>
+        <button type="button">입력</button>
+        <button type="button">AI</button>
+      </nav>
+    </main>
+  </body>
+</html>

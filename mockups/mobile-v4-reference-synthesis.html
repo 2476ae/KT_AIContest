@@ -1,0 +1,1008 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>머니루틴 v4 레퍼런스 종합 콘셉트</title>
+    <style>
+      :root {
+        --page: #f5f7fa;
+        --surface: #ffffff;
+        --surface-soft: #f9fbfd;
+        --ink: #16191f;
+        --muted: #697281;
+        --soft: #9aa3af;
+        --line: #e7ebf1;
+        --blue: #2478ff;
+        --blue-deep: #135bd8;
+        --blue-soft: #eaf2ff;
+        --mint: #00a878;
+        --mint-soft: #e7f8f1;
+        --coral: #ff665a;
+        --coral-soft: #fff0ee;
+        --amber: #f6a623;
+        --amber-soft: #fff5df;
+        --shadow: 0 14px 34px rgba(30, 42, 58, 0.08);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        overflow-x: hidden;
+        scrollbar-width: none;
+      }
+
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+      }
+
+      body {
+        margin: 0;
+        background: #dde3eb;
+        color: var(--ink);
+        overflow-x: hidden;
+        scrollbar-width: none;
+        font-family:
+          Pretendard,
+          "Noto Sans KR",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      .phone {
+        width: min(430px, 100%);
+        min-height: 100vh;
+        margin: 0 auto;
+        background: var(--page);
+        overflow: hidden;
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 18px 18px 104px;
+      }
+
+      .status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 24px;
+        margin-bottom: 18px;
+        font-size: 15px;
+        font-weight: 850;
+      }
+
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #11151c;
+        font-size: 12px;
+      }
+
+      .battery {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 26px;
+        height: 14px;
+        border-radius: 5px;
+        background: #11151c;
+        color: white;
+        font-size: 9px;
+        font-weight: 800;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--blue);
+        color: #ffffff;
+        font-size: 19px;
+        font-weight: 900;
+      }
+
+      .brand-title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 900;
+        line-height: 1.05;
+      }
+
+      .brand-sub {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        flex: 0 0 auto;
+        gap: 5px;
+      }
+
+      .month-pill,
+      .icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: 0 4px 14px rgba(25, 35, 49, 0.04);
+      }
+
+      .month-pill {
+        min-width: 56px;
+        padding: 0 7px;
+        gap: 5px;
+        color: var(--ink);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .icon-btn {
+        position: relative;
+        width: 32px;
+        color: var(--ink);
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .dot-alert {
+        position: absolute;
+        top: 7px;
+        right: 7px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--coral);
+      }
+
+      .card {
+        border: 1px solid rgba(228, 233, 240, 0.9);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .hero {
+        padding: 18px;
+        margin-bottom: 12px;
+      }
+
+      .hero-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .eyebrow {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .hero h2 {
+        margin: 6px 0 0;
+        font-size: 30px;
+        font-weight: 950;
+        line-height: 1.08;
+      }
+
+      .goal-chip {
+        flex: 0 0 auto;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: var(--blue-soft);
+        color: var(--blue-deep);
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .progress-block {
+        margin: 16px 0 15px;
+      }
+
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .bar {
+        height: 9px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #eef2f7;
+      }
+
+      .bar span {
+        display: block;
+        width: 45%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--blue);
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 8px;
+      }
+
+      .metric {
+        min-height: 74px;
+        padding: 11px 10px;
+        border-radius: 8px;
+        background: var(--surface-soft);
+      }
+
+      .metric strong {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 850;
+      }
+
+      .metric span {
+        display: block;
+        color: var(--ink);
+        font-size: 15px;
+        font-weight: 930;
+        line-height: 1.2;
+      }
+
+      .coach-strip {
+        display: flex;
+        gap: 11px;
+        align-items: flex-start;
+        margin-top: 13px;
+        padding: 12px;
+        border-radius: 8px;
+        background: var(--blue-soft);
+      }
+
+      .coach-icon {
+        display: grid;
+        flex: 0 0 auto;
+        width: 30px;
+        height: 30px;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--blue);
+        color: white;
+        font-size: 16px;
+        font-weight: 900;
+      }
+
+      .coach-copy {
+        min-width: 0;
+      }
+
+      .coach-copy strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--blue-deep);
+        font-size: 13px;
+        font-weight: 930;
+      }
+
+      .coach-copy p {
+        margin: 0;
+        color: #38516f;
+        font-size: 12px;
+        font-weight: 720;
+        line-height: 1.45;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .quick {
+        min-height: 74px;
+        padding: 10px 4px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: 0 9px 22px rgba(35, 44, 56, 0.05);
+        text-align: center;
+      }
+
+      .quick i {
+        display: grid;
+        width: 28px;
+        height: 28px;
+        margin: 0 auto 8px;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-style: normal;
+        font-size: 14px;
+        font-weight: 930;
+      }
+
+      .quick span {
+        display: block;
+        color: var(--ink);
+        font-size: 11px;
+        font-weight: 850;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 18px 2px 10px;
+      }
+
+      .section-title h3 {
+        margin: 0;
+        font-size: 17px;
+        font-weight: 930;
+      }
+
+      .section-title span {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .calendar-card {
+        padding: 14px;
+      }
+
+      .calendar-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 12px;
+      }
+
+      .calendar-head strong {
+        font-size: 18px;
+        font-weight: 930;
+      }
+
+      .legend {
+        display: flex;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 800;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .legend i {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+
+      .weekdays,
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+      }
+
+      .weekdays {
+        margin-bottom: 7px;
+        color: var(--soft);
+        font-size: 11px;
+        font-weight: 850;
+        text-align: center;
+      }
+
+      .day {
+        position: relative;
+        min-height: 48px;
+        padding: 6px 3px 5px;
+        border-radius: 8px;
+        background: #f7f9fc;
+        color: var(--ink);
+        text-align: center;
+      }
+
+      .day.muted {
+        opacity: 0.35;
+      }
+
+      .day b {
+        display: block;
+        font-size: 13px;
+        font-weight: 900;
+        line-height: 1;
+      }
+
+      .day small {
+        display: block;
+        margin-top: 7px;
+        color: var(--muted);
+        font-size: 9px;
+        font-weight: 850;
+        line-height: 1;
+      }
+
+      .day.safe {
+        background: var(--mint-soft);
+      }
+
+      .day.sub {
+        background: var(--amber-soft);
+      }
+
+      .day.over {
+        background: var(--coral-soft);
+      }
+
+      .day.selected {
+        background: var(--blue);
+        color: white;
+        box-shadow: 0 10px 22px rgba(36, 120, 255, 0.28);
+      }
+
+      .day.selected small {
+        color: rgba(255, 255, 255, 0.88);
+      }
+
+      .day::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 5px;
+        width: 4px;
+        height: 4px;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        background: transparent;
+      }
+
+      .day.safe::after {
+        background: var(--mint);
+      }
+
+      .day.sub::after {
+        background: var(--amber);
+      }
+
+      .day.over::after {
+        background: var(--coral);
+      }
+
+      .selected-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 13px;
+        padding: 12px;
+        border-radius: 8px;
+        background: var(--surface-soft);
+      }
+
+      .selected-note strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 13px;
+        font-weight: 930;
+      }
+
+      .selected-note p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        line-height: 1.35;
+      }
+
+      .note-amount {
+        flex: 0 0 auto;
+        color: var(--coral);
+        font-size: 16px;
+        font-weight: 950;
+      }
+
+      .mission-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .mission {
+        display: grid;
+        grid-template-columns: 38px 1fr auto;
+        gap: 11px;
+        align-items: center;
+        min-height: 70px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: 0 8px 22px rgba(35, 44, 56, 0.05);
+      }
+
+      .mission-icon {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border-radius: 8px;
+        font-size: 17px;
+        font-weight: 900;
+      }
+
+      .mission-icon.mint {
+        background: var(--mint-soft);
+        color: var(--mint);
+      }
+
+      .mission-icon.blue {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      .mission-copy strong {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 14px;
+        font-weight: 930;
+      }
+
+      .mission-copy span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 720;
+      }
+
+      .mission-save {
+        padding: 7px 8px;
+        border-radius: 8px;
+        background: var(--mint-soft);
+        color: var(--mint);
+        font-size: 11px;
+        font-weight: 930;
+        white-space: nowrap;
+      }
+
+      .two-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .mini-card {
+        min-height: 112px;
+        padding: 13px;
+      }
+
+      .mini-card h4 {
+        margin: 0 0 9px;
+        font-size: 13px;
+        font-weight: 930;
+      }
+
+      .mini-card strong {
+        display: block;
+        margin-bottom: 7px;
+        font-size: 21px;
+        font-weight: 950;
+      }
+
+      .mini-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 720;
+        line-height: 1.35;
+      }
+
+      .subscription-bar {
+        margin-top: 11px;
+        height: 6px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #f0f2f6;
+      }
+
+      .subscription-bar span {
+        display: block;
+        width: 58%;
+        height: 100%;
+        border-radius: inherit;
+        background: var(--amber);
+      }
+
+      .transaction-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .transaction {
+        display: grid;
+        grid-template-columns: 38px 1fr auto;
+        gap: 11px;
+        align-items: center;
+        padding: 11px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+      }
+
+      .tx-icon {
+        display: grid;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border-radius: 8px;
+        background: var(--surface-soft);
+        color: var(--blue);
+        font-size: 15px;
+        font-weight: 950;
+      }
+
+      .tx-copy strong {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .tx-copy span {
+        display: block;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 720;
+      }
+
+      .tx-amount {
+        font-size: 13px;
+        font-weight: 930;
+        white-space: nowrap;
+      }
+
+      .tx-amount.out {
+        color: var(--coral);
+      }
+
+      .tx-amount.in {
+        color: var(--mint);
+      }
+
+      .bottom-nav {
+        position: fixed;
+        left: 50%;
+        bottom: 0;
+        z-index: 5;
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        width: min(430px, 100%);
+        padding: 10px 14px 18px;
+        border-top: 1px solid rgba(218, 224, 232, 0.85);
+        background: rgba(255, 255, 255, 0.92);
+        box-shadow: 0 -12px 30px rgba(25, 35, 49, 0.09);
+        transform: translateX(-50%);
+        backdrop-filter: blur(16px);
+      }
+
+      .nav-item {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+        color: #8a929d;
+        font-size: 10px;
+        font-weight: 850;
+      }
+
+      .nav-icon {
+        display: grid;
+        width: 32px;
+        height: 32px;
+        place-items: center;
+        border-radius: 8px;
+        color: inherit;
+        font-size: 16px;
+      }
+
+      .nav-item.active {
+        color: var(--blue);
+      }
+
+      .nav-item.active .nav-icon {
+        background: var(--blue-soft);
+      }
+
+      .nav-item.add .nav-icon {
+        background: var(--blue);
+        color: white;
+        box-shadow: 0 10px 20px rgba(36, 120, 255, 0.26);
+      }
+
+      @media (max-width: 360px) {
+        .app {
+          padding-left: 14px;
+          padding-right: 14px;
+        }
+
+        .hero h2 {
+          font-size: 27px;
+        }
+
+        .metric-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .two-cards {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone">
+      <div class="app">
+        <div class="status-bar">
+          <span>5:20</span>
+          <div class="status-icons">
+            <span>●●●</span>
+            <span>Wi-Fi</span>
+            <span class="battery">49</span>
+          </div>
+        </div>
+
+        <header class="topbar">
+          <div class="brand">
+            <div class="mark">M</div>
+            <div>
+              <h1 class="brand-title">머니루틴</h1>
+              <div class="brand-sub">소비 캘린더 · 목표 코치</div>
+            </div>
+          </div>
+          <div class="top-actions">
+            <div class="month-pill">7월 ˅</div>
+            <div class="icon-btn">⌁<span class="dot-alert"></span></div>
+          </div>
+        </header>
+
+        <section class="hero card">
+          <div class="hero-head">
+            <div>
+              <div class="eyebrow">7월 14일 화요일 · 14일 남음</div>
+              <h2>326,790원</h2>
+            </div>
+            <div class="goal-chip">월 목표 72만원</div>
+          </div>
+
+          <div class="progress-block">
+            <div class="progress-label">
+              <span>이번 달 소비 진행률</span>
+              <span>45%</span>
+            </div>
+            <div class="bar"><span></span></div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric">
+              <strong>오늘 가능예산</strong>
+              <span>32,900원</span>
+            </div>
+            <div class="metric">
+              <strong>저축 예상</strong>
+              <span>153,000원</span>
+            </div>
+            <div class="metric">
+              <strong>고정 구독비</strong>
+              <span>38,900원</span>
+            </div>
+          </div>
+
+          <div class="coach-strip">
+            <div class="coach-icon">↘</div>
+            <div class="coach-copy">
+              <strong>오늘의 조정</strong>
+              <p>카페를 이번 주 2회만 유지하면 목표 저축액에 12,000원 더 가까워져요.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="quick-actions" aria-label="빠른 실행">
+          <div class="quick"><i>＋</i><span>내역 추가</span></div>
+          <div class="quick"><i>CSV</i><span>파일 연결</span></div>
+          <div class="quick"><i>◎</i><span>목표 수정</span></div>
+          <div class="quick"><i>AI</i><span>코치 보기</span></div>
+        </section>
+
+        <div class="section-title">
+          <h3>7월 소비 캘린더</h3>
+          <span>선택일 14일</span>
+        </div>
+
+        <section class="calendar-card card">
+          <div class="calendar-head">
+            <strong>이번 주 흐름</strong>
+            <div class="legend">
+              <span><i style="background:#00a878"></i>안정</span>
+              <span><i style="background:#f6a623"></i>구독</span>
+              <span><i style="background:#ff665a"></i>초과</span>
+            </div>
+          </div>
+
+          <div class="weekdays">
+            <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+          </div>
+          <div class="calendar-grid">
+            <div class="day muted"><b>29</b><small></small></div>
+            <div class="day muted"><b>30</b><small></small></div>
+            <div class="day safe"><b>1</b><small>8천</small></div>
+            <div class="day"><b>2</b><small>2.1만</small></div>
+            <div class="day sub"><b>3</b><small>넷플</small></div>
+            <div class="day safe"><b>4</b><small>0원</small></div>
+            <div class="day"><b>5</b><small>1.8만</small></div>
+            <div class="day over"><b>6</b><small>6.4만</small></div>
+            <div class="day safe"><b>7</b><small>9천</small></div>
+            <div class="day"><b>8</b><small>2.6만</small></div>
+            <div class="day sub"><b>9</b><small>멜론</small></div>
+            <div class="day safe"><b>10</b><small>0원</small></div>
+            <div class="day"><b>11</b><small>1.2만</small></div>
+            <div class="day over"><b>12</b><small>5.8만</small></div>
+            <div class="day"><b>13</b><small>2.4만</small></div>
+            <div class="day selected"><b>14</b><small>4.2만</small></div>
+            <div class="day safe"><b>15</b><small>예약</small></div>
+            <div class="day"><b>16</b><small>1.7만</small></div>
+            <div class="day sub"><b>17</b><small>어도비</small></div>
+            <div class="day safe"><b>18</b><small>0원</small></div>
+            <div class="day"><b>19</b><small>2.9만</small></div>
+            <div class="day safe"><b>20</b><small>예정</small></div>
+            <div class="day"><b>21</b><small></small></div>
+            <div class="day"><b>22</b><small></small></div>
+            <div class="day"><b>23</b><small></small></div>
+            <div class="day"><b>24</b><small></small></div>
+            <div class="day sub"><b>25</b><small>쿠팡</small></div>
+            <div class="day"><b>26</b><small></small></div>
+          </div>
+
+          <div class="selected-note">
+            <div>
+              <strong>14일은 평소보다 카페 지출이 큰 날</strong>
+              <p>식비는 안정적이고, 카페만 18,500원 초과했어요.</p>
+            </div>
+            <div class="note-amount">-42,300</div>
+          </div>
+        </section>
+
+        <div class="section-title">
+          <h3>이번 주 조정 미션</h3>
+          <span>목표 저축 20만원</span>
+        </div>
+
+        <section class="mission-list">
+          <div class="mission">
+            <div class="mission-icon mint">✓</div>
+            <div class="mission-copy">
+              <strong>목요일 무지출 하루 만들기</strong>
+              <span>교통비 제외 자동 계산</span>
+            </div>
+            <div class="mission-save">+9천</div>
+          </div>
+          <div class="mission">
+            <div class="mission-icon blue">↻</div>
+            <div class="mission-copy">
+              <strong>구독 1개 점검하기</strong>
+              <span>어도비 결제 전 알림 예정</span>
+            </div>
+            <div class="mission-save">+1.1만</div>
+          </div>
+        </section>
+
+        <section class="two-cards">
+          <div class="mini-card card">
+            <h4>구독 지출</h4>
+            <strong>38,900원</strong>
+            <p>이번 달 고정비의 58%가 25일 전 결제돼요.</p>
+            <div class="subscription-bar"><span></span></div>
+          </div>
+          <div class="mini-card card">
+            <h4>잔액 흐름</h4>
+            <strong>151,074원</strong>
+            <p>샘플 계좌 기준 5일 뒤 최저 잔액 예상.</p>
+          </div>
+        </section>
+
+        <div class="section-title">
+          <h3>최근 소비</h3>
+          <span>전체 보기</span>
+        </div>
+
+        <section class="transaction-list">
+          <div class="transaction">
+            <div class="tx-icon">C</div>
+            <div class="tx-copy">
+              <strong>동네 카페</strong>
+              <span>카페 · 오늘 12:41</span>
+            </div>
+            <div class="tx-amount out">-18,500원</div>
+          </div>
+          <div class="transaction">
+            <div class="tx-icon">B</div>
+            <div class="tx-copy">
+              <strong>샘플 입금 계좌</strong>
+              <span>입금 · 어제</span>
+            </div>
+            <div class="tx-amount in">+80,000원</div>
+          </div>
+        </section>
+      </div>
+
+      <nav class="bottom-nav" aria-label="하단 내비게이션">
+        <div class="nav-item active">
+          <div class="nav-icon">⌂</div>
+          <span>홈</span>
+        </div>
+        <div class="nav-item">
+          <div class="nav-icon">□</div>
+          <span>캘린더</span>
+        </div>
+        <div class="nav-item add">
+          <div class="nav-icon">＋</div>
+          <span>추가</span>
+        </div>
+        <div class="nav-item">
+          <div class="nav-icon">◆</div>
+          <span>코치</span>
+        </div>
+        <div class="nav-item">
+          <div class="nav-icon">☰</div>
+          <span>설정</span>
+        </div>
+      </nav>
+    </main>
+  </body>
+</html>

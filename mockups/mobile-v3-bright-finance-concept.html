@@ -1,0 +1,739 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>머니루틴 v3 밝은 생활 금융앱 콘셉트</title>
+    <style>
+      :root {
+        --page: #f5f7fa;
+        --surface: #ffffff;
+        --surface-soft: #f8fafc;
+        --ink: #17191f;
+        --muted: #737b87;
+        --line: #e7ebf0;
+        --blue: #2478ff;
+        --blue-soft: #eaf2ff;
+        --blue-pale: #f4f8ff;
+        --mint: #00a878;
+        --mint-soft: #e6f7f1;
+        --coral: #ff665a;
+        --coral-soft: #fff0ee;
+        --amber: #f6a623;
+        --amber-soft: #fff5df;
+        --shadow: 0 12px 30px rgba(34, 43, 54, 0.08);
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #dfe4eb;
+        color: var(--ink);
+        font-family:
+          Pretendard,
+          "Noto Sans KR",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      .phone {
+        width: min(430px, 100vw);
+        min-height: 100vh;
+        margin: 0 auto;
+        background: var(--page);
+        overflow: hidden;
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 18px 18px 96px;
+      }
+
+      .status-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 24px;
+        margin-bottom: 17px;
+        font-size: 15px;
+        font-weight: 850;
+      }
+
+      .status-icons {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+        font-size: 12px;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .brand {
+        min-width: 0;
+      }
+
+      .brand-label {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border-radius: var(--radius);
+        background: var(--blue);
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 23px;
+        line-height: 1.05;
+      }
+
+      .brand p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .top-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #1f2329;
+        font-size: 23px;
+      }
+
+      .coach {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 13px 14px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .coach-icon {
+        display: grid;
+        flex: 0 0 36px;
+        width: 36px;
+        height: 36px;
+        place-items: center;
+        border-radius: var(--radius);
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .coach strong,
+      .coach span {
+        display: block;
+      }
+
+      .coach strong {
+        font-size: 15px;
+        line-height: 1.35;
+      }
+
+      .coach span {
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .hero-card {
+        margin-bottom: 13px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 18px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .hero-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 18px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .main-amount {
+        display: block;
+        margin-top: 6px;
+        color: #0e1117;
+        font-size: 36px;
+        font-weight: 950;
+        line-height: 1.05;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .goal-pill {
+        display: inline-flex;
+        min-height: 30px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 11px;
+        background: var(--blue-soft);
+        color: var(--blue);
+        font-size: 12px;
+        font-weight: 900;
+        white-space: nowrap;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .summary {
+        border-radius: var(--radius);
+        padding: 13px;
+        background: var(--surface-soft);
+      }
+
+      .summary strong {
+        display: block;
+        margin-top: 5px;
+        font-size: 19px;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 9px;
+        margin-bottom: 20px;
+      }
+
+      .quick-actions button {
+        min-height: 70px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: 0 7px 20px rgba(34, 43, 54, 0.05);
+        color: var(--ink);
+        font-weight: 850;
+      }
+
+      .quick-actions span {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--blue);
+        font-size: 21px;
+      }
+
+      .section {
+        margin-top: 20px;
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 11px;
+      }
+
+      .section-title {
+        margin: 0;
+        font-size: 21px;
+        line-height: 1.2;
+      }
+
+      .section-link {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 850;
+        text-decoration: none;
+      }
+
+      .calendar-card,
+      .mission-card,
+      .subscription-card,
+      .recent-card {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .calendar-card {
+        padding: 15px;
+      }
+
+      .calendar-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+      }
+
+      .calendar-meta strong {
+        font-size: 18px;
+      }
+
+      .legend {
+        display: flex;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+      }
+
+      .legend i {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        margin-right: 3px;
+      }
+
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+      }
+
+      .weekday,
+      .day {
+        text-align: center;
+      }
+
+      .weekday {
+        color: #8b94a1;
+        font-size: 11px;
+        font-weight: 850;
+      }
+
+      .day {
+        min-height: 58px;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        padding: 6px 4px;
+        background: #fafbfc;
+      }
+
+      .day strong {
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .day span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 10px;
+        font-weight: 850;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .day.good {
+        background: var(--mint-soft);
+      }
+
+      .day.over {
+        border-color: #ffd2cd;
+        background: var(--coral-soft);
+      }
+
+      .day.sub {
+        background: var(--blue-pale);
+      }
+
+      .day.selected {
+        border-color: var(--blue);
+        background: var(--blue-soft);
+        box-shadow: inset 0 0 0 1px var(--blue);
+      }
+
+      .calendar-note {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 13px;
+        border-radius: var(--radius);
+        padding: 12px;
+        background: var(--blue-pale);
+      }
+
+      .calendar-note strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .calendar-note span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .mission-card {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        padding: 15px;
+      }
+
+      .mission-card + .mission-card {
+        margin-top: 10px;
+      }
+
+      .mission-card strong {
+        display: block;
+        font-size: 16px;
+      }
+
+      .mission-card p {
+        margin: 5px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .save {
+        color: var(--blue);
+        font-weight: 950;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+
+      .subscription-card {
+        padding: 16px;
+        background: #f3f8ff;
+      }
+
+      .subscription-card h3 {
+        margin: 5px 0 5px;
+        font-size: 20px;
+      }
+
+      .subscription-card p {
+        margin: 0 0 13px;
+        color: #5c6f82;
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .sub-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-top: 1px solid rgba(36, 120, 255, 0.13);
+        padding-top: 11px;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .recent-card {
+        padding: 4px 15px;
+      }
+
+      .recent-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 13px 0;
+      }
+
+      .recent-row + .recent-row {
+        border-top: 1px solid var(--line);
+      }
+
+      .merchant {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        min-width: 0;
+      }
+
+      .merchant-icon {
+        display: grid;
+        flex: 0 0 38px;
+        width: 38px;
+        height: 38px;
+        place-items: center;
+        border-radius: var(--radius);
+        background: var(--surface-soft);
+        font-weight: 900;
+      }
+
+      .merchant strong,
+      .merchant span {
+        display: block;
+      }
+
+      .merchant strong {
+        font-size: 15px;
+      }
+
+      .merchant span {
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .spent {
+        font-size: 15px;
+        font-weight: 950;
+        white-space: nowrap;
+      }
+
+      .bottom-nav {
+        position: fixed;
+        right: max(14px, calc((100vw - 430px) / 2 + 14px));
+        bottom: 14px;
+        left: max(14px, calc((100vw - 430px) / 2 + 14px));
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1px solid rgba(216, 222, 230, 0.92);
+        border-radius: var(--radius);
+        padding: 7px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 14px 34px rgba(34, 43, 54, 0.15);
+        backdrop-filter: blur(14px);
+      }
+
+      .bottom-nav button {
+        min-height: 48px;
+        border: 0;
+        border-radius: var(--radius);
+        background: transparent;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .bottom-nav button.active {
+        background: var(--blue-soft);
+        color: var(--blue);
+      }
+
+      @media (max-width: 420px) {
+        .app {
+          padding-right: 14px;
+          padding-left: 14px;
+        }
+
+        .main-amount {
+          font-size: 33px;
+        }
+
+        .quick-actions {
+          gap: 8px;
+        }
+
+        .quick-actions button {
+          min-height: 66px;
+          font-size: 12px;
+        }
+
+        .mission-card {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="phone">
+      <div class="app">
+        <div class="status-bar">
+          <span>5:20</span>
+          <span class="status-icons">● ● ◐ 51</span>
+        </div>
+
+        <header class="topbar">
+          <div class="brand">
+            <div class="brand-label">
+              <div class="brand-mark">M</div>
+              <h1>머니루틴</h1>
+            </div>
+            <p>목표 저축을 돕는 소비 캘린더</p>
+          </div>
+          <div class="top-actions" aria-label="상단 기능">
+            <span>⌕</span>
+            <span>◔</span>
+            <span>☰</span>
+          </div>
+        </header>
+
+        <section class="coach" aria-label="오늘의 소비 코치">
+          <div class="coach-icon">✦</div>
+          <div>
+            <strong>이번 주 카페 2번만 줄이면 저축 목표에 더 가까워져요</strong>
+            <span>예상 절약 12,000원</span>
+          </div>
+        </section>
+
+        <section class="hero-card" aria-label="이번 달 소비 상태">
+          <div class="hero-top">
+            <div>
+              <span class="label">이번 달 쓴 돈</span>
+              <strong class="main-amount">326,790원</strong>
+            </div>
+            <span class="goal-pill">목표 43%</span>
+          </div>
+          <div class="hero-grid">
+            <div class="summary">
+              <span class="label">오늘부터 하루</span>
+              <strong>35,267원</strong>
+            </div>
+            <div class="summary">
+              <span class="label">저축 가능성</span>
+              <strong>보통</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="quick-actions" aria-label="빠른 실행">
+          <button type="button"><span>＋</span>입력</button>
+          <button type="button"><span>▦</span>CSV</button>
+          <button type="button"><span>◎</span>목표</button>
+          <button type="button"><span>✦</span>코치</button>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">6월 소비 캘린더</h2>
+            <a class="section-link" href="#">전체보기</a>
+          </div>
+          <article class="calendar-card">
+            <div class="calendar-meta">
+              <strong>월간 소비 흐름</strong>
+              <div class="legend">
+                <span><i style="background: var(--mint)"></i>안정</span>
+                <span><i style="background: var(--blue)"></i>구독</span>
+                <span><i style="background: var(--coral)"></i>초과</span>
+              </div>
+            </div>
+            <div class="calendar">
+              <div class="weekday">일</div><div class="weekday">월</div><div class="weekday">화</div><div class="weekday">수</div><div class="weekday">목</div><div class="weekday">금</div><div class="weekday">토</div>
+              <div class="day good"><strong>1</strong><span>1.1만</span></div>
+              <div class="day"><strong>2</strong><span>0.1만</span></div>
+              <div class="day good"><strong>3</strong><span>0.8만</span></div>
+              <div class="day sub"><strong>4</strong><span>2.5만</span></div>
+              <div class="day"><strong>5</strong><span>2.6만</span></div>
+              <div class="day"><strong>6</strong><span>1.8만</span></div>
+              <div class="day good"><strong>7</strong><span>0.2만</span></div>
+              <div class="day sub"><strong>8</strong><span>1.6만</span></div>
+              <div class="day good"><strong>9</strong><span>0.6만</span></div>
+              <div class="day over selected"><strong>10</strong><span>5.2만</span></div>
+              <div class="day good"><strong>11</strong><span>0원</span></div>
+              <div class="day"><strong>12</strong><span>2.1만</span></div>
+              <div class="day"><strong>13</strong><span>1.5만</span></div>
+              <div class="day sub"><strong>14</strong><span>1.0만</span></div>
+            </div>
+            <div class="calendar-note">
+              <div>
+                <strong>6월 10일은 평소보다 많이 쓴 날</strong>
+                <span>쇼핑과 카페 지출이 함께 있었어요</span>
+              </div>
+              <span class="save">+미션</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">이번 주 절약 미션</h2>
+            <a class="section-link" href="#">리포트</a>
+          </div>
+          <article class="mission-card">
+            <div>
+              <strong>카페 2회 줄이기</strong>
+              <p>평일 커피를 3회에서 1회로 줄여보세요</p>
+            </div>
+            <span class="save">12,000원</span>
+          </article>
+          <article class="mission-card">
+            <div>
+              <strong>배달 하루 쉬기</strong>
+              <p>주말 하루는 8,000원 식비로 대체해요</p>
+            </div>
+            <span class="save">18,000원</span>
+          </article>
+        </section>
+
+        <section class="section">
+          <article class="subscription-card">
+            <span class="label">구독 점검</span>
+            <h3>고정 구독 4건, 월 55,800원</h3>
+            <p>최근 사용 빈도가 낮은 음악 구독부터 확인해보세요.</p>
+            <div class="sub-row">
+              <span>스포티파이</span>
+              <span class="save">10,900원 점검</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2 class="section-title">최근 소비</h2>
+            <a class="section-link" href="#">전체</a>
+          </div>
+          <article class="recent-card">
+            <div class="recent-row">
+              <div class="merchant">
+                <span class="merchant-icon">☕</span>
+                <div>
+                  <strong>스타벅스</strong>
+                  <span>카페/간식 · 오늘</span>
+                </div>
+              </div>
+              <span class="spent">-5,900원</span>
+            </div>
+            <div class="recent-row">
+              <div class="merchant">
+                <span class="merchant-icon">B</span>
+                <div>
+                  <strong>배달의민족</strong>
+                  <span>식비 · 어제</span>
+                </div>
+              </div>
+              <span class="spent">-17,600원</span>
+            </div>
+          </article>
+        </section>
+      </div>
+
+      <nav class="bottom-nav" aria-label="하단 탭">
+        <button class="active" type="button">홈</button>
+        <button type="button">캘린더</button>
+        <button type="button">입력</button>
+        <button type="button">코치</button>
+      </nav>
+    </main>
+  </body>
+</html>

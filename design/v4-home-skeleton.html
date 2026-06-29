@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>머니루틴 v4 홈 스켈레톤</title>
+    <link rel="stylesheet" href="./v4-ui-system.css" />
+  </head>
+  <body>
+    <main class="app-phone">
+      <div class="app-page">
+        <header class="app-topbar">
+          <div class="brand-lockup">
+            <div class="brand-mark">M</div>
+            <div class="brand-copy">
+              <h1 class="brand-title">머니루틴</h1>
+              <div class="brand-subtitle">소비 캘린더 · 목표 코치</div>
+            </div>
+          </div>
+          <div class="top-actions">
+            <button class="chip-button" type="button">7월</button>
+            <button class="icon-button" type="button" aria-label="알림">
+              ·
+              <span class="notification-dot"></span>
+            </button>
+          </div>
+        </header>
+
+        <section class="hero-card card" aria-labelledby="monthly-summary-title">
+          <div class="hero-head">
+            <div>
+              <div class="eyebrow">7월 14일 화요일 · 14일 남음</div>
+              <h2 id="monthly-summary-title" class="hero-amount">326,790원</h2>
+            </div>
+            <div class="goal-chip">월 목표 72만원</div>
+          </div>
+
+          <div class="progress-block" aria-label="이번 달 소비 진행률 45%">
+            <div class="progress-label">
+              <span>이번 달 소비 진행률</span>
+              <span>45%</span>
+            </div>
+            <div class="progress-track">
+              <span class="progress-value" style="width:45%"></span>
+            </div>
+          </div>
+
+          <div class="metric-grid">
+            <div class="metric-tile">
+              <span class="metric-label">오늘 가능예산</span>
+              <span class="metric-value">32,900원</span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-label">저축 예상</span>
+              <span class="metric-value">153,000원</span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-label">고정 구독비</span>
+              <span class="metric-value">38,900원</span>
+            </div>
+          </div>
+
+          <div class="coach-strip">
+            <div class="coach-icon">↘</div>
+            <div>
+              <strong class="coach-title">오늘의 조정</strong>
+              <p class="coach-text">카페를 이번 주 2회만 유지하면 목표 저축액에 12,000원 더 가까워져요.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="quick-action-grid" aria-label="빠른 실행">
+          <button class="quick-action" type="button">
+            <span class="quick-action-icon">＋</span>
+            <span class="quick-action-label">내역 추가</span>
+          </button>
+          <button class="quick-action" type="button">
+            <span class="quick-action-icon">CSV</span>
+            <span class="quick-action-label">파일 연결</span>
+          </button>
+          <button class="quick-action" type="button">
+            <span class="quick-action-icon">◎</span>
+            <span class="quick-action-label">목표 수정</span>
+          </button>
+          <button class="quick-action" type="button">
+            <span class="quick-action-icon">AI</span>
+            <span class="quick-action-label">코치 보기</span>
+          </button>
+        </section>
+
+        <div class="section-title">
+          <h2>7월 소비 캘린더</h2>
+          <span>선택일 14일</span>
+        </div>
+
+        <section class="calendar-card card" aria-labelledby="calendar-title">
+          <div class="calendar-head">
+            <h3 id="calendar-title" class="calendar-title">이번 주 흐름</h3>
+            <div class="legend">
+              <span class="legend-item"><span class="legend-dot" style="background:#00a878"></span>안정</span>
+              <span class="legend-item"><span class="legend-dot" style="background:#f6a623"></span>구독</span>
+              <span class="legend-item"><span class="legend-dot" style="background:#ff665a"></span>초과</span>
+            </div>
+          </div>
+
+          <div class="weekdays" aria-hidden="true">
+            <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+          </div>
+
+          <div class="calendar-grid">
+            <button class="calendar-day is-muted" type="button" aria-label="6월 29일">
+              <span class="calendar-day-number">29</span>
+              <span class="calendar-day-meta"></span>
+            </button>
+            <button class="calendar-day is-muted" type="button" aria-label="6월 30일">
+              <span class="calendar-day-number">30</span>
+              <span class="calendar-day-meta"></span>
+            </button>
+            <button class="calendar-day is-safe" type="button" aria-label="7월 1일 지출 8천원 안정">
+              <span class="calendar-day-number">1</span>
+              <span class="calendar-day-meta">8천</span>
+            </button>
+            <button class="calendar-day" type="button" aria-label="7월 2일 지출 2.1만원">
+              <span class="calendar-day-number">2</span>
+              <span class="calendar-day-meta">2.1만</span>
+            </button>
+            <button class="calendar-day is-subscription" type="button" aria-label="7월 3일 넷플릭스 구독 결제">
+              <span class="calendar-day-number">3</span>
+              <span class="calendar-day-meta">넷플</span>
+            </button>
+            <button class="calendar-day is-safe" type="button" aria-label="7월 4일 지출 0원 안정">
+              <span class="calendar-day-number">4</span>
+              <span class="calendar-day-meta">0원</span>
+            </button>
+            <button class="calendar-day" type="button" aria-label="7월 5일 지출 1.8만원">
+              <span class="calendar-day-number">5</span>
+              <span class="calendar-day-meta">1.8만</span>
+            </button>
+            <button class="calendar-day is-over" type="button" aria-label="7월 6일 지출 6.4만원 초과">
+              <span class="calendar-day-number">6</span>
+              <span class="calendar-day-meta">6.4만</span>
+            </button>
+            <button class="calendar-day is-safe" type="button" aria-label="7월 7일 지출 9천원 안정">
+              <span class="calendar-day-number">7</span>
+              <span class="calendar-day-meta">9천</span>
+            </button>
+            <button class="calendar-day" type="button" aria-label="7월 8일 지출 2.6만원">
+              <span class="calendar-day-number">8</span>
+              <span class="calendar-day-meta">2.6만</span>
+            </button>
+            <button class="calendar-day is-subscription" type="button" aria-label="7월 9일 멜론 구독 결제">
+              <span class="calendar-day-number">9</span>
+              <span class="calendar-day-meta">멜론</span>
+            </button>
+            <button class="calendar-day is-safe" type="button" aria-label="7월 10일 지출 0원 안정">
+              <span class="calendar-day-number">10</span>
+              <span class="calendar-day-meta">0원</span>
+            </button>
+            <button class="calendar-day" type="button" aria-label="7월 11일 지출 1.2만원">
+              <span class="calendar-day-number">11</span>
+              <span class="calendar-day-meta">1.2만</span>
+            </button>
+            <button class="calendar-day is-over" type="button" aria-label="7월 12일 지출 5.8만원 초과">
+              <span class="calendar-day-number">12</span>
+              <span class="calendar-day-meta">5.8만</span>
+            </button>
+            <button class="calendar-day" type="button" aria-label="7월 13일 지출 2.4만원">
+              <span class="calendar-day-number">13</span>
+              <span class="calendar-day-meta">2.4만</span>
+            </button>
+            <button class="calendar-day is-over is-selected" type="button" aria-selected="true" aria-label="7월 14일 지출 4.2만원 초과">
+              <span class="calendar-day-number">14</span>
+              <span class="calendar-day-meta">4.2만</span>
+            </button>
+          </div>
+
+          <div class="selected-day-note">
+            <div>
+              <strong>14일은 평소보다 카페 지출이 큰 날</strong>
+              <p>식비는 안정적이고, 카페만 18,500원 초과했어요.</p>
+            </div>
+            <div class="selected-day-amount">-42,300</div>
+          </div>
+        </section>
+
+        <div class="section-title">
+          <h2>이번 주 조정 미션</h2>
+          <span>목표 저축 20만원</span>
+        </div>
+
+        <section class="mission-list">
+          <article class="mission-card">
+            <div class="mission-icon is-saving">✓</div>
+            <div>
+              <strong class="mission-title">목요일 무지출 하루 만들기</strong>
+              <span class="mission-meta">교통비 제외 자동 계산</span>
+            </div>
+            <div class="mission-saving">+9천</div>
+          </article>
+        </section>
+      </div>
+
+      <nav class="bottom-nav" aria-label="하단 내비게이션">
+        <a class="bottom-nav-item is-active" href="#" aria-current="page">
+          <span class="bottom-nav-icon">⌂</span>
+          <span>홈</span>
+        </a>
+        <a class="bottom-nav-item" href="#">
+          <span class="bottom-nav-icon">□</span>
+          <span>캘린더</span>
+        </a>
+        <a class="bottom-nav-item is-add" href="#">
+          <span class="bottom-nav-icon">＋</span>
+          <span>추가</span>
+        </a>
+        <a class="bottom-nav-item" href="#">
+          <span class="bottom-nav-icon">◆</span>
+          <span>코치</span>
+        </a>
+        <a class="bottom-nav-item" href="#">
+          <span class="bottom-nav-icon">☰</span>
+          <span>설정</span>
+        </a>
+      </nav>
+    </main>
+  </body>
+</html>

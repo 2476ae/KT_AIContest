@@ -1,0 +1,1013 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>머니루틴 캘린더 - 메인 대시보드 목업</title>
+    <style>
+      :root {
+        --bg: #f6f8f5;
+        --surface: #ffffff;
+        --ink: #151a17;
+        --muted: #68736d;
+        --line: #dde4df;
+        --primary: #2f7d5c;
+        --primary-weak: #e2f0e8;
+        --blue: #315d86;
+        --blue-weak: #e6eef6;
+        --warning: #d99021;
+        --warning-weak: #fff2d9;
+        --danger: #d95a45;
+        --danger-weak: #fde7e1;
+        --success: #4a9c6e;
+        --success-weak: #e2f3e9;
+        --food: #e86d4f;
+        --cafe: #d79a2b;
+        --transport: #3c78b5;
+        --shopping: #7c5aa6;
+        --leisure: #2c9a8a;
+        --subscription: #2f3645;
+        --radius: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Pretendard,
+          "Noto Sans KR",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .app-shell {
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .top-nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        max-width: 1240px;
+        margin: 0 auto 22px;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 190px;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid #bfd5c8;
+        border-radius: var(--radius);
+        background: var(--surface);
+        color: var(--primary);
+        font-weight: 800;
+      }
+
+      .brand-name {
+        font-size: 18px;
+        font-weight: 800;
+      }
+
+      .tabs {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+
+      .tab {
+        min-height: 36px;
+        border: 0;
+        border-radius: 6px;
+        padding: 0 14px;
+        background: transparent;
+        color: var(--muted);
+        cursor: default;
+      }
+
+      .tab.is-active {
+        background: var(--primary-weak);
+        color: var(--primary);
+        font-weight: 800;
+      }
+
+      .nav-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .privacy-pill {
+        min-height: 36px;
+        display: inline-flex;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 0 12px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .sample-button {
+        min-height: 40px;
+        border: 0;
+        border-radius: var(--radius);
+        padding: 0 16px;
+        background: var(--primary);
+        color: #fff;
+        font-weight: 800;
+      }
+
+      .dashboard {
+        max-width: 1240px;
+        margin: 0 auto;
+      }
+
+      .dashboard-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 18px;
+      }
+
+      .eyebrow {
+        margin: 0 0 8px;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 31px;
+        line-height: 1.2;
+      }
+
+      .header-copy {
+        margin: 8px 0 0;
+        max-width: 620px;
+        color: var(--muted);
+        font-size: 16px;
+        line-height: 1.6;
+      }
+
+      .goal-chip {
+        min-width: 286px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px 14px;
+        background: var(--surface);
+      }
+
+      .goal-chip span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .goal-chip strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 16px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .metric-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .metric-card,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+
+      .metric-card {
+        min-height: 118px;
+        padding: 16px;
+      }
+
+      .metric-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        border-radius: 999px;
+        padding: 0 8px;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .status.stable {
+        background: var(--success-weak);
+        color: #286b45;
+      }
+
+      .status.caution {
+        background: var(--warning-weak);
+        color: #8d590c;
+      }
+
+      .status.risk {
+        background: var(--danger-weak);
+        color: #a53425;
+      }
+
+      .metric-number {
+        display: block;
+        font-size: 27px;
+        font-weight: 850;
+        font-variant-numeric: tabular-nums;
+        line-height: 1.1;
+      }
+
+      .metric-note {
+        margin-top: 9px;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+        gap: 14px;
+        align-items: stretch;
+      }
+
+      .support-grid {
+        display: grid;
+        grid-template-columns: minmax(280px, 1fr) minmax(0, 2fr);
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .panel-title {
+        margin: 0;
+        font-size: 19px;
+        line-height: 1.3;
+      }
+
+      .panel-subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .month-switch {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      .weekdays,
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .weekdays {
+        margin-bottom: 8px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      .day {
+        min-height: 90px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 8px;
+        background: #fff;
+        position: relative;
+      }
+
+      .day.low {
+        background: #f1faf4;
+      }
+
+      .day.normal {
+        background: #eef5fb;
+      }
+
+      .day.caution {
+        border-color: #e2b66b;
+        background: #fff7e9;
+      }
+
+      .day.risk {
+        border-color: #e59b8d;
+        background: #fff0ec;
+      }
+
+      .day.selected {
+        outline: 2px solid var(--primary);
+      }
+
+      .day.no-spend {
+        background: #e8f5ed;
+      }
+
+      .day-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+      }
+
+      .date {
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      .amount {
+        display: block;
+        margin-top: 13px;
+        font-size: 14px;
+        font-weight: 850;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .day-caption {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 11px;
+      }
+
+      .mini-badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 19px;
+        border-radius: 999px;
+        padding: 0 6px;
+        font-size: 10px;
+        font-weight: 850;
+        white-space: nowrap;
+      }
+
+      .mini-badge.sub {
+        background: #eceef1;
+        color: var(--subscription);
+      }
+
+      .mini-badge.over {
+        background: var(--danger-weak);
+        color: #9c3729;
+      }
+
+      .mini-badge.zero {
+        background: var(--success-weak);
+        color: #286b45;
+      }
+
+      .dots {
+        display: flex;
+        gap: 4px;
+        position: absolute;
+        right: 8px;
+        bottom: 8px;
+      }
+
+      .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+      }
+
+      .dot.food {
+        background: var(--food);
+      }
+
+      .dot.cafe {
+        background: var(--cafe);
+      }
+
+      .dot.transport {
+        background: var(--transport);
+      }
+
+      .dot.shopping {
+        background: var(--shopping);
+      }
+
+      .dot.leisure {
+        background: var(--leisure);
+      }
+
+      .dot.subscription {
+        background: var(--subscription);
+      }
+
+      .ai-panel {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .ai-headline {
+        margin: 10px 0 0;
+        font-size: 22px;
+        font-weight: 850;
+        line-height: 1.38;
+      }
+
+      .ai-number {
+        margin: 16px 0;
+        border: 1px solid #d5e4dc;
+        border-radius: var(--radius);
+        padding: 14px;
+        background: var(--primary-weak);
+      }
+
+      .ai-number span {
+        display: block;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .ai-number strong {
+        display: block;
+        margin-top: 4px;
+        color: var(--primary);
+        font-size: 28px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .reason-list,
+      .mission-list,
+      .subs-list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .reason-list li {
+        border-left: 3px solid var(--line);
+        padding-left: 10px;
+        color: var(--muted);
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      .section-label {
+        margin: 18px 0 10px;
+        color: var(--ink);
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .mission {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 8px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 10px;
+        background: #fff;
+      }
+
+      .mission strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .mission span {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .saving {
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 850;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .sub-item {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 10px;
+        align-items: center;
+        border-bottom: 1px solid var(--line);
+        padding: 10px 0;
+      }
+
+      .sub-item:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .sub-name {
+        display: block;
+        font-size: 14px;
+        font-weight: 850;
+      }
+
+      .sub-meta {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .sub-price {
+        text-align: right;
+        font-size: 14px;
+        font-weight: 850;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .category-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .category-row {
+        display: grid;
+        grid-template-columns: 92px minmax(120px, 1fr) 92px;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .category-name {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        font-weight: 800;
+      }
+
+      .bar {
+        height: 10px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: #edf1ee;
+      }
+
+      .bar span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+      }
+
+      .category-amount {
+        text-align: right;
+        color: var(--muted);
+        font-size: 13px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bottom-tabs {
+        display: none;
+      }
+
+      @media (max-width: 980px) {
+        .app-shell {
+          padding: 14px 14px 78px;
+        }
+
+        .top-nav {
+          align-items: flex-start;
+        }
+
+        .tabs,
+        .privacy-pill {
+          display: none;
+        }
+
+        .dashboard-header {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .goal-chip {
+          min-width: 0;
+        }
+
+        .metric-grid,
+        .main-grid,
+        .support-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .metric-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ai-panel {
+          order: -1;
+        }
+
+        .calendar-panel {
+          order: 0;
+        }
+
+        .bottom-tabs {
+          position: fixed;
+          right: 12px;
+          bottom: 12px;
+          left: 12px;
+          z-index: 10;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          border: 1px solid var(--line);
+          border-radius: var(--radius);
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: 0 10px 28px rgba(26, 38, 31, 0.16);
+        }
+
+        .bottom-tabs button {
+          min-height: 48px;
+          border: 0;
+          background: transparent;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 800;
+        }
+
+        .bottom-tabs button:first-child {
+          color: var(--primary);
+        }
+      }
+
+      @media (max-width: 620px) {
+        h1 {
+          font-size: 25px;
+        }
+
+        .sample-button {
+          padding: 0 12px;
+          font-size: 13px;
+        }
+
+        .metric-card {
+          min-height: 108px;
+          padding: 13px;
+        }
+
+        .metric-number {
+          font-size: 22px;
+        }
+
+        .panel {
+          padding: 14px;
+        }
+
+        .weekdays,
+        .calendar-grid {
+          gap: 5px;
+        }
+
+        .day {
+          min-height: 66px;
+          padding: 6px;
+        }
+
+        .amount {
+          margin-top: 8px;
+          font-size: 11px;
+        }
+
+        .day-caption {
+          display: none;
+        }
+
+        .mini-badge {
+          min-height: 16px;
+          padding: 0 4px;
+          font-size: 9px;
+        }
+
+        .dots {
+          right: 6px;
+          bottom: 6px;
+        }
+
+        .dot {
+          width: 5px;
+          height: 5px;
+        }
+
+        .category-row {
+          grid-template-columns: 82px minmax(80px, 1fr);
+        }
+
+        .category-amount {
+          grid-column: 1 / -1;
+          text-align: left;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="top-nav" aria-label="상단 내비게이션">
+        <div class="brand" aria-label="머니루틴 캘린더">
+          <div class="brand-mark">M</div>
+          <div class="brand-name">머니루틴 캘린더</div>
+        </div>
+        <nav class="tabs" aria-label="주요 화면">
+          <button class="tab is-active" type="button">홈</button>
+          <button class="tab" type="button">캘린더</button>
+          <button class="tab" type="button">소비내역</button>
+          <button class="tab" type="button">목표</button>
+          <button class="tab" type="button">AI 리포트</button>
+        </nav>
+        <div class="nav-actions">
+          <span class="privacy-pill">금융 인증정보 없이 체험</span>
+          <button class="sample-button" type="button">샘플 소비로 바로 보기</button>
+        </div>
+      </header>
+
+      <main class="dashboard">
+        <section class="dashboard-header" aria-labelledby="dashboard-title">
+          <div>
+            <p class="eyebrow">AI 소비 캘린더</p>
+            <h1 id="dashboard-title">6월 소비 상태</h1>
+            <p class="header-copy">
+              AI가 소비 흐름을 달력으로 읽고, 목표 저축까지 안내합니다.
+            </p>
+          </div>
+          <div class="goal-chip">
+            <span>이번 달 목표</span>
+            <strong>소비 750,000원 · 저축 300,000원</strong>
+          </div>
+        </section>
+
+        <section class="metric-grid" aria-label="월간 소비 요약">
+          <article class="metric-card">
+            <div class="metric-head">
+              <span class="label">이번 달 지출</span>
+              <span class="status stable">안정</span>
+            </div>
+            <strong class="metric-number">326,790원</strong>
+            <p class="metric-note">목표 소비액의 43%</p>
+          </article>
+          <article class="metric-card">
+            <div class="metric-head">
+              <span class="label">목표 사용률</span>
+              <span class="status stable">여유</span>
+            </div>
+            <strong class="metric-number">43.6%</strong>
+            <p class="metric-note">아직 423,210원 여유</p>
+          </article>
+          <article class="metric-card">
+            <div class="metric-head">
+              <span class="label">남은 하루 예산</span>
+              <span class="status stable">가능</span>
+            </div>
+            <strong class="metric-number">35,267원</strong>
+            <p class="metric-note">남은 12일 기준</p>
+          </article>
+          <article class="metric-card">
+            <div class="metric-head">
+              <span class="label">저축 가능성</span>
+              <span class="status caution">주의</span>
+            </div>
+            <strong class="metric-number">보통</strong>
+            <p class="metric-note">카페·배달만 줄이면 달성 가능</p>
+          </article>
+        </section>
+
+        <section class="main-grid">
+          <article class="panel calendar-panel" aria-labelledby="calendar-title">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title" id="calendar-title">2026년 6월 소비 캘린더</h2>
+                <p class="panel-subtitle">색과 라벨로 과소비일, 무지출일, 구독일을 구분합니다.</p>
+              </div>
+              <span class="month-switch">6월 보기</span>
+            </div>
+            <div class="weekdays" aria-hidden="true">
+              <span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span><span>일</span>
+            </div>
+            <div class="calendar-grid" aria-label="소비 캘린더">
+              <div class="day low">
+                <div class="day-top"><span class="date">1</span></div>
+                <span class="amount">11,000원</span><span class="day-caption">식비·카페</span>
+                <div class="dots"><span class="dot food"></span><span class="dot cafe"></span></div>
+              </div>
+              <div class="day low">
+                <div class="day-top"><span class="date">2</span></div>
+                <span class="amount">1,550원</span><span class="day-caption">교통</span>
+                <div class="dots"><span class="dot transport"></span></div>
+              </div>
+              <div class="day low">
+                <div class="day-top"><span class="date">3</span></div>
+                <span class="amount">8,900원</span><span class="day-caption">식비</span>
+                <div class="dots"><span class="dot food"></span></div>
+              </div>
+              <div class="day normal">
+                <div class="day-top"><span class="date">4</span><span class="mini-badge sub">구독</span></div>
+                <span class="amount">25,900원</span><span class="day-caption">OTT·택시</span>
+                <div class="dots"><span class="dot subscription"></span><span class="dot transport"></span></div>
+              </div>
+              <div class="day low">
+                <div class="day-top"><span class="date">5</span></div>
+                <span class="amount">26,800원</span><span class="day-caption">생활</span>
+                <div class="dots"><span class="dot shopping"></span></div>
+              </div>
+              <div class="day normal">
+                <div class="day-top"><span class="date">6</span></div>
+                <span class="amount">18,700원</span><span class="day-caption">배달</span>
+                <div class="dots"><span class="dot food"></span></div>
+              </div>
+              <div class="day low">
+                <div class="day-top"><span class="date">7</span></div>
+                <span class="amount">2,500원</span><span class="day-caption">카페</span>
+                <div class="dots"><span class="dot cafe"></span></div>
+              </div>
+              <div class="day normal">
+                <div class="day-top"><span class="date">8</span><span class="mini-badge sub">구독</span></div>
+                <span class="amount">16,450원</span><span class="day-caption">구독·교통</span>
+                <div class="dots"><span class="dot subscription"></span><span class="dot transport"></span></div>
+              </div>
+              <div class="day low">
+                <div class="day-top"><span class="date">9</span></div>
+                <span class="amount">6,500원</span><span class="day-caption">학식</span>
+                <div class="dots"><span class="dot food"></span></div>
+              </div>
+              <div class="day risk selected">
+                <div class="day-top"><span class="date">10</span><span class="mini-badge over">초과</span></div>
+                <span class="amount">52,000원</span><span class="day-caption">쇼핑·카페</span>
+                <div class="dots"><span class="dot shopping"></span><span class="dot cafe"></span></div>
+              </div>
+              <div class="day no-spend">
+                <div class="day-top"><span class="date">11</span><span class="mini-badge zero">0원</span></div>
+                <span class="amount">무지출</span>
+              </div>
+              <div class="day normal">
+                <div class="day-top"><span class="date">12</span></div>
+                <span class="amount">21,400원</span><span class="day-caption">야식</span>
+                <div class="dots"><span class="dot food"></span></div>
+              </div>
+              <div class="day low">
+                <div class="day-top"><span class="date">13</span></div>
+                <span class="amount">15,000원</span><span class="day-caption">영화</span>
+                <div class="dots"><span class="dot leisure"></span></div>
+              </div>
+              <div class="day normal">
+                <div class="day-top"><span class="date">14</span><span class="mini-badge sub">구독</span></div>
+                <span class="amount">10,900원</span><span class="day-caption">음악</span>
+                <div class="dots"><span class="dot subscription"></span></div>
+              </div>
+            </div>
+          </article>
+
+          <aside class="panel ai-panel" aria-labelledby="ai-title">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title" id="ai-title">AI 오늘의 판단</h2>
+                <p class="panel-subtitle">결론부터 짧게, 다음 행동까지 제안합니다.</p>
+              </div>
+              <span class="status caution">주의</span>
+            </div>
+            <p class="ai-headline">
+              남은 12일 동안 하루 35,267원 이하로 쓰면 목표 소비액 안에 머물 수 있어요.
+            </p>
+            <div class="ai-number">
+              <span>이번 주 절약 가능액</span>
+              <strong>40,900원</strong>
+            </div>
+            <ul class="reason-list">
+              <li>카페/간식 지출이 같은 기간 평균보다 빠르게 늘고 있어요.</li>
+              <li>배달 지출은 주말 저녁에 반복되는 경향이 있습니다.</li>
+            </ul>
+            <h3 class="section-label">이번 주 미션</h3>
+            <ul class="mission-list">
+              <li class="mission"><div><strong>카페 2회 줄이기</strong><span>평일 커피를 3회에서 1회로</span></div><span class="saving">12,000원</span></li>
+              <li class="mission"><div><strong>배달 하루 쉬기</strong><span>주말 하루는 8,000원 식비로</span></div><span class="saving">18,000원</span></li>
+              <li class="mission"><div><strong>음악 구독 점검</strong><span>사용 빈도가 낮은 구독 확인</span></div><span class="saving">10,900원</span></li>
+            </ul>
+          </aside>
+        </section>
+
+        <section class="support-grid">
+          <article class="panel" aria-labelledby="subs-title">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title" id="subs-title">구독/반복 결제 후보</h2>
+                <p class="panel-subtitle">4건 · 월 55,800원</p>
+              </div>
+            </div>
+            <ul class="subs-list">
+              <li class="sub-item"><div><span class="sub-name">넷플릭스</span><span class="sub-meta">매월 4일 · 유지</span></div><span class="sub-price">13,500원</span></li>
+              <li class="sub-item"><div><span class="sub-name">유튜브프리미엄</span><span class="sub-meta">매월 8일 · 점검</span></div><span class="sub-price">14,900원</span></li>
+              <li class="sub-item"><div><span class="sub-name">스포티파이</span><span class="sub-meta">매월 14일 · 해지 검토</span></div><span class="sub-price">10,900원</span></li>
+              <li class="sub-item"><div><span class="sub-name">노션AI</span><span class="sub-meta">매월 22일 · 점검</span></div><span class="sub-price">16,500원</span></li>
+            </ul>
+          </article>
+
+          <article class="panel" aria-labelledby="category-title">
+            <div class="panel-header">
+              <div>
+                <h2 class="panel-title" id="category-title">카테고리별 소비 흐름</h2>
+                <p class="panel-subtitle">AI가 사용처와 메모를 기준으로 자동 분류한 결과입니다.</p>
+              </div>
+            </div>
+            <div class="category-list">
+              <div class="category-row">
+                <div class="category-name"><span class="dot food"></span>식비</div>
+                <div class="bar"><span style="width: 82%; background: var(--food)"></span></div>
+                <div class="category-amount">117,900원</div>
+              </div>
+              <div class="category-row">
+                <div class="category-name"><span class="dot shopping"></span>쇼핑</div>
+                <div class="bar"><span style="width: 70%; background: var(--shopping)"></span></div>
+                <div class="category-amount">105,600원</div>
+              </div>
+              <div class="category-row">
+                <div class="category-name"><span class="dot subscription"></span>구독</div>
+                <div class="bar"><span style="width: 52%; background: var(--subscription)"></span></div>
+                <div class="category-amount">55,800원</div>
+              </div>
+              <div class="category-row">
+                <div class="category-name"><span class="dot transport"></span>교통</div>
+                <div class="bar"><span style="width: 28%; background: var(--transport)"></span></div>
+                <div class="category-amount">29,400원</div>
+              </div>
+              <div class="category-row">
+                <div class="category-name"><span class="dot cafe"></span>카페</div>
+                <div class="bar"><span style="width: 24%; background: var(--cafe)"></span></div>
+                <div class="category-amount">29,100원</div>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+
+      <nav class="bottom-tabs" aria-label="모바일 하단 탭">
+        <button type="button">홈</button>
+        <button type="button">캘린더</button>
+        <button type="button">입력</button>
+        <button type="button">AI</button>
+      </nav>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,1044 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>머니루틴 캘린더 - 전체 화면 프로토타입</title>
+    <style>
+      :root {
+        --bg: #f6f8f5;
+        --surface: #ffffff;
+        --ink: #151a17;
+        --muted: #68736d;
+        --line: #dde4df;
+        --primary: #2f7d5c;
+        --primary-weak: #e2f0e8;
+        --blue: #315d86;
+        --blue-weak: #e6eef6;
+        --warning: #d99021;
+        --warning-weak: #fff2d9;
+        --danger: #d95a45;
+        --danger-weak: #fde7e1;
+        --success: #4a9c6e;
+        --success-weak: #e2f3e9;
+        --food: #e86d4f;
+        --cafe: #d79a2b;
+        --transport: #3c78b5;
+        --shopping: #7c5aa6;
+        --leisure: #2c9a8a;
+        --subscription: #2f3645;
+        --education: #5a8f3d;
+        --life: #7a6a57;
+        --radius: 8px;
+        --shadow-soft: 0 10px 28px rgba(26, 38, 31, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Pretendard,
+          "Noto Sans KR",
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        letter-spacing: 0;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .app {
+        min-height: 100vh;
+        padding: 18px;
+      }
+
+      .topbar {
+        position: sticky;
+        top: 12px;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        max-width: 1240px;
+        margin: 0 auto 18px;
+        border: 1px solid rgba(221, 228, 223, 0.86);
+        border-radius: var(--radius);
+        padding: 10px;
+        background: rgba(255, 255, 255, 0.94);
+        box-shadow: var(--shadow-soft);
+        backdrop-filter: blur(10px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 190px;
+        font-weight: 850;
+      }
+
+      .brand-mark {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        place-items: center;
+        border: 1px solid #bfd5c8;
+        border-radius: var(--radius);
+        color: var(--primary);
+        background: var(--surface);
+      }
+
+      .nav {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: #fbfcfb;
+      }
+
+      .nav a {
+        display: inline-flex;
+        align-items: center;
+        min-height: 36px;
+        border-radius: 6px;
+        padding: 0 12px;
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 750;
+      }
+
+      .nav a:first-child {
+        color: var(--primary);
+        background: var(--primary-weak);
+      }
+
+      .sample-cta {
+        min-height: 40px;
+        border: 0;
+        border-radius: var(--radius);
+        padding: 0 14px;
+        color: #fff;
+        background: var(--primary);
+        font-weight: 850;
+      }
+
+      .page {
+        max-width: 1240px;
+        margin: 0 auto;
+      }
+
+      .screen {
+        scroll-margin-top: 92px;
+        margin-bottom: 22px;
+      }
+
+      .screen-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 24px;
+        margin: 0 0 14px;
+      }
+
+      .eyebrow {
+        margin: 0 0 7px;
+        color: var(--primary);
+        font-size: 13px;
+        font-weight: 850;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 7px;
+        font-size: 31px;
+        line-height: 1.2;
+      }
+
+      h2 {
+        margin-bottom: 4px;
+        font-size: 25px;
+        line-height: 1.25;
+      }
+
+      .lead,
+      .muted {
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .lead {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .mock-label {
+        display: inline-flex;
+        min-height: 30px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 0 10px;
+        background: var(--surface);
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .grid-2-1 {
+        display: grid;
+        grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+        gap: 14px;
+      }
+
+      .grid-1-2 {
+        display: grid;
+        grid-template-columns: minmax(300px, 1fr) minmax(0, 2fr);
+        gap: 14px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .card,
+      .panel {
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        background: var(--surface);
+      }
+
+      .card {
+        min-height: 112px;
+        padding: 16px;
+      }
+
+      .panel {
+        padding: 18px;
+      }
+
+      .panel + .panel {
+        margin-top: 14px;
+      }
+
+      .card-head,
+      .panel-head,
+      .row-between {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .label {
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .num {
+        display: block;
+        margin-top: 14px;
+        font-size: 27px;
+        font-weight: 900;
+        line-height: 1.1;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .note {
+        margin: 8px 0 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.4;
+      }
+
+      .status {
+        display: inline-flex;
+        min-height: 24px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 8px;
+        font-size: 12px;
+        font-weight: 850;
+        white-space: nowrap;
+      }
+
+      .stable {
+        color: #286b45;
+        background: var(--success-weak);
+      }
+
+      .caution {
+        color: #8d590c;
+        background: var(--warning-weak);
+      }
+
+      .risk {
+        color: #a53425;
+        background: var(--danger-weak);
+      }
+
+      .calendar {
+        display: grid;
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .weekday {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+        text-align: center;
+      }
+
+      .day {
+        min-height: 78px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 8px;
+        background: #fff;
+        position: relative;
+      }
+
+      .day.low {
+        background: #f1faf4;
+      }
+
+      .day.normal {
+        background: #eef5fb;
+      }
+
+      .day.caution-day {
+        border-color: #e2b66b;
+        background: #fff7e9;
+      }
+
+      .day.risk-day {
+        border-color: #e59b8d;
+        background: #fff0ec;
+      }
+
+      .day.selected {
+        outline: 2px solid var(--primary);
+      }
+
+      .date {
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .amount {
+        display: block;
+        margin-top: 11px;
+        font-size: 13px;
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .mini {
+        display: inline-flex;
+        min-height: 18px;
+        align-items: center;
+        border-radius: 999px;
+        padding: 0 6px;
+        font-size: 10px;
+        font-weight: 900;
+      }
+
+      .mini.sub {
+        color: var(--subscription);
+        background: #eceef1;
+      }
+
+      .mini.over {
+        color: #9c3729;
+        background: var(--danger-weak);
+      }
+
+      .dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        margin-right: 7px;
+      }
+
+      .food {
+        background: var(--food);
+      }
+
+      .cafe {
+        background: var(--cafe);
+      }
+
+      .transport {
+        background: var(--transport);
+      }
+
+      .shopping {
+        background: var(--shopping);
+      }
+
+      .leisure {
+        background: var(--leisure);
+      }
+
+      .sub-dot {
+        background: var(--subscription);
+      }
+
+      .ai-hero {
+        border: 1px solid #d5e4dc;
+        border-radius: var(--radius);
+        padding: 16px;
+        background: var(--primary-weak);
+      }
+
+      .ai-hero strong {
+        display: block;
+        margin-top: 8px;
+        color: var(--primary);
+        font-size: 28px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .list {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .list li {
+        border-bottom: 1px solid var(--line);
+        padding: 0 0 10px;
+      }
+
+      .list li:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .mission {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 12px;
+        background: #fff;
+      }
+
+      .mission strong,
+      .row-title {
+        display: block;
+        font-size: 14px;
+        font-weight: 900;
+      }
+
+      .mission span,
+      .row-meta {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .saving {
+        color: var(--primary);
+        font-weight: 900;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .bar-row {
+        display: grid;
+        grid-template-columns: 96px minmax(120px, 1fr) 90px;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .bar {
+        height: 10px;
+        border-radius: 999px;
+        overflow: hidden;
+        background: #edf1ee;
+      }
+
+      .bar span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+      }
+
+      .table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .table th,
+      .table td {
+        border-bottom: 1px solid var(--line);
+        padding: 12px 8px;
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .table th {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 850;
+      }
+
+      .table td {
+        font-size: 14px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .field label {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font-size: 13px;
+        font-weight: 750;
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        min-height: 42px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius);
+        padding: 0 12px;
+        background: #fff;
+        color: var(--ink);
+      }
+
+      .upload-box {
+        display: grid;
+        min-height: 160px;
+        place-items: center;
+        border: 1px dashed #aebeb4;
+        border-radius: var(--radius);
+        padding: 18px;
+        background: #fbfcfb;
+        text-align: center;
+      }
+
+      .button-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .primary-button,
+      .secondary-button {
+        min-height: 40px;
+        border-radius: var(--radius);
+        padding: 0 14px;
+        font-weight: 850;
+      }
+
+      .primary-button {
+        border: 0;
+        color: #fff;
+        background: var(--primary);
+      }
+
+      .secondary-button {
+        border: 1px solid var(--line);
+        color: var(--ink);
+        background: #fff;
+      }
+
+      .slider-row {
+        display: grid;
+        gap: 8px;
+        margin-bottom: 16px;
+      }
+
+      .slider-track {
+        height: 10px;
+        border-radius: 999px;
+        background: #edf1ee;
+        overflow: hidden;
+      }
+
+      .slider-track span {
+        display: block;
+        height: 100%;
+        border-radius: 999px;
+        background: var(--primary);
+      }
+
+      .insight-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .bottom-tabs {
+        display: none;
+      }
+
+      @media (max-width: 980px) {
+        .app {
+          padding: 12px 12px 76px;
+        }
+
+        .topbar {
+          top: 8px;
+          align-items: flex-start;
+        }
+
+        .nav {
+          display: none;
+        }
+
+        .screen-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .grid-4 {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .grid-2-1,
+        .grid-1-2,
+        .grid-2,
+        .insight-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .ai-first {
+          order: -1;
+        }
+
+        .bottom-tabs {
+          position: fixed;
+          right: 12px;
+          bottom: 12px;
+          left: 12px;
+          z-index: 30;
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          border: 1px solid var(--line);
+          border-radius: var(--radius);
+          background: rgba(255, 255, 255, 0.96);
+          box-shadow: var(--shadow-soft);
+        }
+
+        .bottom-tabs a {
+          display: grid;
+          min-height: 48px;
+          place-items: center;
+          color: var(--muted);
+          font-size: 13px;
+          font-weight: 850;
+        }
+
+        .bottom-tabs a:first-child {
+          color: var(--primary);
+        }
+      }
+
+      @media (max-width: 620px) {
+        h1 {
+          font-size: 25px;
+        }
+
+        h2 {
+          font-size: 22px;
+        }
+
+        .sample-cta {
+          padding: 0 10px;
+          font-size: 13px;
+        }
+
+        .brand {
+          min-width: 0;
+        }
+
+        .grid-4,
+        .form-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .card,
+        .panel {
+          padding: 14px;
+        }
+
+        .num {
+          font-size: 22px;
+        }
+
+        .calendar {
+          gap: 5px;
+        }
+
+        .day {
+          min-height: 62px;
+          padding: 6px;
+        }
+
+        .amount {
+          margin-top: 8px;
+          font-size: 11px;
+        }
+
+        .mini {
+          min-height: 16px;
+          padding: 0 4px;
+          font-size: 9px;
+        }
+
+        .bar-row {
+          grid-template-columns: 88px minmax(80px, 1fr);
+        }
+
+        .bar-row .muted {
+          grid-column: 1 / -1;
+        }
+
+        .table {
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <a class="brand" href="#home" aria-label="머니루틴 캘린더 홈">
+          <span class="brand-mark">M</span>
+          <span>머니루틴 캘린더</span>
+        </a>
+        <nav class="nav" aria-label="프로토타입 화면">
+          <a href="#home">홈</a>
+          <a href="#calendar">캘린더</a>
+          <a href="#input">소비내역</a>
+          <a href="#goals">목표</a>
+          <a href="#report">AI 리포트</a>
+        </nav>
+        <button class="sample-cta" type="button">샘플 소비로 바로 보기</button>
+      </header>
+
+      <main class="page">
+        <section class="screen" id="home" aria-labelledby="home-title">
+          <div class="screen-head">
+            <div>
+              <p class="eyebrow">AI 소비 캘린더</p>
+              <h1 id="home-title">6월 소비 상태</h1>
+              <p class="lead">AI가 소비 흐름을 달력으로 읽고, 목표 저축까지 안내합니다.</p>
+            </div>
+            <span class="mock-label">금융 인증정보 없이 체험</span>
+          </div>
+
+          <div class="grid-4">
+            <article class="card">
+              <div class="card-head"><span class="label">이번 달 지출</span><span class="status stable">안정</span></div>
+              <strong class="num">326,790원</strong>
+              <p class="note">목표 소비액의 43%</p>
+            </article>
+            <article class="card">
+              <div class="card-head"><span class="label">목표 사용률</span><span class="status stable">여유</span></div>
+              <strong class="num">43.6%</strong>
+              <p class="note">아직 423,210원 여유</p>
+            </article>
+            <article class="card">
+              <div class="card-head"><span class="label">남은 하루 예산</span><span class="status stable">가능</span></div>
+              <strong class="num">35,267원</strong>
+              <p class="note">남은 12일 기준</p>
+            </article>
+            <article class="card">
+              <div class="card-head"><span class="label">저축 가능성</span><span class="status caution">주의</span></div>
+              <strong class="num">보통</strong>
+              <p class="note">카페·배달만 줄이면 달성 가능</p>
+            </article>
+          </div>
+
+          <div class="grid-2-1" style="margin-top: 14px">
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <h2>2026년 6월 소비 캘린더</h2>
+                  <p class="muted">과소비일, 무지출일, 구독 결제일을 한눈에 구분합니다.</p>
+                </div>
+                <span class="mock-label">6월 보기</span>
+              </div>
+              <div class="calendar" aria-label="홈 소비 캘린더">
+                <span class="weekday">월</span><span class="weekday">화</span><span class="weekday">수</span><span class="weekday">목</span><span class="weekday">금</span><span class="weekday">토</span><span class="weekday">일</span>
+                <div class="day low"><span class="date">1</span><span class="amount">1.1만</span></div>
+                <div class="day low"><span class="date">2</span><span class="amount">0.1만</span></div>
+                <div class="day low"><span class="date">3</span><span class="amount">0.8만</span></div>
+                <div class="day normal"><div class="row-between"><span class="date">4</span><span class="mini sub">구독</span></div><span class="amount">2.5만</span></div>
+                <div class="day low"><span class="date">5</span><span class="amount">2.6만</span></div>
+                <div class="day normal"><span class="date">6</span><span class="amount">1.8만</span></div>
+                <div class="day low"><span class="date">7</span><span class="amount">0.2만</span></div>
+                <div class="day normal"><div class="row-between"><span class="date">8</span><span class="mini sub">구독</span></div><span class="amount">1.6만</span></div>
+                <div class="day low"><span class="date">9</span><span class="amount">0.6만</span></div>
+                <div class="day risk-day selected"><div class="row-between"><span class="date">10</span><span class="mini over">초과</span></div><span class="amount">5.2만</span></div>
+                <div class="day low"><span class="date">11</span><span class="amount">0원</span></div>
+                <div class="day normal"><span class="date">12</span><span class="amount">2.1만</span></div>
+                <div class="day low"><span class="date">13</span><span class="amount">1.5만</span></div>
+                <div class="day normal"><div class="row-between"><span class="date">14</span><span class="mini sub">구독</span></div><span class="amount">1.0만</span></div>
+              </div>
+            </article>
+
+            <aside class="panel ai-first">
+              <div class="panel-head">
+                <div>
+                  <h2>AI 오늘의 판단</h2>
+                  <p class="muted">결론, 이유, 미션 순서로 보여줍니다.</p>
+                </div>
+                <span class="status caution">주의</span>
+              </div>
+              <div class="ai-hero">
+                <span class="label">남은 하루 예산</span>
+                <strong>35,267원</strong>
+                <p class="note">남은 12일 동안 이 금액 안에서 쓰면 목표 소비액을 지킬 수 있어요.</p>
+              </div>
+              <div class="panel" style="margin-top: 14px">
+                <h3>이번 주 미션</h3>
+                <div class="mission"><div><strong>카페 2회 줄이기</strong><span>평일 커피를 3회에서 1회로</span></div><span class="saving">12,000원</span></div>
+                <div class="mission" style="margin-top: 8px"><div><strong>배달 하루 쉬기</strong><span>주말 하루는 8,000원 식비로</span></div><span class="saving">18,000원</span></div>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" id="calendar" aria-labelledby="calendar-title">
+          <div class="screen-head">
+            <div>
+              <p class="eyebrow">Calendar</p>
+              <h2 id="calendar-title">소비 캘린더</h2>
+              <p class="lead">날짜별 소비 흐름과 선택한 날의 AI 코멘트를 확인합니다.</p>
+            </div>
+            <span class="mock-label">초과 · 구독 · 무지출 표시</span>
+          </div>
+          <div class="grid-2-1">
+            <article class="panel">
+              <div class="panel-head">
+                <h3>6월 월간 보기</h3>
+                <div class="button-row" style="margin-top: 0">
+                  <button class="secondary-button" type="button">식비</button>
+                  <button class="secondary-button" type="button">구독</button>
+                  <button class="secondary-button" type="button">초과일</button>
+                </div>
+              </div>
+              <div class="calendar">
+                <span class="weekday">월</span><span class="weekday">화</span><span class="weekday">수</span><span class="weekday">목</span><span class="weekday">금</span><span class="weekday">토</span><span class="weekday">일</span>
+                <div class="day low"><span class="date">15</span><span class="amount">0.8만</span></div>
+                <div class="day low"><span class="date">16</span><span class="amount">0.9만</span></div>
+                <div class="day normal"><span class="date">17</span><span class="amount">1.0만</span></div>
+                <div class="day low"><span class="date">18</span><span class="amount">0.3만</span></div>
+                <div class="day normal"><span class="date">19</span><span class="amount">3.2만</span></div>
+                <div class="day caution-day"><span class="date">20</span><span class="amount">1.9만</span></div>
+                <div class="day low"><span class="date">21</span><span class="amount">0.1만</span></div>
+                <div class="day normal"><div class="row-between"><span class="date">22</span><span class="mini sub">구독</span></div><span class="amount">1.6만</span></div>
+                <div class="day low"><span class="date">23</span><span class="amount">0.6만</span></div>
+                <div class="day low"><span class="date">24</span><span class="amount">0.5만</span></div>
+                <div class="day normal"><span class="date">25</span><span class="amount">0.9만</span></div>
+                <div class="day normal"><span class="date">26</span><span class="amount">1.7만</span></div>
+                <div class="day low"><span class="date">27</span><span class="amount">0.5만</span></div>
+                <div class="day selected"><span class="date">28</span><span class="amount">0.6만</span></div>
+              </div>
+            </article>
+            <aside class="panel">
+              <h3>6월 10일 상세</h3>
+              <p class="muted">쇼핑과 카페 지출이 겹쳐 하루 권장 예산보다 높았어요.</p>
+              <ul class="list">
+                <li><span class="row-title">무신사</span><span class="row-meta">쇼핑 · 45,900원</span></li>
+                <li><span class="row-title">스타벅스</span><span class="row-meta">카페/간식 · 6,100원</span></li>
+              </ul>
+              <div class="button-row">
+                <button class="primary-button" type="button">이 날 소비 줄이기 미션 보기</button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" id="input" aria-labelledby="input-title">
+          <div class="screen-head">
+            <div>
+              <p class="eyebrow">Input</p>
+              <h2 id="input-title">소비 내역 입력</h2>
+              <p class="lead">직접 입력과 CSV 업로드를 모두 지원하는 화면입니다.</p>
+            </div>
+            <span class="mock-label">금융 인증정보 미수집</span>
+          </div>
+          <div class="grid-1-2">
+            <aside class="panel">
+              <h3>직접 입력</h3>
+              <div class="form-grid">
+                <div class="field"><label for="date">날짜</label><input id="date" value="2026-06-29" /></div>
+                <div class="field"><label for="merchant">사용처</label><input id="merchant" value="서울교통공사" /></div>
+                <div class="field"><label for="amount">금액</label><input id="amount" value="1,550원" /></div>
+                <div class="field"><label for="category">카테고리</label><select id="category"><option>교통</option><option>식비</option><option>카페/간식</option></select></div>
+              </div>
+              <div class="button-row">
+                <button class="primary-button" type="button">소비 추가</button>
+                <button class="secondary-button" type="button">AI 분류</button>
+              </div>
+            </aside>
+            <article class="panel">
+              <h3>CSV 업로드</h3>
+              <div class="upload-box">
+                <div>
+                  <strong>CSV 불러오기</strong>
+                  <p class="note">날짜, 사용처, 금액만 있어도 AI가 분류를 도와줍니다.</p>
+                  <button class="secondary-button" type="button">파일 선택</button>
+                </div>
+              </div>
+              <table class="table" aria-label="최근 거래">
+                <thead><tr><th>날짜</th><th>사용처</th><th>분류</th><th>금액</th><th>상태</th></tr></thead>
+                <tbody>
+                  <tr><td>6.29</td><td>서울교통공사</td><td>교통</td><td>1,550원</td><td>AI 분류</td></tr>
+                  <tr><td>6.28</td><td>GS25</td><td>카페/간식</td><td>6,800원</td><td>확인 필요</td></tr>
+                  <tr><td>6.26</td><td>배달의민족</td><td>식비</td><td>17,600원</td><td>AI 분류</td></tr>
+                </tbody>
+              </table>
+            </article>
+          </div>
+        </section>
+
+        <section class="screen" id="goals" aria-labelledby="goals-title">
+          <div class="screen-head">
+            <div>
+              <p class="eyebrow">Goals</p>
+              <h2 id="goals-title">목표 설정</h2>
+              <p class="lead">목표 소비액과 저축액을 바꾸면 AI 리포트의 기준도 바뀝니다.</p>
+            </div>
+            <span class="mock-label">목표 기반 AI 코칭</span>
+          </div>
+          <div class="grid-2">
+            <article class="panel">
+              <h3>이번 달 목표</h3>
+              <div class="slider-row">
+                <div class="row-between"><span class="label">월 수입</span><strong>1,200,000원</strong></div>
+                <div class="slider-track"><span style="width: 100%"></span></div>
+              </div>
+              <div class="slider-row">
+                <div class="row-between"><span class="label">목표 소비액</span><strong>750,000원</strong></div>
+                <div class="slider-track"><span style="width: 62%"></span></div>
+              </div>
+              <div class="slider-row">
+                <div class="row-between"><span class="label">목표 저축액</span><strong>300,000원</strong></div>
+                <div class="slider-track"><span style="width: 25%"></span></div>
+              </div>
+              <div class="button-row">
+                <button class="secondary-button" type="button">대학생 추천값</button>
+                <button class="secondary-button" type="button">사회초년생 추천값</button>
+              </div>
+            </article>
+            <aside class="panel">
+              <h3>변경 미리보기</h3>
+              <div class="ai-hero">
+                <span class="label">목표 조정 후 하루 예산</span>
+                <strong>35,267원</strong>
+                <p class="note">목표가 조금 빠듯해요. 식비보다 카페/구독부터 조정하면 실천 가능성이 높습니다.</p>
+              </div>
+              <h3 style="margin-top: 16px">우선 절약 항목</h3>
+              <div class="button-row">
+                <button class="secondary-button" type="button">카페/간식</button>
+                <button class="secondary-button" type="button">배달</button>
+                <button class="secondary-button" type="button">구독</button>
+              </div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="screen" id="report" aria-labelledby="report-title">
+          <div class="screen-head">
+            <div>
+              <p class="eyebrow">AI Report</p>
+              <h2 id="report-title">AI 절약 리포트</h2>
+              <p class="lead">긴 챗봇 답변이 아니라 결론, 근거, 미션으로 정리합니다.</p>
+            </div>
+            <span class="mock-label">분석 기준 35건</span>
+          </div>
+          <div class="grid-2-1">
+            <article class="panel">
+              <div class="panel-head">
+                <div>
+                  <h3>이번 달 결론</h3>
+                  <p class="muted">남은 12일 동안 하루 35,267원 이하로 쓰면 목표 소비액 안에 머물 수 있어요.</p>
+                </div>
+                <span class="status caution">주의</span>
+              </div>
+              <div class="insight-grid">
+                <div class="card"><span class="label">절약 가능액</span><strong class="num">40,900원</strong><p class="note">이번 주 기준</p></div>
+                <div class="card"><span class="label">구독 점검</span><strong class="num">4건</strong><p class="note">월 55,800원</p></div>
+                <div class="card"><span class="label">가장 줄이기 쉬움</span><strong class="num">카페</strong><p class="note">2회 줄이면 12,000원</p></div>
+              </div>
+              <h3 style="margin-top: 18px">카테고리 인사이트</h3>
+              <div class="bar-row"><span><span class="dot food"></span>식비</span><div class="bar"><span style="width: 82%; background: var(--food)"></span></div><span class="muted">117,900원</span></div>
+              <div class="bar-row" style="margin-top: 10px"><span><span class="dot cafe"></span>카페</span><div class="bar"><span style="width: 24%; background: var(--cafe)"></span></div><span class="muted">29,100원</span></div>
+              <div class="bar-row" style="margin-top: 10px"><span><span class="dot sub-dot"></span>구독</span><div class="bar"><span style="width: 52%; background: var(--subscription)"></span></div><span class="muted">55,800원</span></div>
+            </article>
+            <aside class="panel">
+              <h3>다음 주 미션</h3>
+              <div class="mission"><div><strong>카페 2회 줄이기</strong><span>난이도 쉬움 · 평일 커피 구매 줄이기</span></div><span class="saving">12,000원</span></div>
+              <div class="mission" style="margin-top: 8px"><div><strong>배달 하루 쉬기</strong><span>난이도 보통 · 주말 하루 집밥/학식</span></div><span class="saving">18,000원</span></div>
+              <div class="mission" style="margin-top: 8px"><div><strong>스포티파이 점검</strong><span>난이도 쉬움 · 사용 빈도 확인</span></div><span class="saving">10,900원</span></div>
+              <p class="note" style="margin-top: 14px">분석 기준: 6월 1일~29일 소비 35건, 목표 소비액 750,000원, 목표 저축액 300,000원</p>
+            </aside>
+          </div>
+        </section>
+      </main>
+
+      <nav class="bottom-tabs" aria-label="모바일 하단 탭">
+        <a href="#home">홈</a>
+        <a href="#calendar">캘린더</a>
+        <a href="#input">입력</a>
+        <a href="#report">AI</a>
+      </nav>
+    </div>
+  </body>
+</html>
