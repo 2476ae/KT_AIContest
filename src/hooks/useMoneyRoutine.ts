@@ -2,9 +2,9 @@ import { useCallback, useMemo, useState } from "react";
 import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
 import { getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
-import { createCoachReport } from "../services/aiAdapter";
+import { createCoachReportResponse } from "../services/aiAdapter";
 import { addMonths, firstDateOfMonth, getMonthId } from "../services/date";
-import { parseTransactionsCsv, transactionsToCsv } from "../services/csv";
+import { parseTransactionsCsvWithValidation, transactionsToCsv } from "../services/csv";
 import type { AppState, Goal, TabId, Transaction } from "../types";
 
 const initialState: AppState = {
@@ -93,6 +93,13 @@ export function useMoneyRoutine() {
     [updateState],
   );
 
+  const resetGoal = useCallback(() => {
+    updateState((current) => ({
+      ...current,
+      goal: DEFAULT_GOAL,
+    }));
+  }, [updateState]);
+
   const moveCalendarMonth = useCallback(
     (amount: number) => {
       updateState((current) => {
@@ -148,7 +155,16 @@ export function useMoneyRoutine() {
 
   const importCsv = useCallback(
     (csvText: string, mode: "replace" | "merge" = "replace") => {
-      const imported = parseTransactionsCsv(csvText);
+      const result = parseTransactionsCsvWithValidation(csvText);
+      if (result.errors.length > 0) {
+        throw new Error(result.errors[0]);
+      }
+
+      const imported = result.transactions;
+      if (imported.length === 0) {
+        throw new Error("반영할 거래가 없습니다.");
+      }
+
       updateState((current) => ({
         ...current,
         transactions:
@@ -174,7 +190,8 @@ export function useMoneyRoutine() {
     const calendarDays = getCalendarDays(monthTransactions, state.goal, state.calendarMonth);
     const categorySummaries = getCategorySummaries(monthTransactions);
     const subscriptionCandidates = getSubscriptionCandidates(monthTransactions);
-    const coachReport = createCoachReport({ transactions: monthTransactions, goal: state.goal, monthId: state.calendarMonth });
+    const coachResponse = createCoachReportResponse({ transactions: monthTransactions, goal: state.goal, monthId: state.calendarMonth });
+    const coachReport = coachResponse.data;
     const selectedDay = calendarDays.find((day) => day.date === state.selectedDate) ?? calendarDays.find((day) => day.isCurrentMonth);
     const recentTransactions = [...monthTransactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
 
@@ -185,6 +202,7 @@ export function useMoneyRoutine() {
       selectedDay,
       categorySummaries,
       subscriptionCandidates,
+      coachResponse,
       coachReport,
       recentTransactions,
     };
@@ -201,6 +219,7 @@ export function useMoneyRoutine() {
       loadSample,
       moveCalendarMonth,
       resetAll,
+      resetGoal,
       setActiveTab,
       setSelectedDate,
       updateGoal,

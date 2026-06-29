@@ -82,6 +82,13 @@ export function parseTransactionsCsvWithValidation(csvText: string): CsvValidati
     };
   }
 
+  if (dataLines.length === 0) {
+    return {
+      transactions: [],
+      errors: ["CSV에 거래 데이터가 없습니다."],
+    };
+  }
+
   const transactions = dataLines.flatMap((line, index) => {
     const values = splitCsvLine(line);
     const row = headers.reduce<Record<string, string>>((record, header, valueIndex) => {
@@ -89,7 +96,7 @@ export function parseTransactionsCsvWithValidation(csvText: string): CsvValidati
       return record;
     }, {});
     const rowNumber = index + 2;
-    const amount = Number(row.amount);
+    const amount = Number(row.amount.replace(/[,\s]/g, ""));
 
     if (!/^\d{4}-\d{2}-\d{2}$/.test(row.date)) {
       errors.push(`${rowNumber}행: 날짜는 YYYY-MM-DD 형식이어야 합니다.`);
@@ -106,7 +113,7 @@ export function parseTransactionsCsvWithValidation(csvText: string): CsvValidati
       return [];
     }
 
-    const isSubscription = row.isSubscription === "true";
+    const isSubscription = (row.isSubscription ?? "").toLowerCase() === "true";
     const classified = classifyTransaction({
       merchant: row.merchant,
       memo: row.memo,

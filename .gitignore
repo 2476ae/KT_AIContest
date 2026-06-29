@@ -3,5 +3,7 @@ dist/
 *.tsbuildinfo
 vite-dev.log
 vite-dev.err
+vite-*.log
+qa-screenshots/
 vite.config.js
 vite.config.d.ts

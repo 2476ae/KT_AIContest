@@ -21,12 +21,22 @@ describe("csv service", () => {
     const missingHeader = parseTransactionsCsvWithValidation("date,merchant\n2026-06-01,카페");
     expect(missingHeader.errors[0]).toContain("필수 필드");
 
+    const noRows = parseTransactionsCsvWithValidation("date,merchant,amount");
+    expect(noRows.errors[0]).toContain("거래 데이터");
+
     const invalidRows = parseTransactionsCsvWithValidation(
       ["date,merchant,amount", "2026/06/01,카페,0", "2026-06-02,,3000"].join("\n"),
     );
 
     expect(invalidRows.transactions).toHaveLength(0);
     expect(invalidRows.errors).toHaveLength(2);
+  });
+
+  it("accepts quoted comma amounts", () => {
+    const result = parseTransactionsCsvWithValidation('date,merchant,amount\n2026-06-01,카페,"4,300"');
+
+    expect(result.errors).toEqual([]);
+    expect(result.transactions[0].amount).toBe(4300);
   });
 
   it("serializes transactions back to CSV", () => {

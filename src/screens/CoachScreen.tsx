@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCircle2, ClipboardList, WalletCards } from "lucide-react";
+import { AlertTriangle, Bot, CheckCircle2, ClipboardList, WalletCards } from "lucide-react";
 import { MissionList } from "../components/MissionList";
 import { formatWon } from "../services/analytics";
 import type { BudgetStatus } from "../types";
@@ -15,7 +15,13 @@ function statusCopy(status: BudgetStatus) {
 }
 
 export function CoachScreen({ computed }: MoneyRoutineViewModel) {
-  const { categorySummaries, coachReport, subscriptionCandidates } = computed;
+  const { categorySummaries, coachReport, coachResponse, subscriptionCandidates } = computed;
+  const aiStatusCopy = {
+    error: "AI 응답을 표시하지 못했습니다. 안전한 대체 결과를 준비합니다.",
+    fallback: "외부 AI 응답 실패 시 로컬 분석으로 대체했습니다.",
+    loading: "AI 분석 결과를 불러오는 중입니다.",
+    ready: `${coachResponse.provider.label} 결과를 표시하고 있습니다.`,
+  }[coachResponse.status];
 
   return (
     <>
@@ -29,6 +35,17 @@ export function CoachScreen({ computed }: MoneyRoutineViewModel) {
         <h2>{coachReport.headline}</h2>
         <p>{coachReport.todayAction}</p>
         <strong>{formatWon(coachReport.dailyBudget)}</strong>
+      </section>
+
+      <section className={`ai-state-card card is-${coachResponse.status}`}>
+        <span className="ai-state-icon">
+          <Bot size={19} />
+        </span>
+        <span>
+          <strong>AI 분석 연결 상태</strong>
+          <small>{aiStatusCopy}</small>
+          {coachResponse.error && <small>{coachResponse.error}</small>}
+        </span>
       </section>
 
       <div className="section-title">

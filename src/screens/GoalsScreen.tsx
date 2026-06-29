@@ -1,6 +1,8 @@
-import { Target } from "lucide-react";
-import { CATEGORIES } from "../constants";
-import { formatWon } from "../services/analytics";
+import { RotateCcw, Save, Target, Undo2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { CATEGORIES, DEFAULT_GOAL } from "../constants";
+import { formatWon, getSummary } from "../services/analytics";
+import { validateGoal } from "../services/formValidation";
 import type { Category, Goal } from "../types";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
@@ -19,20 +21,70 @@ function updateNumber(goal: Goal, key: keyof Pick<Goal, "monthlyIncome" | "savin
   };
 }
 
+function hasSameGoal(left: Goal, right: Goal) {
+  return (
+    left.monthlyIncome === right.monthlyIncome &&
+    left.spendingLimit === right.spendingLimit &&
+    left.savingGoal === right.savingGoal &&
+    left.subscriptionLimit === right.subscriptionLimit &&
+    left.focusCategories.length === right.focusCategories.length &&
+    left.focusCategories.every((category, index) => category === right.focusCategories[index])
+  );
+}
+
 export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel) {
-  const { coachReport, summary } = computed;
-  const isAggressiveGoal = state.goal.monthlyIncome - state.goal.spendingLimit < state.goal.savingGoal;
+  const { coachReport } = computed;
+  const [draftGoal, setDraftGoal] = useState<Goal>(state.goal);
+  const [saveAttempted, setSaveAttempted] = useState(false);
+  const [goalMessage, setGoalMessage] = useState("");
+
+  useEffect(() => {
+    setDraftGoal(state.goal);
+  }, [state.goal]);
+
+  const validation = useMemo(() => validateGoal(draftGoal), [draftGoal]);
+  const draftSummary = useMemo(
+    () => getSummary(computed.monthTransactions, draftGoal, state.calendarMonth),
+    [computed.monthTransactions, draftGoal, state.calendarMonth],
+  );
+  const isDirty = !hasSameGoal(draftGoal, state.goal);
+  const visibleErrors = saveAttempted ? validation.errors : [];
 
   function toggleFocus(category: Category) {
-    const exists = state.goal.focusCategories.includes(category);
+    const exists = draftGoal.focusCategories.includes(category);
     const focusCategories = exists
-      ? state.goal.focusCategories.filter((item) => item !== category)
-      : [...state.goal.focusCategories, category];
+      ? draftGoal.focusCategories.filter((item) => item !== category)
+      : [...draftGoal.focusCategories, category];
 
-    actions.updateGoal({
-      ...state.goal,
+    setDraftGoal({
+      ...draftGoal,
       focusCategories,
     });
+    setGoalMessage("");
+  }
+
+  function saveGoal() {
+    setSaveAttempted(true);
+    if (validation.errors.length > 0) {
+      setGoalMessage("");
+      return;
+    }
+
+    actions.updateGoal(draftGoal);
+    setGoalMessage("목표를 저장했어요. 홈, 캘린더, 코치 화면이 같은 기준으로 다시 계산됩니다.");
+    setSaveAttempted(false);
+  }
+
+  function discardGoal() {
+    setDraftGoal(state.goal);
+    setGoalMessage("저장 전 변경을 되돌렸어요.");
+    setSaveAttempted(false);
+  }
+
+  function resetGoal() {
+    actions.resetGoal();
+    setGoalMessage("기본 목표로 초기화했어요.");
+    setSaveAttempted(false);
   }
 
   return (
@@ -47,8 +99,8 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           <Target size={20} />
         </span>
         <span>
-          <strong>{coachReport.savingPossibility === "높음" ? "달성 가능성이 좋아요" : "목표를 보며 조정해요"}</strong>
-          <small>{coachReport.headline}</small>
+          <strong>{isDirty ? "저장 전 미리보기" : coachReport.savingPossibility === "높음" ? "달성 가능성이 좋아요" : "목표를 보며 조정해요"}</strong>
+          <small>{isDirty ? "아래 수치는 아직 저장되지 않은 목표 기준입니다." : coachReport.headline}</small>
         </span>
       </section>
 
@@ -56,51 +108,86 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
         <label>
           <span>월 수입</span>
           <input
-            value={formatNumberInput(state.goal.monthlyIncome)}
-            onChange={(event) => actions.updateGoal(updateNumber(state.goal, "monthlyIncome", event.target.value))}
+            value={formatNumberInput(draftGoal.monthlyIncome)}
+            onChange={(event) => {
+              setDraftGoal(updateNumber(draftGoal, "monthlyIncome", event.target.value));
+              setGoalMessage("");
+            }}
             inputMode="numeric"
           />
         </label>
         <label>
           <span>목표 소비액</span>
           <input
-            value={formatNumberInput(state.goal.spendingLimit)}
-            onChange={(event) => actions.updateGoal(updateNumber(state.goal, "spendingLimit", event.target.value))}
+            value={formatNumberInput(draftGoal.spendingLimit)}
+            onChange={(event) => {
+              setDraftGoal(updateNumber(draftGoal, "spendingLimit", event.target.value));
+              setGoalMessage("");
+            }}
             inputMode="numeric"
           />
         </label>
         <label>
           <span>목표 저축액</span>
           <input
-            value={formatNumberInput(state.goal.savingGoal)}
-            onChange={(event) => actions.updateGoal(updateNumber(state.goal, "savingGoal", event.target.value))}
+            value={formatNumberInput(draftGoal.savingGoal)}
+            onChange={(event) => {
+              setDraftGoal(updateNumber(draftGoal, "savingGoal", event.target.value));
+              setGoalMessage("");
+            }}
             inputMode="numeric"
           />
         </label>
         <label>
           <span>구독 지출 상한</span>
           <input
-            value={formatNumberInput(state.goal.subscriptionLimit)}
-            onChange={(event) => actions.updateGoal(updateNumber(state.goal, "subscriptionLimit", event.target.value))}
+            value={formatNumberInput(draftGoal.subscriptionLimit)}
+            onChange={(event) => {
+              setDraftGoal(updateNumber(draftGoal, "subscriptionLimit", event.target.value));
+              setGoalMessage("");
+            }}
             inputMode="numeric"
           />
         </label>
-        <div className={`goal-feedback${isAggressiveGoal ? " is-watch" : ""}`}>
-          {isAggressiveGoal
-            ? "목표 저축액이 현재 수입/소비 목표 대비 빡빡해요. 소비 목표를 조금 낮추거나 저축 목표를 나눠보세요."
-            : "목표를 바꾸면 홈, 캘린더, 코치 화면이 같은 기준으로 다시 계산됩니다."}
+        {visibleErrors.length > 0 && (
+          <div className="field-error">
+            {visibleErrors.map((error) => (
+              <span key={error}>{error}</span>
+            ))}
+          </div>
+        )}
+        {validation.warnings.length > 0 && visibleErrors.length === 0 && (
+          <div className="goal-feedback is-watch">{validation.warnings[0]}</div>
+        )}
+        {validation.warnings.length === 0 && visibleErrors.length === 0 && (
+          <div className="goal-feedback">저장하면 모든 화면이 이 목표 기준으로 다시 계산됩니다.</div>
+        )}
+        {goalMessage && <div className="success-line">{goalMessage}</div>}
+        <div className="form-actions">
+          <button className="primary-button" type="button" onClick={saveGoal} disabled={!isDirty && validation.errors.length === 0}>
+            <Save size={18} />
+            목표 저장
+          </button>
+          <button className="secondary-button" type="button" onClick={discardGoal} disabled={!isDirty}>
+            <Undo2 size={16} />
+            되돌리기
+          </button>
+          <button className="secondary-button" type="button" onClick={resetGoal}>
+            <RotateCcw size={16} />
+            기본값
+          </button>
         </div>
       </section>
 
       <div className="section-title">
         <h2>집중 관리 항목</h2>
-        <span>{state.goal.focusCategories.length}개 선택</span>
+        <span>{draftGoal.focusCategories.length}개 선택</span>
       </div>
       <section className="category-pills">
         {CATEGORIES.map((category) => (
           <button
             key={category}
-            className={`category-pill${state.goal.focusCategories.includes(category) ? " is-active" : ""}`}
+            className={`category-pill${draftGoal.focusCategories.includes(category) ? " is-active" : ""}`}
             type="button"
             onClick={() => toggleFocus(category)}
           >
@@ -112,19 +199,19 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
       <section className="preview-grid">
         <article className="preview-card card">
           <span>오늘 가능예산</span>
-          <strong>{formatWon(summary.dailyBudget)}</strong>
+          <strong>{formatWon(draftSummary.dailyBudget)}</strong>
         </article>
         <article className="preview-card card">
           <span>목표 진행률</span>
-          <strong>{Math.round(summary.progress)}%</strong>
+          <strong>{Math.round(draftSummary.progress)}%</strong>
         </article>
         <article className="preview-card card">
           <span>저축 예상</span>
-          <strong>{formatWon(summary.savingProjection)}</strong>
+          <strong>{formatWon(draftSummary.savingProjection)}</strong>
         </article>
         <article className="preview-card card">
           <span>구독 지출</span>
-          <strong>{formatWon(summary.subscriptionTotal)}</strong>
+          <strong>{formatWon(draftSummary.subscriptionTotal)}</strong>
         </article>
       </section>
     </>
