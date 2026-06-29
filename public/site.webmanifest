@@ -1,0 +1,30 @@
+{
+  "name": "머니루틴 캘린더",
+  "short_name": "머니루틴",
+  "description": "목표 기반 AI 소비 코칭 캘린더",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#2478FF",
+  "icons": [
+    {
+      "src": "./money-routine-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./money-routine-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./money-routine-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
