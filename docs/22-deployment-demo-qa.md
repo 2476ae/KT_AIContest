@@ -12,6 +12,7 @@
 - Build Command: `npm run build`
 - Output Directory: `dist`
 - 권장 사용: 공모전 제출용 기본 URL
+- 제출 URL: `https://kt-ai-contest.vercel.app/`
 
 ### 2. Netlify
 
@@ -24,13 +25,13 @@
 
 - 설정 파일: `.github/workflows/deploy-github-pages.yml`
 - Build command: `npm run build:github-pages`
-- 예상 URL: `https://2476ae.github.io/KT_AIContest/`
+- 백업 URL: `https://2476ae.github.io/KT_AIContest/`
 - 전제: GitHub 저장소 Settings > Pages의 Source가 GitHub Actions로 설정되어 있어야 한다.
 - 활성화 절차: [배포 활성화 가이드](24-deployment-activation-guide.md)
 
 ## 로컬 검증 결과
 
-2026-06-29 기준으로 아래 명령을 통과했다.
+2026-06-30 기준으로 아래 명령을 통과했다.
 
 ```bash
 npm run verify
@@ -39,7 +40,7 @@ npm run build:github-pages
 
 검증 범위:
 
-- Vitest: 8개 파일, 29개 테스트
+- Vitest: 8개 파일, 30개 테스트
 - TypeScript build
 - Vite production build
 - GitHub Pages base path build
@@ -62,7 +63,7 @@ npm run build:github-pages
 4. 홈 화면에서 월 목표 금액, 진행률, 오늘 가능예산이 바뀌는지 확인한다.
 5. 추가 화면에서 거래를 직접 입력하고 저장 성공 메시지를 확인한다.
 6. 캘린더 화면에서 방금 입력한 거래가 선택일 상세에 반영되는지 확인한다.
-7. 코치 화면에서 오늘의 조정, 미션, 구독 점검, AI 분석 연결 상태를 확인한다.
+7. 코치 화면에서 오늘의 소비 가이드, 미션, 정기 결제 점검, AI 분석 연결 상태를 확인한다.
 8. 설정 화면에서 CSV 내보내기와 초기화/샘플 복원을 확인한다.
 
 성공 기준:

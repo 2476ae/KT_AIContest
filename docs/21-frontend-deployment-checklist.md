@@ -4,8 +4,8 @@
 
 - `npm install`로 의존성을 설치한다.
 - `npm run verify`가 통과하는지 확인한다.
-- 2026-06-29 기준 `npm run verify`는 Vitest 8개 파일, 29개 테스트와 production build를 포함한다.
-- GitHub Pages 제출 번들은 `npm run build:github-pages`로 확인한다.
+- 2026-06-30 기준 `npm run verify`는 Vitest 8개 파일, 30개 테스트와 production build를 포함한다.
+- Vercel 제출 번들은 `npm run build`로 확인한다. GitHub Pages 백업 번들은 `npm run build:github-pages`로 확인한다.
 - 시크릿 창 기준으로 샘플 데이터 체험 흐름을 확인한다.
 - 실제 금융 인증정보를 요구하는 화면이 없는지 확인한다.
 
@@ -15,7 +15,7 @@
 2. 목표 화면에서 목표 소비액 또는 목표 저축액을 바꾼다.
 3. 홈의 총 지출, 진행률, 오늘 가능예산 변화를 확인한다.
 4. 캘린더에서 과소비일과 정기 결제일을 누른다.
-5. 코치 화면에서 오늘의 조정, 미션, 구독 점검을 확인한다.
+5. 코치 화면에서 오늘의 소비 가이드, 미션, 정기 결제 점검을 확인한다.
 6. 추가 화면에서 직접 거래를 하나 저장하고 홈 갱신을 확인한다.
 
 ## Vercel
@@ -24,6 +24,7 @@
 - Build Command: `npm run build`
 - Output Directory: `dist`
 - 설정 파일: `vercel.json`
+- 제출 URL: `https://kt-ai-contest.vercel.app/`
 
 ## Netlify
 
@@ -35,7 +36,7 @@
 
 - Workflow: `.github/workflows/deploy-github-pages.yml`
 - Build command: `npm run build:github-pages`
-- 예상 URL: `https://2476ae.github.io/KT_AIContest/`
+- 백업 URL: `https://2476ae.github.io/KT_AIContest/`
 - GitHub 저장소 Settings > Pages에서 Source를 GitHub Actions로 둔다.
 
 ## 제출 QA 리포트

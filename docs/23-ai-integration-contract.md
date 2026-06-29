@@ -1,6 +1,6 @@
 # AI 기능 인계 계약
 
-## 2026-06-29 프론트 준비 상태
+## 2026-06-30 프론트 준비 상태
 
 - `AiProvider`는 동기 결과와 `Promise` 결과를 모두 받을 수 있다.
 - OpenAI API는 서버 프록시에서만 호출하고, 브라우저에는 API key를 넣지 않는다.
@@ -52,13 +52,14 @@
 - `POST /api/ai/classify`
 - `POST /api/ai/coach`
 
-GitHub Pages처럼 정적 호스팅만 사용하는 경우 같은 origin에 `/api`를 둘 수 없으므로, `VITE_AI_PROXY_BASE_URL`에 별도 Vercel/Node 프록시 URL을 넣는다.
+Vercel 전체 배포처럼 같은 origin에 `/api`가 있는 경우 `VITE_AI_PROXY_BASE_URL`은 비워둘 수 있다. GitHub Pages처럼 정적 호스팅만 사용하는 경우 같은 origin에 `/api`를 둘 수 없으므로, `VITE_AI_PROXY_BASE_URL`에 별도 Vercel/Node 프록시 URL을 넣는다.
 
 프론트 빌드 env:
 
 ```env
 VITE_AI_PROVIDER=openai-proxy
-VITE_AI_PROXY_BASE_URL=https://your-openai-proxy.example.com
+# Vercel 전체 배포에서는 비워둘 수 있음
+VITE_AI_PROXY_BASE_URL=
 ```
 
 서버 프록시 env:
@@ -66,7 +67,7 @@ VITE_AI_PROXY_BASE_URL=https://your-openai-proxy.example.com
 ```env
 OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4.1-mini
-AI_ALLOWED_ORIGINS=https://2476ae.github.io,http://localhost:5173
+AI_ALLOWED_ORIGINS=https://kt-ai-contest.vercel.app,http://localhost:5173
 ```
 
 서버 프록시는 OpenAI Responses API의 structured output을 사용해 `ClassificationResult`와 `CoachReport` JSON을 반환한다.
@@ -237,7 +238,7 @@ interface AiProviderMetadata {
 ## 실제 API 연결 체크리스트
 
 1. 서버 프록시 배포 환경에 `OPENAI_API_KEY`를 등록한다.
-2. GitHub Pages 빌드 변수에 `VITE_AI_PROVIDER`, `VITE_AI_PROXY_BASE_URL`을 등록한다.
+2. Vercel 배포에서는 `VITE_AI_PROVIDER=openai-proxy`를 등록하고, GitHub Pages 백업 빌드에서만 `VITE_AI_PROXY_BASE_URL`을 등록한다.
 3. `AI_ALLOWED_ORIGINS`에 실제 제출 origin을 포함한다.
 4. 코치 탭 진입 시 `OpenAI 분석` provider 상태가 표시되는지 확인한다.
 5. API 실패 시 로컬 규칙 fallback이 표시되는지 확인한다.

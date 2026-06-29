@@ -120,7 +120,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
           <h3 className="calendar-title">월간 흐름</h3>
           <div className="legend">
             <span className="legend-item"><span className="legend-dot is-safe" />안정</span>
-            <span className="legend-item"><span className="legend-dot is-subscription" />구독</span>
+            <span className="legend-item"><span className="legend-dot is-subscription" />정기 결제</span>
             <span className="legend-item"><span className="legend-dot is-over" />초과</span>
           </div>
         </div>
