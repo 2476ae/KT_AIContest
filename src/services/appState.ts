@@ -17,9 +17,12 @@ export function mergeStoredState(stored: unknown): AppState {
     return INITIAL_APP_STATE;
   }
 
+  const { activeTab: _storedActiveTab, ...storedState } = stored as Partial<AppState>;
+
   return {
     ...INITIAL_APP_STATE,
-    ...stored,
+    ...storedState,
+    activeTab: "home",
   };
 }
 

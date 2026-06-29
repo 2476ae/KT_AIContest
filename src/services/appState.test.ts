@@ -44,7 +44,10 @@ describe("app state service", () => {
       transactions: [],
     });
 
-    expect(mergeStoredState({ activeTab: "coach" }).activeTab).toBe("coach");
+    expect(mergeStoredState({ activeTab: "coach", hasLoadedSample: true })).toMatchObject({
+      activeTab: "home",
+      hasLoadedSample: true,
+    });
     expect(mergeStoredState(null)).toBe(INITIAL_APP_STATE);
   });
 
