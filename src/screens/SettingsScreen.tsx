@@ -61,7 +61,17 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
         </span>
         <span>
           <strong>금융 인증정보 미수집</strong>
-          <small>이 데모는 샘플 데이터, 직접 입력, CSV 파일만 사용합니다.</small>
+          <small>현재 데모는 샘플 데이터, 직접 입력, CSV 파일만 사용합니다.</small>
+        </span>
+      </section>
+
+      <section className="trust-panel card">
+        <span className="trust-icon">
+          <WalletCards size={22} />
+        </span>
+        <span>
+          <strong>실시간 반영 준비</strong>
+          <small>연결 지출은 중복 없이 홈, 캘린더, AI 코치와 알림에 반영됩니다.</small>
         </span>
       </section>
     </>

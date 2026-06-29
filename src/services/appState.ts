@@ -2,6 +2,7 @@ import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
 import type { AppState, Goal, TabId, Transaction } from "../types";
 import { parseTransactionsCsvWithValidation } from "./csv";
 import { addMonths, firstDateOfMonth, getMonthId } from "./date";
+import { normalizeFinancialFeedTransactions, type FinancialFeedTransactionInput } from "./financialFeed";
 
 export const INITIAL_APP_STATE: AppState = {
   transactions: [],
@@ -134,6 +135,45 @@ export function applyImportedTransactionsState(
     calendarMonth: imported[imported.length - 1]?.date ? getMonthId(imported[imported.length - 1].date) : current.calendarMonth,
     selectedDate: imported[imported.length - 1]?.date ?? current.selectedDate,
     hasLoadedSample: imported.length > 0,
+  };
+}
+
+function mergeTransactions(current: Transaction[], incoming: Transaction[]) {
+  return [...current.filter((item) => !incoming.some((transaction) => transaction.id === item.id)), ...incoming].sort((a, b) =>
+    a.date.localeCompare(b.date),
+  );
+}
+
+export function applyFinancialFeedTransactionsState(
+  current: AppState,
+  incoming: Transaction[],
+): AppState {
+  if (incoming.length === 0) {
+    return current;
+  }
+
+  const latest = [...incoming].sort((a, b) => b.date.localeCompare(a.date))[0];
+
+  return {
+    ...current,
+    transactions: mergeTransactions(current.transactions, incoming),
+    calendarMonth: getMonthId(latest.date),
+    selectedDate: latest.date,
+    hasLoadedSample: true,
+  };
+}
+
+export function syncFinancialFeedState(
+  current: AppState,
+  inputs: FinancialFeedTransactionInput[],
+  source = "financial-feed",
+) {
+  const result = normalizeFinancialFeedTransactions(inputs, source);
+
+  return {
+    imported: result.transactions,
+    skipped: result.skipped,
+    state: applyFinancialFeedTransactionsState(current, result.transactions),
   };
 }
 

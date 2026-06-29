@@ -14,6 +14,7 @@ import {
   resetGoalState,
   setActiveTabState,
   setSelectedDateState,
+  syncFinancialFeedState,
   updateGoalState,
   updateTransactionState,
 } from "../services/appState";
@@ -28,7 +29,13 @@ import {
 import { COACH_AI_DEBOUNCE_MS, createCoachReportCacheKey, shouldRequestCoachReportAi } from "../services/aiRequestPolicy";
 import { transactionsToCsv } from "../services/csv";
 import { getMonthId } from "../services/date";
+import type { FinancialFeedTransactionInput } from "../services/financialFeed";
 import type { AppState, CoachReport, Goal, TabId, Transaction } from "../types";
+
+interface FinancialFeedEventDetail {
+  source?: string;
+  transactions?: FinancialFeedTransactionInput[];
+}
 
 function readStoredState(): AppState {
   const stored = window.localStorage.getItem(DEMO_MONTH.storageKey);
@@ -139,7 +146,37 @@ export function useMoneyRoutine() {
     [updateState],
   );
 
+  const syncFinancialFeed = useCallback((transactions: FinancialFeedTransactionInput[], source = "financial-feed") => {
+    let syncResult: ReturnType<typeof syncFinancialFeedState> | undefined;
+
+    setState((current) => {
+      syncResult = syncFinancialFeedState(current, transactions, source);
+      persistState(syncResult.state);
+      return syncResult.state;
+    });
+
+    return syncResult ?? syncFinancialFeedState(state, [], source);
+  }, [state]);
+
   const exportCsv = useCallback(() => transactionsToCsv(state.transactions), [state.transactions]);
+
+  useEffect(() => {
+    function handleFinancialFeedEvent(event: Event) {
+      const detail = (event as CustomEvent<FinancialFeedEventDetail>).detail;
+
+      if (!detail || !Array.isArray(detail.transactions)) {
+        return;
+      }
+
+      syncFinancialFeed(detail.transactions, detail.source);
+    }
+
+    window.addEventListener("money-routine:financial-transactions", handleFinancialFeedEvent);
+
+    return () => {
+      window.removeEventListener("money-routine:financial-transactions", handleFinancialFeedEvent);
+    };
+  }, [syncFinancialFeed]);
 
   const baseComputed = useMemo(() => {
     const monthTransactions = state.transactions.filter((transaction) => getMonthId(transaction.date) === state.calendarMonth);
@@ -237,6 +274,7 @@ export function useMoneyRoutine() {
       resetGoal,
       setActiveTab,
       setSelectedDate,
+      syncFinancialFeed,
       updateGoal,
       updateTransaction,
     },

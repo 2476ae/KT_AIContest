@@ -100,6 +100,37 @@ interface AiProvider {
 - 직접 입력 저장은 자동 분류 선택 시에만 async 래퍼를 사용한다.
 - AI 코치 리포트의 외부 AI 호출은 `src/services/aiRequestPolicy.ts` 기준으로 AI 코치 탭에서 사용자가 명시적으로 요청했을 때만 실행된다.
 
+## 실시간 금융 데이터 수신 계약
+
+실제 금융 API, 마이데이터, 카드 승인 웹훅이 붙는 경우 프론트에는 다음 브라우저 이벤트로 지출 거래를 전달한다.
+
+```ts
+window.dispatchEvent(new CustomEvent("money-routine:financial-transactions", {
+  detail: {
+    source: "connected-card",
+    transactions: [
+      {
+        externalId: "card-transaction-id",
+        postedAt: "2026-06-30T09:20:00+09:00",
+        merchant: "테스트 카페",
+        amount: -5200,
+        accountName: "연결 카드",
+      },
+    ],
+  },
+}));
+```
+
+수신 경로:
+
+- `src/hooks/useMoneyRoutine.ts`가 `money-routine:financial-transactions` 이벤트를 듣는다.
+- `src/services/financialFeed.ts`가 외부 거래를 내부 `Transaction`으로 정규화한다.
+- `src/services/appState.ts`의 `syncFinancialFeedState`가 `source + externalId` 기반 안정 ID로 병합한다.
+- 같은 거래가 다시 들어오면 중복 추가가 아니라 기존 거래 업데이트로 처리한다.
+- 입금 거래(`direction: "credit"`)는 소비 내역에 반영하지 않는다.
+- 반영 후 홈, 캘린더, 알림, AI 코치 로컬 미리보기 계산이 즉시 갱신된다.
+- 실시간 거래 반영만으로는 OpenAI API를 자동 호출하지 않는다. AI 코치 외부 분석은 여전히 사용자의 `OpenAI 분석 업데이트` 클릭에서만 실행된다.
+
 ## 호출 정책
 
 - 초기 렌더, 홈, 캘린더, 목표, 설정 탭에서는 외부 AI 코치를 호출하지 않는다.

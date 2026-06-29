@@ -16,6 +16,7 @@ import {
   resetGoalState,
   setActiveTabState,
   setSelectedDateState,
+  syncFinancialFeedState,
   updateGoalState,
   updateTransactionState,
 } from "./appState";
@@ -144,5 +145,68 @@ describe("app state service", () => {
     expect(merged.transactions).toHaveLength(2);
     expect(merged.transactions.find((item) => item.id === "tx-existing")?.amount).toBe(5000);
     expect(merged.transactions.find((item) => item.id === "tx-new")?.isSubscription).toBe(true);
+  });
+
+  it("syncs real-time financial feed transactions without duplicates", () => {
+    const firstSync = syncFinancialFeedState(
+      INITIAL_APP_STATE,
+      [
+        {
+          externalId: "card-001",
+          postedAt: "2026-06-30T09:20:00+09:00",
+          merchant: "테스트 카페",
+          amount: -5200,
+          accountName: "국민카드",
+        },
+        {
+          externalId: "salary-001",
+          postedAt: "2026-06-30",
+          merchant: "월급",
+          amount: 1200000,
+          direction: "credit",
+        },
+      ],
+      "mock-card",
+    );
+
+    expect(firstSync.imported).toHaveLength(1);
+    expect(firstSync.skipped).toHaveLength(1);
+    expect(firstSync.state.transactions).toHaveLength(1);
+    expect(firstSync.state.transactions[0]).toMatchObject({
+      id: "tx-feed-mock-card-card-001",
+      date: "2026-06-30",
+      merchant: "테스트 카페",
+      amount: 5200,
+    });
+    expect(firstSync.state.calendarMonth).toBe("2026-06");
+    expect(firstSync.state.selectedDate).toBe("2026-06-30");
+
+    const secondSync = syncFinancialFeedState(
+      firstSync.state,
+      [
+        {
+          externalId: "card-001",
+          postedAt: "2026-06-30T09:20:00+09:00",
+          merchant: "테스트 카페",
+          amount: -6200,
+          accountName: "국민카드",
+        },
+        {
+          externalId: "card-002",
+          postedAt: "2026-07-01T11:00:00+09:00",
+          merchant: "테스트 편의점",
+          amount: 4300,
+          direction: "debit",
+          category: "생활",
+        },
+      ],
+      "mock-card",
+    );
+
+    expect(secondSync.state.transactions).toHaveLength(2);
+    expect(secondSync.state.transactions.find((item) => item.id === "tx-feed-mock-card-card-001")?.amount).toBe(6200);
+    expect(secondSync.state.transactions.find((item) => item.id === "tx-feed-mock-card-card-002")?.category).toBe("생활");
+    expect(secondSync.state.calendarMonth).toBe("2026-07");
+    expect(secondSync.state.selectedDate).toBe("2026-07-01");
   });
 });
