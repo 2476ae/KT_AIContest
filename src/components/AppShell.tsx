@@ -1,7 +1,7 @@
 import { Bell, Bot, CalendarDays, CheckCircle2, CreditCard, Home, Plus, RefreshCw, Settings, ShieldCheck, Target, WalletCards, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatWon } from "../services/analytics";
 import { formatMonthLabel } from "../services/date";
 import type { AppState, TabId } from "../types";
@@ -23,6 +23,7 @@ const bottomTabs: Array<{ id: TabId; label: string; icon: LucideIcon }> = [
 ];
 
 const appIconSrc = `${import.meta.env.BASE_URL}money-routine-icon-v2-192.png`;
+const READ_NOTIFICATION_IDS_KEY = "money-routine-read-notification-ids";
 
 interface NotificationItem {
   id: string;
@@ -95,11 +96,59 @@ function buildNotifications(state: AppState): NotificationItem[] {
   return notifications.slice(0, 7);
 }
 
+function readStoredNotificationIds() {
+  if (typeof window === "undefined") {
+    return new Set<string>();
+  }
+
+  try {
+    const stored = window.localStorage.getItem(READ_NOTIFICATION_IDS_KEY);
+    const parsed = JSON.parse(stored ?? "[]");
+    return new Set<string>(Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set<string>();
+  }
+}
+
+function storeNotificationIds(ids: Set<string>) {
+  window.localStorage.setItem(READ_NOTIFICATION_IDS_KEY, JSON.stringify([...ids]));
+}
+
 export function AppShell({ children, state, actions }: AppShellProps) {
   const [openPanel, setOpenPanel] = useState<"alerts" | "trust" | null>(null);
+  const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(() => readStoredNotificationIds());
   const notifications = useMemo(() => buildNotifications(state), [state]);
+  const unreadNotifications = useMemo(
+    () => notifications.filter((notification) => !readNotificationIds.has(notification.id)),
+    [notifications, readNotificationIds],
+  );
   const hasNotifications = notifications.length > 0;
-  const notificationCountLabel = notifications.length > 9 ? "9+" : String(notifications.length);
+  const hasUnreadNotifications = unreadNotifications.length > 0;
+  const notificationCountLabel = unreadNotifications.length > 9 ? "9+" : String(unreadNotifications.length);
+
+  useEffect(() => {
+    if (openPanel !== "alerts" || notifications.length === 0) {
+      return;
+    }
+
+    setReadNotificationIds((current) => {
+      const next = new Set(current);
+      let changed = false;
+
+      notifications.forEach((notification) => {
+        if (!next.has(notification.id)) {
+          next.add(notification.id);
+          changed = true;
+        }
+      });
+
+      if (changed) {
+        storeNotificationIds(next);
+      }
+
+      return changed ? next : current;
+    });
+  }, [notifications, openPanel]);
 
   function togglePanel(panel: "alerts" | "trust") {
     setOpenPanel((current) => (current === panel ? null : panel));
@@ -148,7 +197,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
               data-testid="top-notification-button"
             >
               <Bell size={17} />
-              {hasNotifications && <span className="notification-badge">{notificationCountLabel}</span>}
+              {hasUnreadNotifications && <span className="notification-badge">{notificationCountLabel}</span>}
             </button>
           </div>
 
@@ -193,7 +242,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
                     <CheckCircle2 size={18} />
                   </span>
                   <span>
-                    <strong>{notifications.length}개 알림이 있어요</strong>
+                    <strong>{unreadNotifications.length > 0 ? `${unreadNotifications.length}개 새 알림이 있어요` : "모든 알림을 확인했어요"}</strong>
                     <small>새 소비가 들어오면 목표와 코치 분석에 자동 반영됩니다.</small>
                   </span>
                 </div>

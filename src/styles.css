@@ -1879,6 +1879,106 @@ button:disabled {
   gap: 8px;
 }
 
+.category-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.category-plan-card {
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.category-plan-card.is-watch {
+  border-color: rgba(239, 160, 36, 0.28);
+  background: var(--subscription-soft);
+}
+
+.category-plan-card.is-over {
+  border-color: rgba(235, 94, 85, 0.24);
+  background: var(--danger-soft);
+}
+
+.category-plan-head,
+.category-plan-amounts {
+  display: grid;
+  gap: 8px;
+}
+
+.category-plan-head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.category-plan-head strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-plan-head span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 860;
+  white-space: nowrap;
+}
+
+.category-plan-amounts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.category-plan-amounts span {
+  min-width: 0;
+  padding: 8px;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.category-plan-amounts small,
+.category-plan-amounts strong {
+  display: block;
+}
+
+.category-plan-amounts small {
+  color: var(--soft);
+  font-size: 10px;
+  font-weight: 820;
+}
+
+.category-plan-amounts strong {
+  overflow: hidden;
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.category-plan-card p,
+.category-plan-card em {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 740;
+  line-height: 1.4;
+}
+
+.category-plan-card em {
+  color: var(--primary);
+  font-weight: 900;
+}
+
 .category-bar {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 82px;
@@ -2077,6 +2177,10 @@ button:disabled {
 
   .ai-refresh-button {
     width: 100%;
+  }
+
+  .category-plan-grid {
+    grid-template-columns: 1fr;
   }
 }
 

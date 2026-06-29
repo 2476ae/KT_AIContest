@@ -70,6 +70,16 @@ export interface CoachMission {
   completed: boolean;
 }
 
+export interface CategoryPlan {
+  category: Category;
+  status: BudgetStatus;
+  currentAmount: number;
+  plannedAmount: number;
+  expectedSaving: number;
+  reason: string;
+  action: string;
+}
+
 export interface CoachReport {
   headline: string;
   status: BudgetStatus;
@@ -77,6 +87,7 @@ export interface CoachReport {
   savingPossibility: "높음" | "보통" | "낮음";
   todayAction: string;
   insights: string[];
+  categoryPlans: CategoryPlan[];
   missions: CoachMission[];
   subscriptionAdvice: string[];
   basis: string;

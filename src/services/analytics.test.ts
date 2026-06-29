@@ -77,6 +77,8 @@ describe("analytics service", () => {
     const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
 
     expect(report.headline).toContain("하루");
+    expect(report.categoryPlans.length).toBeGreaterThan(0);
+    expect(report.categoryPlans[0].expectedSaving).toBeGreaterThan(0);
     expect(report.missions.length).toBeGreaterThanOrEqual(2);
     expect(report.subscriptionAdvice[0]).toContain("월");
   });

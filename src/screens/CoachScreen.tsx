@@ -95,7 +95,44 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
           <section className="coach-section card">
             <div className="coach-section-head">
               <ClipboardList size={19} />
-              <strong>카테고리 코멘트</strong>
+              <strong>분야별 소비 계획</strong>
+            </div>
+            <div className="category-plan-grid">
+              {coachReport.categoryPlans.length === 0 ? (
+                <div className="empty-line">소비 데이터가 들어오면 분야별 계획을 제안합니다.</div>
+              ) : (
+                coachReport.categoryPlans.map((plan) => (
+                  <article className={`category-plan-card is-${plan.status}`} key={plan.category}>
+                    <div className="category-plan-head">
+                      <strong>{plan.category}</strong>
+                      <span>{statusCopy(plan.status)}</span>
+                    </div>
+                    <div className="category-plan-amounts">
+                      <span>
+                        <small>현재</small>
+                        <strong>{formatWon(plan.currentAmount)}</strong>
+                      </span>
+                      <span>
+                        <small>계획</small>
+                        <strong>{formatWon(plan.plannedAmount)}</strong>
+                      </span>
+                      <span>
+                        <small>절약</small>
+                        <strong>{formatWon(plan.expectedSaving)}</strong>
+                      </span>
+                    </div>
+                    <p>{plan.reason}</p>
+                    <em>{plan.action}</em>
+                  </article>
+                ))
+              )}
+            </div>
+          </section>
+
+          <section className="coach-section card">
+            <div className="coach-section-head">
+              <ClipboardList size={19} />
+              <strong>분야별 지출 흐름</strong>
             </div>
             <div className="category-bars">
               {categorySummaries.length === 0 ? (

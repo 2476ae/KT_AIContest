@@ -7,9 +7,11 @@
 - 프론트는 `VITE_AI_PROVIDER=openai-proxy` 또는 `VITE_AI_PROXY_BASE_URL`이 있을 때 `openAiProxyProvider`를 등록한다.
 - 직접 입력 화면은 자동 분류를 선택한 저장에서만 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
 - 코치 AI 리포트는 코치 화면의 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
+- 브라우저 쪽은 기본적으로 하루 전체 8회, 코치 5회, 자동 분류 8회 호출 제한을 둔다. Vercel/env에서 `VITE_AI_*_LIMIT` 값으로 조정할 수 있다.
 - 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 로컬 미리보기 결과를 사용해 초기 렌더 외부 호출을 막는다.
 - 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
 - 월 목표 소비액을 초과해도 하루 권장 한도를 즉시 0원으로 고정하지 않는다. `getSummary`가 월수입, 목표 저축액, 남은 일수를 기준으로 `현실 조정 목표`와 `조정 저축 목표`를 계산하고, 이 로컬 계산값이 OpenAI 문구보다 우선한다.
+- 코치 리포트는 `categoryPlans`로 분야별 소비 계획 카드를 제공한다. 긴 문장은 provider 검증 단계에서 잘라 카드 UI를 보호한다.
 - 기존 동기 API(`classifyTransactionResponse`, `createCoachReportResponse`)는 로컬/테스트 호환용으로 유지한다.
 - 외부 AI provider가 실패하면 로컬 규칙 기반 결과로 fallback되어 거래 저장과 화면 렌더링이 계속된다.
 
@@ -68,10 +70,14 @@ VITE_AI_PROXY_BASE_URL=
 ```env
 OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4.1-mini
+OPENAI_MAX_OUTPUT_TOKENS=900
 AI_ALLOWED_ORIGINS=https://kt-ai-contest.vercel.app,http://localhost:5173
+AI_DAILY_REQUEST_LIMIT=60
+AI_CLASSIFY_DAILY_LIMIT=40
+AI_COACH_DAILY_LIMIT=20
 ```
 
-서버 프록시는 OpenAI Responses API의 structured output을 사용해 `ClassificationResult`와 `CoachReport` JSON을 반환한다.
+서버 프록시는 OpenAI Responses API의 structured output을 사용해 `ClassificationResult`와 `CoachReport` JSON을 반환한다. 서버 제한은 서버리스 인스턴스 단위의 안전장치이며, 비용 관리의 1차 방어선은 명시 호출, 캐시, 브라우저 일일 제한이다.
 
 ## Provider 인터페이스
 
@@ -166,9 +172,24 @@ interface CoachReport {
   savingPossibility: "높음" | "보통" | "낮음";
   todayAction: string;
   insights: string[];
+  categoryPlans: CategoryPlan[];
   missions: CoachMission[];
   subscriptionAdvice: string[];
   basis: string;
+}
+```
+
+분야별 계획 출력:
+
+```ts
+interface CategoryPlan {
+  category: Category;
+  status: "stable" | "watch" | "over";
+  currentAmount: number;
+  plannedAmount: number;
+  expectedSaving: number;
+  reason: string;
+  action: string;
 }
 ```
 

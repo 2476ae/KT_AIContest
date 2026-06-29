@@ -3,6 +3,7 @@ import { formatDate, parseMonthId } from "./date";
 import type {
   BudgetStatus,
   Category,
+  CategoryPlan,
   CategorySummary,
   CoachMission,
   CoachReport,
@@ -254,6 +255,41 @@ function buildMissions(
   return missions.slice(0, 3);
 }
 
+function getCategoryAction(category: Category) {
+  const actions: Record<Category, string> = {
+    식비: "배달/외식을 한 끼만 집밥이나 학식으로 바꾸기",
+    "카페/간식": "커피나 간식 결제를 하루 한 번 쉬기",
+    교통: "택시나 추가 이동을 한 번 줄이기",
+    쇼핑: "장바구니 결제를 하루 보류하기",
+    여가: "이번 주 유료 여가 결제를 한 번 쉬기",
+    구독: "최근 안 쓴 정기 결제 1건 해지 검토",
+    교육: "중복 강의나 자료 결제 전 재확인",
+    의료: "필수 의료비는 유지하고 비급한 지출만 미루기",
+    생활: "생활용품 묶음 구매 전 재고 확인",
+    기타: "용도가 흐린 결제는 메모 후 재구매 판단",
+  };
+
+  return actions[category];
+}
+
+function buildCategoryPlans(categories: CategorySummary[]): CategoryPlan[] {
+  return categories.slice(0, 4).map((category) => {
+    const savingRate = category.status === "over" ? 0.14 : category.status === "watch" ? 0.09 : 0.05;
+    const expectedSaving = Math.max(3000, Math.round(category.amount * savingRate / 1000) * 1000);
+    const plannedAmount = Math.max(0, category.amount - expectedSaving);
+
+    return {
+      category: category.category,
+      status: category.status,
+      currentAmount: category.amount,
+      plannedAmount,
+      expectedSaving,
+      reason: `${category.category} 지출이 전체의 ${Math.round(category.ratio)}%입니다.`,
+      action: getCategoryAction(category.category),
+    };
+  });
+}
+
 export function getCoachReport(transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id): CoachReport {
   const summary = getSummary(transactions, goal, monthId);
   const categories = getCategorySummaries(transactions);
@@ -264,6 +300,7 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
     summary.savingProjection >= targetSavingGoal ? "높음" : summary.savingProjection >= targetSavingGoal * 0.75 ? "보통" : "낮음";
   const status = summary.status;
   const missions = buildMissions(goal, summary, categories, subscriptions);
+  const categoryPlans = buildCategoryPlans(categories);
   const focusText = focus ? `${focus.category} 지출` : "선택 소비";
   const todayAction =
     summary.remainingBudget < 0
@@ -294,6 +331,7 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
         ? `목표 저축액은 ${formatWon(goal.savingGoal)}에서 ${formatWon(summary.adjustedSavingGoal)}로 현실 조정했습니다.`
         : `목표 저축액 ${formatWon(goal.savingGoal)} 기준 현재 예상 저축은 ${formatWon(summary.savingProjection)}입니다.`,
     ],
+    categoryPlans,
     missions,
     subscriptionAdvice:
       subscriptions.length > 0
@@ -313,6 +351,7 @@ export function alignCoachReportBudgetFields(report: CoachReport, transactions: 
     dailyBudget: localReport.dailyBudget,
     savingPossibility: localReport.savingPossibility,
     todayAction: localReport.todayAction,
+    categoryPlans: report.categoryPlans.length > 0 ? report.categoryPlans : localReport.categoryPlans,
     basis: localReport.basis,
   };
 }

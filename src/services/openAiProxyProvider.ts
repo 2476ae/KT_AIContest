@@ -1,20 +1,84 @@
 import { CATEGORIES } from "../constants";
-import type { Category, CoachMission, CoachReport } from "../types";
+import type { Category, CategoryPlan, CoachMission, CoachReport } from "../types";
 import type { AiProvider, ClassificationInput, ClassificationResult, CoachReportInput } from "./aiAdapter";
 
 export interface OpenAiProxyProviderOptions {
   baseUrl?: string;
+  classifyDailyLimit?: number;
+  coachDailyLimit?: number;
+  dailyRequestLimit?: number;
+  disableClientRateLimit?: boolean;
   fetcher?: typeof fetch;
   timeoutMs?: number;
 }
 
 const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_DAILY_REQUEST_LIMIT = 8;
+const DEFAULT_CLASSIFY_DAILY_LIMIT = 8;
+const DEFAULT_COACH_DAILY_LIMIT = 5;
 const CLASSIFY_PATH = "/api/ai/classify";
 const COACH_PATH = "/api/ai/coach";
+const AI_USAGE_KEY = "money-routine-ai-usage:v1";
 
 function buildEndpoint(baseUrl: string | undefined, path: string) {
   const normalizedBaseUrl = baseUrl?.trim().replace(/\/$/, "") ?? "";
   return `${normalizedBaseUrl}${path}`;
+}
+
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function getEnvNumber(name: string, fallback: number) {
+  const value = (import.meta.env as Record<string, string | undefined>)[name];
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function readUsageRecord(): { classify: number; coach: number; date: string; total: number } {
+  if (typeof window === "undefined") {
+    return { classify: 0, coach: 0, date: getTodayKey(), total: 0 };
+  }
+
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(AI_USAGE_KEY) ?? "{}");
+    if (parsed?.date === getTodayKey()) {
+      return {
+        classify: Number(parsed.classify) || 0,
+        coach: Number(parsed.coach) || 0,
+        date: parsed.date,
+        total: Number(parsed.total) || 0,
+      };
+    }
+  } catch {
+    // Ignore corrupt local usage data and start a fresh daily counter.
+  }
+
+  return { classify: 0, coach: 0, date: getTodayKey(), total: 0 };
+}
+
+function reserveClientAiRequest(kind: "classify" | "coach", options: OpenAiProxyProviderOptions) {
+  if (options.disableClientRateLimit || typeof window === "undefined") {
+    return;
+  }
+
+  const dailyLimit = options.dailyRequestLimit ?? getEnvNumber("VITE_AI_DAILY_REQUEST_LIMIT", DEFAULT_DAILY_REQUEST_LIMIT);
+  const kindLimit =
+    kind === "coach"
+      ? options.coachDailyLimit ?? getEnvNumber("VITE_AI_COACH_DAILY_LIMIT", DEFAULT_COACH_DAILY_LIMIT)
+      : options.classifyDailyLimit ?? getEnvNumber("VITE_AI_CLASSIFY_DAILY_LIMIT", DEFAULT_CLASSIFY_DAILY_LIMIT);
+  const usage = readUsageRecord();
+
+  if (usage.total >= dailyLimit || usage[kind] >= kindLimit) {
+    throw new Error("오늘 AI 분석 호출 한도에 도달했습니다. 비용 보호를 위해 내일 다시 시도하세요.");
+  }
+
+  const next = {
+    ...usage,
+    [kind]: usage[kind] + 1,
+    total: usage.total + 1,
+  };
+  window.localStorage.setItem(AI_USAGE_KEY, JSON.stringify(next));
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -23,6 +87,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function ensureString(value: unknown, fallback = "") {
   return typeof value === "string" ? value : fallback;
+}
+
+function clipText(value: unknown, fallback: string, maxLength: number) {
+  const normalized = ensureString(value, fallback).replace(/\s+/g, " ").trim();
+  return normalized.length > maxLength ? `${normalized.slice(0, maxLength - 1)}…` : normalized;
 }
 
 function ensureNumber(value: unknown, fallback = 0) {
@@ -35,6 +104,10 @@ function ensureBoolean(value: unknown, fallback = false) {
 
 function ensureStringArray(value: unknown) {
   return Array.isArray(value) ? value.filter((item): item is string => typeof item === "string") : [];
+}
+
+function ensureClippedStringArray(value: unknown, maxItems: number, maxLength: number) {
+  return ensureStringArray(value).slice(0, maxItems).map((item) => clipText(item, "", maxLength)).filter(Boolean);
 }
 
 function ensureCategory(value: unknown): Category {
@@ -51,12 +124,30 @@ function ensureCoachMission(value: unknown, index: number): CoachMission {
   }
 
   return {
-    id: ensureString(value.id, `openai-mission-${index}`),
-    title: ensureString(value.title, "소비 미션"),
-    reason: ensureString(value.reason, "목표 달성을 위한 조정입니다."),
+    id: clipText(value.id, `openai-mission-${index}`, 40),
+    title: clipText(value.title, "소비 미션", 24),
+    reason: clipText(value.reason, "목표 달성을 위한 조정입니다.", 52),
     expectedSaving: Math.max(0, Math.round(ensureNumber(value.expectedSaving))),
-    action: ensureString(value.action, "오늘 실행할 수 있는 작은 조정을 선택하세요."),
+    action: clipText(value.action, "오늘 실행할 수 있는 작은 조정을 선택하세요.", 56),
     completed: ensureBoolean(value.completed),
+  };
+}
+
+function ensureCategoryPlan(value: unknown): CategoryPlan {
+  if (!isRecord(value)) {
+    throw new Error("OpenAI proxy returned an invalid category plan.");
+  }
+
+  const status = value.status === "stable" || value.status === "watch" || value.status === "over" ? value.status : "watch";
+
+  return {
+    category: ensureCategory(value.category),
+    status,
+    currentAmount: Math.max(0, Math.round(ensureNumber(value.currentAmount))),
+    plannedAmount: Math.max(0, Math.round(ensureNumber(value.plannedAmount))),
+    expectedSaving: Math.max(0, Math.round(ensureNumber(value.expectedSaving))),
+    reason: clipText(value.reason, "분야별 지출 비중을 기준으로 조정합니다.", 48),
+    action: clipText(value.action, "이번 주 줄일 수 있는 결제를 하나 정하세요.", 50),
   };
 }
 
@@ -72,19 +163,22 @@ function ensureCoachReport(value: unknown): CoachReport {
       : "보통";
 
   return {
-    headline: ensureString(value.headline, "오늘 소비 흐름을 점검해요"),
+    headline: clipText(value.headline, "오늘 소비 흐름을 점검해요", 64),
     status,
     dailyBudget: Math.max(0, Math.round(ensureNumber(value.dailyBudget))),
     savingPossibility,
-    todayAction: ensureString(value.todayAction, "오늘 줄일 수 있는 항목을 하나 정해보세요."),
-    insights: ensureStringArray(value.insights).slice(0, 4),
+    todayAction: clipText(value.todayAction, "오늘 줄일 수 있는 항목을 하나 정해보세요.", 78),
+    insights: ensureClippedStringArray(value.insights, 4, 58),
+    categoryPlans: (Array.isArray(value.categoryPlans) ? value.categoryPlans : []).slice(0, 4).map(ensureCategoryPlan),
     missions: (Array.isArray(value.missions) ? value.missions : []).slice(0, 4).map(ensureCoachMission),
-    subscriptionAdvice: ensureStringArray(value.subscriptionAdvice).slice(0, 3),
-    basis: ensureString(value.basis, "현재 월 거래, 목표 소비액, 목표 저축액을 기준으로 분석했습니다."),
+    subscriptionAdvice: ensureClippedStringArray(value.subscriptionAdvice, 3, 58),
+    basis: clipText(value.basis, "현재 월 거래, 목표 소비액, 목표 저축액을 기준으로 분석했습니다.", 96),
   };
 }
 
 async function postJson<T>(path: string, payload: unknown, options: OpenAiProxyProviderOptions): Promise<T> {
+  reserveClientAiRequest(path === COACH_PATH ? "coach" : "classify", options);
+
   const fetcher = options.fetcher ?? fetch;
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
@@ -120,7 +214,7 @@ export function createOpenAiProxyProvider(options: OpenAiProxyProviderOptions = 
 
       return {
         category: ensureCategory(response.category),
-        reason: ensureString(response.reason, "OpenAI가 거래 사용처와 메모를 기준으로 분류했습니다."),
+        reason: clipText(response.reason, "OpenAI가 거래 사용처와 메모를 기준으로 분류했습니다.", 72),
       };
     },
     async createCoachReport(input: CoachReportInput): Promise<CoachReport> {

@@ -2,6 +2,10 @@ const CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "여가", "�
 const BUDGET_STATUSES = ["stable", "watch", "over"];
 const SAVING_POSSIBILITIES = ["높음", "보통", "낮음"];
 const DEFAULT_ALLOWED_ORIGINS = ["https://2476ae.github.io", "http://localhost:5173", "http://127.0.0.1:5173"];
+const DEFAULT_MAX_OUTPUT_TOKENS = 900;
+const DEFAULT_SERVER_DAILY_REQUEST_LIMIT = 60;
+const DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT = 40;
+const DEFAULT_SERVER_COACH_DAILY_LIMIT = 20;
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -70,6 +74,43 @@ export function assertPost(req) {
   }
 }
 
+function readPositiveNumber(value, fallback) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function getClientKey(req) {
+  const forwardedFor = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
+  return forwardedFor || String(req.headers["x-real-ip"] || req.socket?.remoteAddress || "unknown");
+}
+
+function getUsageStore() {
+  globalThis.__moneyRoutineAiUsage ??= new Map();
+  return globalThis.__moneyRoutineAiUsage;
+}
+
+export function assertAiRateLimit(req, kind) {
+  const date = new Date().toISOString().slice(0, 10);
+  const key = `${date}:${getClientKey(req)}`;
+  const store = getUsageStore();
+  const current = store.get(key) ?? { classify: 0, coach: 0, total: 0 };
+  const dailyLimit = readPositiveNumber(process.env.AI_DAILY_REQUEST_LIMIT, DEFAULT_SERVER_DAILY_REQUEST_LIMIT);
+  const kindLimit =
+    kind === "coach"
+      ? readPositiveNumber(process.env.AI_COACH_DAILY_LIMIT, DEFAULT_SERVER_COACH_DAILY_LIMIT)
+      : readPositiveNumber(process.env.AI_CLASSIFY_DAILY_LIMIT, DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT);
+
+  if (current.total >= dailyLimit || current[kind] >= kindLimit) {
+    throw new HttpError(429, "AI request limit reached for today.");
+  }
+
+  store.set(key, {
+    ...current,
+    [kind]: current[kind] + 1,
+    total: current.total + 1,
+  });
+}
+
 export function validateClassificationInput(input) {
   if (!input || typeof input !== "object") {
     throw new HttpError(400, "Invalid classification input.");
@@ -126,6 +167,24 @@ export const coachReportSchema = {
       items: { type: "string" },
       maxItems: 4,
     },
+    categoryPlans: {
+      type: "array",
+      maxItems: 4,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          category: { type: "string", enum: CATEGORIES },
+          status: { type: "string", enum: BUDGET_STATUSES },
+          currentAmount: { type: "number" },
+          plannedAmount: { type: "number" },
+          expectedSaving: { type: "number" },
+          reason: { type: "string" },
+          action: { type: "string" },
+        },
+        required: ["category", "status", "currentAmount", "plannedAmount", "expectedSaving", "reason", "action"],
+      },
+    },
     missions: {
       type: "array",
       maxItems: 4,
@@ -157,6 +216,7 @@ export const coachReportSchema = {
     "savingPossibility",
     "todayAction",
     "insights",
+    "categoryPlans",
     "missions",
     "subscriptionAdvice",
     "basis",
@@ -199,6 +259,7 @@ export async function createOpenAiJsonResponse({ name, schema, system, payload }
         },
       ],
       model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+      max_output_tokens: Number(process.env.OPENAI_MAX_OUTPUT_TOKENS) || DEFAULT_MAX_OUTPUT_TOKENS,
       text: {
         format: {
           type: "json_schema",
