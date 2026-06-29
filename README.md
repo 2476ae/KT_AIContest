@@ -30,7 +30,7 @@ npm run verify
 - Netlify: `netlify.toml`, `npm run build`, publish `dist`
 - GitHub Pages: `.github/workflows/deploy-github-pages.yml`, `npm run build:github-pages`
 
-GitHub Pages 예상 URL은 `https://2476ae.github.io/AI-KT-/`입니다. 저장소 Settings > Pages에서 Source를 GitHub Actions로 설정하면 `master` 푸시 후 workflow가 배포합니다.
+GitHub Pages 예상 URL은 `https://2476ae.github.io/KT_AIContest/`입니다. 저장소 Settings > Pages에서 Source를 GitHub Actions로 설정하면 `master` 푸시 후 workflow가 배포합니다.
 
 ## 프론트엔드 구현 범위
 

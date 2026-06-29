@@ -33,7 +33,7 @@
 
 - Workflow: `.github/workflows/deploy-github-pages.yml`
 - Build command: `npm run build:github-pages`
-- 예상 URL: `https://2476ae.github.io/AI-KT-/`
+- 예상 URL: `https://2476ae.github.io/KT_AIContest/`
 - GitHub 저장소 Settings > Pages에서 Source를 GitHub Actions로 둔다.
 
 ## 제출 QA 리포트

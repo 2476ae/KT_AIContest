@@ -24,7 +24,7 @@
 
 - 설정 파일: `.github/workflows/deploy-github-pages.yml`
 - Build command: `npm run build:github-pages`
-- 예상 URL: `https://2476ae.github.io/AI-KT-/`
+- 예상 URL: `https://2476ae.github.io/KT_AIContest/`
 - 전제: GitHub 저장소 Settings > Pages의 Source가 GitHub Actions로 설정되어 있어야 한다.
 - 활성화 절차: [배포 활성화 가이드](24-deployment-activation-guide.md)
 

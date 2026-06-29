@@ -10,11 +10,11 @@
 - 일반 빌드: `npm run build`
 - GitHub Pages 빌드: `npm run build:github-pages`
 
-2026-06-29 확인 결과, `https://2476ae.github.io/AI-KT-/`는 아직 404를 반환한다. 이는 저장소의 GitHub Pages Source가 아직 활성화되지 않았기 때문이다.
+2026-06-29 확인 결과, `https://2476ae.github.io/KT_AIContest/`는 아직 404를 반환한다. 이는 저장소의 GitHub Pages Source가 아직 활성화되지 않았기 때문이다.
 
 ## 1. GitHub Pages 활성화
 
-1. GitHub에서 `2476ae/AI-KT-` 저장소로 이동한다.
+1. GitHub에서 `2476ae/KT_AIContest` 저장소로 이동한다.
 2. `Settings` 탭을 연다.
 3. 왼쪽 메뉴에서 `Pages`를 선택한다.
 4. `Build and deployment`의 `Source`를 `GitHub Actions`로 변경한다.
@@ -22,7 +22,7 @@
 6. workflow가 성공하면 아래 URL을 확인한다.
 
 ```text
-https://2476ae.github.io/AI-KT-/
+https://2476ae.github.io/KT_AIContest/
 ```
 
 확인 기준:
@@ -35,7 +35,7 @@ https://2476ae.github.io/AI-KT-/
 
 1. Vercel에 로그인한다.
 2. `Add New Project`를 선택한다.
-3. GitHub 저장소 `2476ae/AI-KT-`를 import한다.
+3. GitHub 저장소 `2476ae/KT_AIContest`를 import한다.
 4. Framework Preset은 `Vite`로 둔다.
 5. Build Command는 아래와 같이 둔다.
 
@@ -60,7 +60,7 @@ dist
 ## 3. Netlify 배포
 
 1. Netlify에 로그인한다.
-2. `Add new site`에서 GitHub 저장소 `2476ae/AI-KT-`를 연결한다.
+2. `Add new site`에서 GitHub 저장소 `2476ae/KT_AIContest`를 연결한다.
 3. Build command는 아래와 같이 둔다.
 
 ```bash
