@@ -39,10 +39,20 @@ npm run build:github-pages
 
 검증 범위:
 
-- Vitest: 4개 파일, 15개 테스트
+- Vitest: 5개 파일, 22개 테스트
 - TypeScript build
 - Vite production build
 - GitHub Pages base path build
+- 핵심 상태 흐름 테스트: 샘플 로드, 탭/월 이동, 직접 거래 추가/수정/삭제, 목표 수정/초기화, CSV 교체/병합
+
+자동 QA 보조 기준:
+
+- 주요 버튼과 입력에는 `data-testid`가 있다.
+- 하단 내비: `nav-home`, `nav-calendar`, `nav-add`, `nav-coach`, `nav-settings`
+- 샘플 로드: `home-load-sample`, `settings-load-sample`
+- 거래 입력: `transaction-amount-input`, `transaction-merchant-input`, `transaction-date-input`, `transaction-save-button`
+- 목표 저장: `goal-spending-limit-input`, `goal-saving-input`, `goal-save-button`
+- 캘린더: `calendar-day-YYYY-MM-DD`, `calendar-filter-over`, `calendar-filter-subscription`, `calendar-filter-safe`
 
 ## 심사위원 3분 체험 플로우
 
@@ -106,7 +116,7 @@ date,merchant,amount
 
 - PC: 1440x900
 - 모바일: 390x844
-- 작은 모바일: 360x780
+- 작은 모바일: 360px 계열 보완 대상 확인 후 모바일 캘린더 탭 영역을 재조정했다.
 
 확인 결과:
 
@@ -114,6 +124,8 @@ date,merchant,amount
 - 섹션 제목과 콘텐츠 오정렬 없음
 - 콘솔 에러 0개
 - 하단 내비가 핵심 버튼을 가리지 않음
+- 모바일 390x844 기준 캘린더 날짜 버튼 최소 폭 46px
+- 모바일 390x844 기준 44px 미만 주요 버튼 0개
 
 ## 제출 전 마지막 확인
 

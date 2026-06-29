@@ -95,4 +95,10 @@ dist
 
 ## 권장 제출 URL
 
-가능하면 Vercel URL을 제출용 기본 URL로 사용한다. Vercel은 GitHub Pages보다 설정이 단순하고, SPA 새로고침 처리도 현재 `vercel.json`으로 준비되어 있다.
+현재 실제로 활성화와 QA가 확인된 제출 URL은 GitHub Pages다.
+
+```text
+https://2476ae.github.io/KT_AIContest/
+```
+
+Vercel과 Netlify 설정도 유지되어 있으므로 대체 URL이 필요하면 같은 저장소를 연결해 사용할 수 있다. 다만 제출 직전에는 실제 제출 URL 하나를 기준으로 `npm run verify`, `npm run build:github-pages`, GitHub Actions 최신 run, 모바일 접속을 다시 확인한다.

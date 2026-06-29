@@ -28,26 +28,32 @@
 - `setAiProvider(provider, metadata?)`
 - `getAiProvider()`
 - `getAiProviderMetadata()`
-- `classifyTransaction(input)`
 - `classifyTransactionResponse(input)`
-- `createCoachReport(input)`
+- `classifyTransactionResponseAsync(input)`
 - `createCoachReportResponse(input)`
+- `createCoachReportResponseAsync(input)`
+- `createCoachReportLoadingResponse(input, previousReport?)`
+- `classifyTransaction(input)`
+- `createCoachReport(input)`
 
 ## Provider 인터페이스
 
 ```ts
+type MaybePromise<T> = T | Promise<T>;
+
 interface AiProvider {
-  classifyTransaction(input: ClassificationInput): ClassificationResult;
-  createCoachReport(input: CoachReportInput): CoachReport;
+  classifyTransaction(input: ClassificationInput): MaybePromise<ClassificationResult>;
+  createCoachReport(input: CoachReportInput): MaybePromise<CoachReport>;
 }
 ```
 
-현재 provider는 동기 함수로 정의되어 있다. 실제 API가 비동기라면 기능 채팅에서 다음 중 하나를 선택한다.
+현재 provider 계약은 동기 결과와 `Promise` 결과를 모두 허용한다. 실제 API 연결 시에는 `classifyTransactionResponseAsync`와 `createCoachReportResponseAsync` 경로를 사용한다.
 
-1. provider 계약을 `Promise` 기반으로 확장하고 화면에 loading 상태를 연결한다.
-2. API 결과를 별도 상태에 저장한 뒤 현재 동기 provider가 마지막 성공 결과를 반환하도록 감싼다.
+주의:
 
-추천은 1번이다. 이미 화면 상태 타입은 `ready`, `loading`, `fallback`, `error`를 받을 준비가 되어 있다.
+- 기존 동기 래퍼인 `classifyTransactionResponse`, `createCoachReportResponse`는 로컬 provider와 테스트 호환용이다.
+- 비동기 provider를 연결한 상태에서 동기 래퍼를 직접 호출하면 fallback 응답이 반환될 수 있다.
+- 화면 경로는 이미 직접 입력 저장과 코치 리포트에서 async 래퍼를 사용한다.
 
 ## 분류 입력
 
@@ -186,11 +192,18 @@ interface AiProviderMetadata {
 
 ## 실제 API 연결 시 필요한 작업
 
-1. 비동기 provider 계약 전환 여부 결정
-2. API client 파일 추가
-3. 환경변수 이름 확정
-4. provider metadata 확정
-5. `loading` 상태를 `useMoneyRoutine`에 연결
+1. API client 파일 추가
+2. 환경변수 이름 확정
+3. provider metadata 확정
+4. `setAiProvider(externalProvider, metadata)` 호출 위치 확정
+5. 분류/코치 리포트 응답 스키마 검증 추가
 6. 실패 시 `fallback` 또는 `error` 정책 확정
-7. 분류/코치 리포트 응답 스키마 검증 추가
-8. 테스트에서 성공, 지연, 실패, 잘못된 응답을 모두 확인
+7. 테스트에서 성공, 지연, 실패, 잘못된 응답을 모두 확인
+
+이미 준비된 항목:
+
+- `MaybePromise` 기반 provider 계약
+- `loading`, `ready`, `fallback`, `error` 상태 표시
+- 직접 입력 저장의 async 분류 대기
+- 코치 화면의 async 리포트 갱신
+- provider 실패 시 로컬 규칙 fallback
