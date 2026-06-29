@@ -178,6 +178,10 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             <span>날짜</span>
             <input
               value={date}
+              onInput={(event) => {
+                setDate(event.currentTarget.value);
+                setFormErrors([]);
+              }}
               onChange={(event) => {
                 setDate(event.target.value);
                 setFormErrors([]);
