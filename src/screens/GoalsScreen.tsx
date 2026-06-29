@@ -208,7 +208,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
 
       <section className="preview-grid">
         <article className="preview-card card">
-          <span>오늘 가능예산</span>
+          <span>오늘 권장 한도</span>
           <strong>{formatWon(draftSummary.dailyBudget)}</strong>
         </article>
         <article className="preview-card card">

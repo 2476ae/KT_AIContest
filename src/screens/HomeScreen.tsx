@@ -49,7 +49,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
 
             <div className="metric-grid">
               <div className="metric-tile">
-                <span className="metric-label">오늘 가능예산</span>
+                <span className="metric-label">오늘 권장 한도</span>
                 <span className="metric-value">{formatWon(summary.dailyBudget)}</span>
               </div>
               <div className="metric-tile">
@@ -67,7 +67,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
                 <CalendarClock size={17} />
               </span>
               <span>
-                <strong className="coach-title">오늘의 조정</strong>
+                <strong className="coach-title">오늘의 소비 가이드</strong>
                 <span className="coach-text">{coachReport.todayAction}</span>
               </span>
             </div>

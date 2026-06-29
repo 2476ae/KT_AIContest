@@ -6,10 +6,10 @@ import type { MoneyRoutineViewModel } from "./screenTypes";
 
 function statusCopy(status: BudgetStatus) {
   if (status === "over") {
-    return "초과";
+    return "초과 주의";
   }
   if (status === "watch") {
-    return "점검";
+    return "조정 필요";
   }
   return "안정";
 }
@@ -26,15 +26,19 @@ export function CoachScreen({ computed }: MoneyRoutineViewModel) {
   return (
     <>
       <section className="screen-head">
-        <span className="eyebrow">목표 코치</span>
-        <h1>오늘의 조정</h1>
+        <span className="eyebrow">AI 목표 코치</span>
+        <h1>오늘의 소비 가이드</h1>
       </section>
 
       <section className={`coach-hero card is-${coachReport.status}`}>
         <span className="coach-status">{statusCopy(coachReport.status)}</span>
         <h2>{coachReport.headline}</h2>
         <p>{coachReport.todayAction}</p>
-        <strong>{formatWon(coachReport.dailyBudget)}</strong>
+        <div className="coach-budget-callout">
+          <span>오늘 권장 사용 한도</span>
+          <strong>{formatWon(coachReport.dailyBudget)}</strong>
+          <small>월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액</small>
+        </div>
       </section>
 
       <section className={`ai-state-card card is-${coachResponse.status}`}>
