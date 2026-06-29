@@ -44,11 +44,6 @@ export default function App() {
             <img src={introIconSrc} alt="" aria-hidden="true" />
           </div>
           <strong>머니루틴</strong>
-          <div className="app-intro-loader" aria-hidden="true">
-            <span />
-            <span />
-            <span />
-          </div>
         </section>
       )}
     </>
