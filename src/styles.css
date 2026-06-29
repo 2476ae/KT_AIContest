@@ -1421,48 +1421,28 @@ button:disabled {
 
 @media (min-width: 900px) {
   .app-shell {
-    width: min(1040px, calc(100% - 40px));
+    width: min(760px, calc(100% - 48px));
   }
 
   .app-page {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
-    gap: 12px;
-    align-items: start;
-  }
-
-  .topbar,
-  .screen-head {
-    grid-column: 1 / -1;
-  }
-
-  .hero-card,
-  .quick-action-grid,
-  .calendar-card,
-  .month-switcher,
-  .status-grid,
-  .filter-row,
-  .entry-form,
-  .settings-form {
-    grid-column: 1;
-  }
-
-  .section-title,
-  .mission-list,
-  .mini-card-grid,
-  .transaction-list,
-  .detail-panel,
-  .upload-card,
-  .goal-summary,
-  .preview-grid,
-  .coach-hero,
-  .coach-section,
-  .settings-actions,
-  .trust-panel {
-    grid-column: 2;
+    padding: 28px 22px calc(var(--bottom-nav-height) + 28px);
   }
 
   .bottom-nav {
-    width: min(1040px, calc(100% - 40px));
+    width: min(760px, calc(100% - 48px));
+  }
+
+  .hero-card,
+  .calendar-card,
+  .entry-form,
+  .settings-form,
+  .coach-hero,
+  .coach-section,
+  .detail-panel,
+  .upload-card,
+  .goal-summary,
+  .trust-panel,
+  .action-row {
+    box-shadow: 0 18px 44px rgba(30, 42, 58, 0.07);
   }
 }
