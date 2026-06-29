@@ -13,8 +13,8 @@ type CalendarFilter = "all" | "over" | "subscription" | "safe";
 const filters: Array<{ id: CalendarFilter; label: string }> = [
   { id: "all", label: "전체" },
   { id: "over", label: "초과" },
-  { id: "subscription", label: "구독" },
-  { id: "safe", label: "무지출" },
+  { id: "subscription", label: "정기 결제" },
+  { id: "safe", label: "적정" },
 ];
 
 export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewModel) {
@@ -58,7 +58,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
           <strong>{counts.over}일</strong>
         </article>
         <article className="status-card">
-          <span>구독일</span>
+          <span>정기 결제일</span>
           <strong>{counts.subscription}일</strong>
         </article>
       </section>
@@ -85,7 +85,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
         <div className="detail-head">
           <span>
             <strong>{selectedDay?.date}</strong>
-            <span>{selectedTop ?? "무지출"} 흐름</span>
+            <span>{selectedTop ?? "적정"} 흐름</span>
           </span>
           <strong className="detail-amount">{selectedDay?.amount ? `-${formatWon(selectedDay.amount)}` : "0원"}</strong>
         </div>

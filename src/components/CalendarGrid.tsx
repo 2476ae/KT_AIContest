@@ -33,9 +33,7 @@ export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all" 
       <div className="calendar-grid">
         {visibleDays.map((day) => {
           const topCategory = getTopCategory(day.transactions);
-          const label =
-            day.transactions.find((transaction) => transaction.isSubscription)?.merchant.slice(0, 3) ??
-            (day.amount > 0 ? formatShortWon(day.amount) : "0원");
+          const label = day.amount > 0 ? formatShortWon(day.amount) : "0원";
 
           return (
             <button
