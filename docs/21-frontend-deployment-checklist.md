@@ -40,6 +40,7 @@
 
 - [배포와 제출 데모 QA 리포트](22-deployment-demo-qa.md)
 - [AI 기능 인계 계약](23-ai-integration-contract.md)
+- [배포 활성화 가이드](24-deployment-activation-guide.md)
 
 ## AI 기능 연결 시
 

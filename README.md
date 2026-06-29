@@ -52,6 +52,7 @@ AI 기능 자체는 별도 기능 작업에서 연결하며, 프론트엔드는 
 5. 코치 화면에서 오늘의 조정, 미션, 구독 점검, AI 분석 연결 상태를 확인합니다.
 
 제출 직전 QA 기준은 [배포와 제출 데모 QA 리포트](docs/22-deployment-demo-qa.md)에 정리되어 있습니다. 실제 AI 연결 계약은 [AI 기능 인계 계약](docs/23-ai-integration-contract.md)을 기준으로 합니다.
+배포 서비스에서 URL을 활성화하는 절차는 [배포 활성화 가이드](docs/24-deployment-activation-guide.md)를 따르면 됩니다.
 
 ## 확정 방향
 
