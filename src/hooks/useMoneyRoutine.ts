@@ -1,38 +1,41 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
+import { DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
 import { getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
+import {
+  applyImportedTransactionsState,
+  addTransactionState,
+  deleteTransactionState,
+  INITIAL_APP_STATE,
+  loadSampleState,
+  mergeStoredState,
+  moveCalendarMonthState,
+  parseImportCsv,
+  resetGoalState,
+  setActiveTabState,
+  setSelectedDateState,
+  updateGoalState,
+  updateTransactionState,
+} from "../services/appState";
 import {
   createCoachReportLoadingResponse,
   createCoachReportResponse,
   createCoachReportResponseAsync,
 } from "../services/aiAdapter";
-import { addMonths, firstDateOfMonth, getMonthId } from "../services/date";
-import { parseTransactionsCsvWithValidation, transactionsToCsv } from "../services/csv";
+import { transactionsToCsv } from "../services/csv";
+import { getMonthId } from "../services/date";
 import type { AppState, Goal, TabId, Transaction } from "../types";
-
-const initialState: AppState = {
-  transactions: [],
-  goal: DEFAULT_GOAL,
-  calendarMonth: DEMO_MONTH.id,
-  selectedDate: "2026-06-29",
-  activeTab: "home",
-  hasLoadedSample: false,
-};
 
 function readStoredState(): AppState {
   const stored = window.localStorage.getItem(DEMO_MONTH.storageKey);
   if (!stored) {
-    return initialState;
+    return INITIAL_APP_STATE;
   }
 
   try {
-    return {
-      ...initialState,
-      ...JSON.parse(stored),
-    };
+    return mergeStoredState(JSON.parse(stored));
   } catch {
-    return initialState;
+    return INITIAL_APP_STATE;
   }
 }
 
@@ -45,8 +48,8 @@ export function useMoneyRoutine() {
   const [coachResponse, setCoachResponse] = useState(() =>
     createCoachReportResponse({
       transactions: [],
-      goal: initialState.goal,
-      monthId: initialState.calendarMonth,
+      goal: INITIAL_APP_STATE.goal,
+      monthId: INITIAL_APP_STATE.calendarMonth,
     }),
   );
 
@@ -59,135 +62,72 @@ export function useMoneyRoutine() {
   }, []);
 
   const loadSample = useCallback(() => {
-    updateState((current) => ({
-      ...current,
-      transactions: loadSampleTransactions(),
-      calendarMonth: DEMO_MONTH.id,
-      selectedDate: "2026-06-29",
-      hasLoadedSample: true,
-    }));
+    updateState((current) => loadSampleState(current, loadSampleTransactions()));
   }, [updateState]);
 
   const resetAll = useCallback(() => {
     window.localStorage.removeItem(DEMO_MONTH.storageKey);
-    setState(initialState);
+    setState(INITIAL_APP_STATE);
   }, []);
 
   const setActiveTab = useCallback(
     (activeTab: TabId) => {
-      updateState((current) => ({
-        ...current,
-        activeTab,
-      }));
+      updateState((current) => setActiveTabState(current, activeTab));
     },
     [updateState],
   );
 
   const setSelectedDate = useCallback(
     (selectedDate: string) => {
-      updateState((current) => ({
-        ...current,
-        calendarMonth: getMonthId(selectedDate),
-        selectedDate,
-      }));
+      updateState((current) => setSelectedDateState(current, selectedDate));
     },
     [updateState],
   );
 
   const updateGoal = useCallback(
     (goal: Goal) => {
-      updateState((current) => ({
-        ...current,
-        goal,
-      }));
+      updateState((current) => updateGoalState(current, goal));
     },
     [updateState],
   );
 
   const resetGoal = useCallback(() => {
-    updateState((current) => ({
-      ...current,
-      goal: DEFAULT_GOAL,
-    }));
+    updateState(resetGoalState);
   }, [updateState]);
 
   const moveCalendarMonth = useCallback(
     (amount: number) => {
-      updateState((current) => {
-        const calendarMonth = addMonths(current.calendarMonth, amount);
-        return {
-          ...current,
-          calendarMonth,
-          selectedDate: firstDateOfMonth(calendarMonth),
-        };
-      });
+      updateState((current) => moveCalendarMonthState(current, amount));
     },
     [updateState],
   );
 
   const addTransaction = useCallback(
     (transaction: Omit<Transaction, "id">) => {
-      updateState((current) => ({
-        ...current,
-        transactions: [
-          {
-            ...transaction,
-            id: `tx-user-${Date.now()}`,
-          },
-          ...current.transactions,
-        ].sort((a, b) => a.date.localeCompare(b.date)),
-        calendarMonth: getMonthId(transaction.date),
-        selectedDate: transaction.date,
-        hasLoadedSample: true,
-      }));
+      updateState((current) => addTransactionState(current, transaction, `tx-user-${Date.now()}`));
     },
     [updateState],
   );
 
   const updateTransaction = useCallback(
     (transaction: Transaction) => {
-      updateState((current) => ({
-        ...current,
-        transactions: current.transactions.map((item) => (item.id === transaction.id ? transaction : item)),
-      }));
+      updateState((current) => updateTransactionState(current, transaction));
     },
     [updateState],
   );
 
   const deleteTransaction = useCallback(
     (id: string) => {
-      updateState((current) => ({
-        ...current,
-        transactions: current.transactions.filter((transaction) => transaction.id !== id),
-      }));
+      updateState((current) => deleteTransactionState(current, id));
     },
     [updateState],
   );
 
   const importCsv = useCallback(
     (csvText: string, mode: "replace" | "merge" = "replace") => {
-      const result = parseTransactionsCsvWithValidation(csvText);
-      if (result.errors.length > 0) {
-        throw new Error(result.errors[0]);
-      }
+      const imported = parseImportCsv(csvText);
+      updateState((current) => applyImportedTransactionsState(current, imported, mode));
 
-      const imported = result.transactions;
-      if (imported.length === 0) {
-        throw new Error("반영할 거래가 없습니다.");
-      }
-
-      updateState((current) => ({
-        ...current,
-        transactions:
-          mode === "merge"
-            ? [...current.transactions.filter((item) => !imported.some((incoming) => incoming.id === item.id)), ...imported].sort((a, b) =>
-                a.date.localeCompare(b.date),
-              )
-            : imported,
-        calendarMonth: imported[imported.length - 1]?.date ? getMonthId(imported[imported.length - 1].date) : current.calendarMonth,
-        selectedDate: imported[imported.length - 1]?.date ?? current.selectedDate,
-        hasLoadedSample: imported.length > 0,
-      }));
       return imported;
     },
     [updateState],
