@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
-import { getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
+import { alignCoachReportBudgetFields, getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
 import {
   applyImportedTransactionsState,
   addTransactionState,
@@ -217,9 +217,9 @@ export function useMoneyRoutine() {
     () => ({
       ...baseComputed,
       coachResponse,
-      coachReport: coachResponse.data,
+      coachReport: alignCoachReportBudgetFields(coachResponse.data, baseComputed.monthTransactions, state.goal, state.calendarMonth),
     }),
-    [baseComputed, coachResponse],
+    [baseComputed, coachResponse, state.calendarMonth, state.goal],
   );
 
   return {

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
-import { getCalendarDays, getCoachReport, getSummary, getSubscriptionCandidates } from "./analytics";
+import { alignCoachReportBudgetFields, getCalendarDays, getCoachReport, getSummary, getSubscriptionCandidates } from "./analytics";
 
 describe("analytics service", () => {
   const transactions = loadSampleTransactions();
@@ -49,5 +49,22 @@ describe("analytics service", () => {
     expect(report.headline).toContain("하루");
     expect(report.missions.length).toBeGreaterThanOrEqual(2);
     expect(report.subscriptionAdvice[0]).toContain("월");
+  });
+
+  it("keeps budget-critical coach copy aligned with local spending math", () => {
+    const unsafeAiReport = {
+      ...getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id),
+      headline: "목표 소비액을 초과했어요. 즉시 소비를 멈추세요.",
+      status: "over" as const,
+      dailyBudget: 0,
+      todayAction: "추가 소비를 모두 중단하세요.",
+    };
+    const aligned = alignCoachReportBudgetFields(unsafeAiReport, transactions, DEFAULT_GOAL, DEMO_MONTH.id);
+
+    expect(getSummary(transactions, DEFAULT_GOAL, DEMO_MONTH.id).remainingBudget).toBeGreaterThan(0);
+    expect(aligned.status).not.toBe("over");
+    expect(aligned.dailyBudget).toBe(322210);
+    expect(aligned.headline).not.toContain("초과");
+    expect(aligned.todayAction).not.toContain("중단");
   });
 });

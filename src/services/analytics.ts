@@ -255,6 +255,20 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
   };
 }
 
+export function alignCoachReportBudgetFields(report: CoachReport, transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id): CoachReport {
+  const localReport = getCoachReport(transactions, goal, monthId);
+
+  return {
+    ...report,
+    headline: localReport.headline,
+    status: localReport.status,
+    dailyBudget: localReport.dailyBudget,
+    savingPossibility: localReport.savingPossibility,
+    todayAction: localReport.todayAction,
+    basis: localReport.basis,
+  };
+}
+
 export function formatWon(value: number) {
   return `${Math.round(value).toLocaleString("ko-KR")}원`;
 }
