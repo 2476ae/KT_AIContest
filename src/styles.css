@@ -18,6 +18,7 @@
   --shadow-card: 0 14px 34px rgba(30, 42, 58, 0.08);
   --shadow-action: 0 9px 22px rgba(35, 44, 56, 0.05);
   --radius: 8px;
+  --radius-lg: 8px;
   --content-max-mobile: 430px;
   --bottom-nav-height: 82px;
 }
@@ -1333,6 +1334,70 @@ button:disabled {
   font-size: 12px;
   font-weight: 720;
   line-height: 1.4;
+}
+
+.coach-analysis-shell {
+  position: relative;
+}
+
+.coach-analysis-content {
+  transition:
+    opacity 0.18s ease,
+    filter 0.18s ease;
+}
+
+.coach-analysis-shell.is-loading .coach-analysis-content {
+  opacity: 0.22;
+  filter: blur(1px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.coach-loading-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 92px 18px 24px;
+  border-radius: var(--radius-lg);
+  background: rgba(245, 247, 250, 0.52);
+  text-align: center;
+}
+
+.coach-loading-overlay > * {
+  width: min(100%, 292px);
+}
+
+.coach-loading-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  place-items: center;
+  margin-bottom: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--primary-soft);
+  color: var(--primary);
+  box-shadow: 0 12px 28px rgba(36, 120, 255, 0.18);
+}
+
+.coach-loading-overlay strong {
+  display: block;
+  color: var(--ink);
+  font-size: 16px;
+  font-weight: 940;
+  line-height: 1.35;
+}
+
+.coach-loading-overlay small {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.45;
 }
 
 .settings-form {
