@@ -18,7 +18,7 @@ const bottomTabs: Array<{ id: TabId; label: string; icon: LucideIcon }> = [
   { id: "home", label: "홈", icon: Home },
   { id: "calendar", label: "캘린더", icon: CalendarDays },
   { id: "add", label: "추가", icon: Plus },
-  { id: "coach", label: "코치", icon: Bot },
+  { id: "coach", label: "AI코치", icon: Bot },
   { id: "settings", label: "설정", icon: Settings },
 ];
 
@@ -167,7 +167,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
             <img className="brand-mark" src={appIconSrc} alt="" aria-hidden="true" />
             <span className="brand-copy">
               <span className="brand-title">머니루틴</span>
-              <span className="brand-subtitle">소비 캘린더 · 목표 코치</span>
+              <span className="brand-subtitle">소비 캘린더 · AI 코치</span>
             </span>
           </button>
 
@@ -243,7 +243,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
                   </span>
                   <span>
                     <strong>{unreadNotifications.length > 0 ? `${unreadNotifications.length}개 새 알림이 있어요` : "모든 알림을 확인했어요"}</strong>
-                    <small>새 소비가 들어오면 목표와 코치 분석에 자동 반영됩니다.</small>
+                    <small>새 소비가 들어오면 목표와 AI 코치 분석에 자동 반영됩니다.</small>
                   </span>
                 </div>
 
@@ -267,7 +267,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
                     캘린더 보기
                   </button>
                   <button className="primary-button" type="button" onClick={() => moveFromPanel("coach")}>
-                    코치 확인
+                    AI 코치 확인
                   </button>
                 </div>
               </>

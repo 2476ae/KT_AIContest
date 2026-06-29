@@ -39,7 +39,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   return (
     <>
       <section className="screen-head">
-        <span className="eyebrow">AI 목표 코치</span>
+        <span className="eyebrow">AI 코치</span>
         <h1>오늘의 소비 가이드</h1>
       </section>
 

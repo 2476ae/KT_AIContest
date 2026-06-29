@@ -6,12 +6,12 @@
 - OpenAI API는 서버 프록시에서만 호출하고, 브라우저에는 API key를 넣지 않는다.
 - 프론트는 `VITE_AI_PROVIDER=openai-proxy` 또는 `VITE_AI_PROXY_BASE_URL`이 있을 때 `openAiProxyProvider`를 등록한다.
 - 직접 입력 화면은 자동 분류를 선택한 저장에서만 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
-- 코치 AI 리포트는 코치 화면의 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
-- 브라우저 쪽은 기본적으로 하루 전체 8회, 코치 5회, 자동 분류 8회 호출 제한을 둔다. Vercel/env에서 `VITE_AI_*_LIMIT` 값으로 조정할 수 있다.
+- AI 코치 리포트는 AI 코치 화면의 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
+- 브라우저 쪽은 기본적으로 하루 전체 8회, AI 코치 5회, 자동 분류 8회 호출 제한을 둔다. Vercel/env에서 `VITE_AI_*_LIMIT` 값으로 조정할 수 있다.
 - 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 로컬 미리보기 결과를 사용해 초기 렌더 외부 호출을 막는다.
-- 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
+- AI 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
 - 월 목표 소비액을 초과해도 하루 권장 한도를 즉시 0원으로 고정하지 않는다. `getSummary`가 월수입, 목표 저축액, 남은 일수를 기준으로 `현실 조정 목표`와 `조정 저축 목표`를 계산하고, 이 로컬 계산값이 OpenAI 문구보다 우선한다.
-- 코치 리포트는 `categoryPlans`로 분야별 소비 계획 카드를 최대 3개 제공한다. 긴 문장은 provider 검증 단계에서 잘라 카드 UI를 보호한다.
+- AI 코치 리포트는 `categoryPlans`로 분야별 소비 계획 카드를 최대 3개 제공한다. 긴 문장은 provider 검증 단계에서 잘라 카드 UI를 보호한다.
 - 정기 결제 조언은 `subscriptionLimit`만 보지 않고 전체 소비 목표 대비 비중도 함께 본다. 전체 예산에서 부담이 낮으면 구독 해지/점검을 핵심 미션으로 강조하지 않는다.
 - 기존 동기 API(`classifyTransactionResponse`, `createCoachReportResponse`)는 로컬/테스트 호환용으로 유지한다.
 - 외부 AI provider가 실패하면 로컬 규칙 기반 결과로 fallback되어 거래 저장과 화면 렌더링이 계속된다.
@@ -98,15 +98,15 @@ interface AiProvider {
 - 기존 동기 래퍼인 `classifyTransactionResponse`, `createCoachReportResponse`는 로컬 provider와 테스트 호환용이다.
 - 비동기 provider를 연결한 상태에서 동기 래퍼를 직접 호출하면 fallback 응답이 반환될 수 있다.
 - 직접 입력 저장은 자동 분류 선택 시에만 async 래퍼를 사용한다.
-- 코치 리포트의 외부 AI 호출은 `src/services/aiRequestPolicy.ts` 기준으로 코치 탭에서 사용자가 명시적으로 요청했을 때만 실행된다.
+- AI 코치 리포트의 외부 AI 호출은 `src/services/aiRequestPolicy.ts` 기준으로 AI 코치 탭에서 사용자가 명시적으로 요청했을 때만 실행된다.
 
 ## 호출 정책
 
-- 초기 렌더, 홈, 캘린더, 목표, 설정 탭에서는 외부 코치 AI를 호출하지 않는다.
-- 코치 탭 진입만으로는 외부 AI를 호출하지 않는다. 사용자가 `OpenAI 분석 업데이트` 버튼을 누르면 250ms debounce 후 현재 월/목표/거래 입력값으로 리포트를 요청한다.
+- 초기 렌더, 홈, 캘린더, 목표, 설정 탭에서는 외부 AI 코치를 호출하지 않는다.
+- AI 코치 탭 진입만으로는 외부 AI를 호출하지 않는다. 사용자가 `OpenAI 분석 업데이트` 버튼을 누르면 250ms debounce 후 현재 월/목표/거래 입력값으로 리포트를 요청한다.
 - 같은 provider와 같은 입력값이면 cache된 응답을 재사용한다.
 - 거래 자동 분류는 직접 입력에서 `자동 분류`를 선택한 상태로 저장 버튼을 눌렀을 때만 호출한다. 사용자가 카테고리를 직접 선택하면 외부 분류를 호출하지 않는다.
-- CSV import는 거래별 외부 분류를 추가로 호출하지 않고, 코치 리포트 요청 대상 데이터만 갱신한다.
+- CSV import는 거래별 외부 분류를 추가로 호출하지 않고, AI 코치 리포트 요청 대상 데이터만 갱신한다.
 
 ## 분류 입력
 
@@ -151,7 +151,7 @@ interface ClassificationResult {
 - 모호한 거래는 `기타`로 보내고 `reason`에 짧은 근거를 쓴다.
 - 반복 결제, OTT, 멤버십, 클라우드, 앱스토어형 사용처는 `구독` 우선이다.
 
-## 코치 리포트 입력
+## AI 코치 리포트 입력
 
 ```ts
 interface CoachReportInput {
@@ -163,7 +163,7 @@ interface CoachReportInput {
 
 `transactions`는 현재 선택된 월의 거래만 전달된다.
 
-## 코치 리포트 출력
+## AI 코치 리포트 출력
 
 ```ts
 interface CoachReport {
@@ -263,7 +263,7 @@ interface AiProviderMetadata {
 1. 서버 프록시 배포 환경에 `OPENAI_API_KEY`를 등록한다.
 2. Vercel 배포에서는 `VITE_AI_PROVIDER=openai-proxy`를 등록하고, GitHub Pages 백업 빌드에서만 `VITE_AI_PROXY_BASE_URL`을 등록한다.
 3. `AI_ALLOWED_ORIGINS`에 실제 제출 origin을 포함한다.
-4. 코치 화면에서 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `OpenAI 분석` provider 상태가 표시되는지 확인한다.
+4. AI 코치 화면에서 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `OpenAI 분석` provider 상태가 표시되는지 확인한다.
 5. API 실패 시 로컬 규칙 fallback이 표시되는지 확인한다.
 
 이미 준비된 항목:
@@ -271,5 +271,5 @@ interface AiProviderMetadata {
 - `MaybePromise` 기반 provider 계약
 - `loading`, `ready`, `fallback`, `error` 상태 표시
 - 직접 입력 자동 분류 저장의 async 분류 대기
-- 코치 화면 버튼 기반 async 리포트 갱신
+- AI 코치 화면 버튼 기반 async 리포트 갱신
 - provider 실패 시 로컬 규칙 fallback

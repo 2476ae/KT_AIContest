@@ -122,7 +122,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
           <span className="quick-action-icon">
             <CalendarClock size={18} />
           </span>
-          <span className="quick-action-label">코치 보기</span>
+          <span className="quick-action-label">AI 코치</span>
         </button>
       </section>
 

@@ -74,7 +74,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
     }
 
     actions.updateGoal(draftGoal);
-    setGoalMessage("목표를 저장했어요. 홈, 캘린더, 코치 화면이 같은 기준으로 다시 계산됩니다.");
+    setGoalMessage("목표를 저장했어요. 홈, 캘린더, AI 코치 화면이 같은 기준으로 다시 계산됩니다.");
     setSaveAttempted(false);
   }
 

@@ -138,7 +138,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
     try {
       const imported = actions.importCsv(csvText, importMode);
       setCsvMessage(
-        `${imported.length}건을 ${importMode === "replace" ? "교체" : "병합"}했어요. 캘린더와 코치 화면이 다시 계산됩니다.`,
+        `${imported.length}건을 ${importMode === "replace" ? "교체" : "병합"}했어요. 캘린더와 AI 코치 화면이 다시 계산됩니다.`,
       );
     } catch (error) {
       setCsvErrors([error instanceof Error ? error.message : "CSV를 반영하지 못했습니다."]);
