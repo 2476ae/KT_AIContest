@@ -10,6 +10,14 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   const { coachReport, recentTransactions, selectedDay, summary } = computed;
   const hasData = state.transactions.length > 0;
   const progress = Math.min(100, Math.round(summary.progress));
+  const isOverBudget = summary.remainingBudget < 0;
+  const guideAmountLabel = isOverBudget ? "목표 초과 금액" : "오늘 권장 한도";
+  const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.dailyBudget;
+  const remainingFlowLabel = isOverBudget ? "목표 초과" : "잔액 흐름";
+  const remainingFlowAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.remainingBudget;
+  const remainingFlowText = isOverBudget
+    ? "목표 소비액을 넘긴 금액입니다. 이번 주는 필수 지출만 남겨두세요."
+    : "목표 소비액 안에서 남은 조정 여력입니다.";
 
   return (
     <>
@@ -48,9 +56,9 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
             </div>
 
             <div className="metric-grid">
-              <div className="metric-tile">
-                <span className="metric-label">오늘 권장 한도</span>
-                <span className="metric-value">{formatWon(summary.dailyBudget)}</span>
+              <div className={`metric-tile${isOverBudget ? " is-over" : ""}`}>
+                <span className="metric-label">{guideAmountLabel}</span>
+                <span className="metric-value">{formatWon(guideAmount)}</span>
               </div>
               <div className="metric-tile">
                 <span className="metric-label">저축 예상</span>
@@ -138,10 +146,10 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
           <strong className="mini-card-value">{formatWon(summary.subscriptionTotal)}</strong>
           <p className="mini-card-text">구독 상한 {formatWon(state.goal.subscriptionLimit)} 기준으로 점검합니다.</p>
         </article>
-        <article className="mini-card card">
-          <span className="mini-card-title">잔액 흐름</span>
-          <strong className="mini-card-value">{formatWon(summary.remainingBudget)}</strong>
-          <p className="mini-card-text">목표 소비액 안에서 남은 조정 여력입니다.</p>
+        <article className={`mini-card card${isOverBudget ? " is-over" : ""}`}>
+          <span className="mini-card-title">{remainingFlowLabel}</span>
+          <strong className="mini-card-value">{formatWon(remainingFlowAmount)}</strong>
+          <p className="mini-card-text">{remainingFlowText}</p>
         </article>
       </section>
 

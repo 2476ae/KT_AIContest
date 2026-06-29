@@ -15,7 +15,13 @@ function statusCopy(status: BudgetStatus) {
 }
 
 export function CoachScreen({ computed }: MoneyRoutineViewModel) {
-  const { categorySummaries, coachReport, coachResponse, subscriptionCandidates } = computed;
+  const { categorySummaries, coachReport, coachResponse, subscriptionCandidates, summary } = computed;
+  const isOverBudget = summary.remainingBudget < 0;
+  const guideAmountLabel = isOverBudget ? "목표 초과 금액" : "오늘 권장 사용 한도";
+  const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : coachReport.dailyBudget;
+  const guideHelpText = isOverBudget
+    ? "이미 월 목표를 넘겼어요. 오늘은 필수 지출만 남기고 추가 소비를 멈추는 게 좋아요."
+    : "월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액";
   const aiStatusCopy = {
     error: "AI 응답을 표시하지 못했습니다. 안전한 대체 결과를 준비합니다.",
     fallback: "외부 AI 응답 실패 시 로컬 분석으로 대체했습니다.",
@@ -34,10 +40,10 @@ export function CoachScreen({ computed }: MoneyRoutineViewModel) {
         <span className="coach-status">{statusCopy(coachReport.status)}</span>
         <h2>{coachReport.headline}</h2>
         <p>{coachReport.todayAction}</p>
-        <div className="coach-budget-callout">
-          <span>오늘 권장 사용 한도</span>
-          <strong>{formatWon(coachReport.dailyBudget)}</strong>
-          <small>월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액</small>
+        <div className={`coach-budget-callout${isOverBudget ? " is-over" : ""}`}>
+          <span>{guideAmountLabel}</span>
+          <strong>{formatWon(guideAmount)}</strong>
+          <small>{guideHelpText}</small>
         </div>
       </section>
 

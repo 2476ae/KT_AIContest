@@ -47,6 +47,9 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
     () => getSummary(computed.monthTransactions, draftGoal, state.calendarMonth),
     [computed.monthTransactions, draftGoal, state.calendarMonth],
   );
+  const isDraftOverBudget = draftSummary.remainingBudget < 0;
+  const draftGuideAmountLabel = isDraftOverBudget ? "목표 초과 예상" : "오늘 권장 한도";
+  const draftGuideAmount = isDraftOverBudget ? Math.abs(draftSummary.remainingBudget) : draftSummary.dailyBudget;
   const isDirty = !hasSameGoal(draftGoal, state.goal);
   const visibleErrors = saveAttempted ? validation.errors : [];
 
@@ -207,9 +210,9 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
       </section>
 
       <section className="preview-grid">
-        <article className="preview-card card">
-          <span>오늘 권장 한도</span>
-          <strong>{formatWon(draftSummary.dailyBudget)}</strong>
+        <article className={`preview-card card${isDraftOverBudget ? " is-over" : ""}`}>
+          <span>{draftGuideAmountLabel}</span>
+          <strong>{formatWon(draftGuideAmount)}</strong>
         </article>
         <article className="preview-card card">
           <span>목표 진행률</span>

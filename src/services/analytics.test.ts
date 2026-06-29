@@ -15,6 +15,18 @@ describe("analytics service", () => {
     expect(summary.dailyBudget).toBe(322210);
   });
 
+  it("explains overspending as an exceeded amount", () => {
+    const overGoal = { ...DEFAULT_GOAL, spendingLimit: 300000 };
+    const summary = getSummary(transactions, overGoal, DEMO_MONTH.id);
+    const report = getCoachReport(transactions, overGoal, DEMO_MONTH.id);
+
+    expect(summary.status).toBe("over");
+    expect(summary.remainingBudget).toBeLessThan(0);
+    expect(summary.dailyBudget).toBe(0);
+    expect(report.headline).toContain("초과");
+    expect(report.todayAction).toContain("초과");
+  });
+
   it("builds a full month calendar grid", () => {
     const days = getCalendarDays(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
     const june10 = days.find((day) => day.date === "2026-06-10");

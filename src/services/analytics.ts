@@ -223,6 +223,10 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
   const status = summary.status;
   const missions = buildMissions(goal, summary, categories, subscriptions);
   const focusText = focus ? `${focus.category} 지출` : "선택 소비";
+  const todayAction =
+    summary.remainingBudget < 0
+      ? `목표를 ${formatWon(Math.abs(summary.remainingBudget))} 초과했어요. 오늘은 필수 지출만 남기고 추가 결제를 멈춰보세요.`
+      : `${focusText}을 이번 주 한 번만 줄이면 목표 저축에 더 가까워져요.`;
 
   return {
     headline:
@@ -232,7 +236,7 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
     status,
     dailyBudget: summary.dailyBudget,
     savingPossibility,
-    todayAction: `${focusText}을 이번 주 한 번만 줄이면 목표 저축에 더 가까워져요.`,
+    todayAction,
     insights: [
       focus
         ? `${focus.category}이(가) 이번 달 지출의 ${Math.round(focus.ratio)}%를 차지합니다.`
