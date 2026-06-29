@@ -29,6 +29,18 @@
 - Publish directory: `dist`
 - 설정 파일: `netlify.toml`
 
+## GitHub Pages
+
+- Workflow: `.github/workflows/deploy-github-pages.yml`
+- Build command: `npm run build:github-pages`
+- 예상 URL: `https://2476ae.github.io/AI-KT-/`
+- GitHub 저장소 Settings > Pages에서 Source를 GitHub Actions로 둔다.
+
+## 제출 QA 리포트
+
+- [배포와 제출 데모 QA 리포트](22-deployment-demo-qa.md)
+- [AI 기능 인계 계약](23-ai-integration-contract.md)
+
 ## AI 기능 연결 시
 
 - 프론트는 `src/services/aiAdapter.ts`의 `AiProvider` 계약을 기준으로 결과를 받는다.

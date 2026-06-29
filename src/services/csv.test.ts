@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { loadSampleTransactions } from "../data";
 import { parseTransactionsCsvWithValidation, transactionsToCsv } from "./csv";
 
 describe("csv service", () => {
@@ -37,6 +38,16 @@ describe("csv service", () => {
 
     expect(result.errors).toEqual([]);
     expect(result.transactions[0].amount).toBe(4300);
+  });
+
+  it("keeps the bundled sample CSV deploy-ready", () => {
+    const transactions = loadSampleTransactions();
+    const total = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+    const subscriptions = transactions.filter((transaction) => transaction.isSubscription || transaction.category === "구독");
+
+    expect(transactions).toHaveLength(35);
+    expect(total).toBe(397790);
+    expect(subscriptions.length).toBeGreaterThanOrEqual(5);
   });
 
   it("serializes transactions back to CSV", () => {

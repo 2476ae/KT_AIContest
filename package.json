@@ -3,9 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
+    "build:github-pages": "tsc -b && vite build --base=/AI-KT-/",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest",
     "test:run": "vitest run",

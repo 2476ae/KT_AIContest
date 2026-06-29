@@ -18,8 +18,19 @@ npm run dev
 ```bash
 npm run test:run
 npm run build
+npm run build:github-pages
 npm run verify
 ```
+
+## 배포
+
+이 저장소는 세 가지 배포 경로를 준비합니다.
+
+- Vercel: `vercel.json`, `npm run build`, output `dist`
+- Netlify: `netlify.toml`, `npm run build`, publish `dist`
+- GitHub Pages: `.github/workflows/deploy-github-pages.yml`, `npm run build:github-pages`
+
+GitHub Pages 예상 URL은 `https://2476ae.github.io/AI-KT-/`입니다. 저장소 Settings > Pages에서 Source를 GitHub Actions로 설정하면 `master` 푸시 후 workflow가 배포합니다.
 
 ## 프론트엔드 구현 범위
 
@@ -31,6 +42,16 @@ npm run verify
 - 설정: 샘플 데이터 로딩, 초기화, CSV 내보내기, 금융 인증정보 미수집 안내
 
 AI 기능 자체는 별도 기능 작업에서 연결하며, 프론트엔드는 `src/services/aiAdapter.ts`의 provider 계약을 통해 결과를 받아 표시합니다.
+
+## 심사위원 1분 체험 시나리오
+
+1. 설정에서 `샘플 데이터 불러오기`를 눌러 35건의 소비 데이터를 복원합니다.
+2. 홈에서 월 지출, 목표 진행률, 오늘 가능예산을 확인합니다.
+3. 목표 화면에서 목표 소비액을 바꾸고 저장해 홈/코치 재계산을 확인합니다.
+4. 추가 화면에서 직접 소비를 하나 저장하고 캘린더 반영을 확인합니다.
+5. 코치 화면에서 오늘의 조정, 미션, 구독 점검, AI 분석 연결 상태를 확인합니다.
+
+제출 직전 QA 기준은 [배포와 제출 데모 QA 리포트](docs/22-deployment-demo-qa.md)에 정리되어 있습니다. 실제 AI 연결 계약은 [AI 기능 인계 계약](docs/23-ai-integration-contract.md)을 기준으로 합니다.
 
 ## 확정 방향
 
