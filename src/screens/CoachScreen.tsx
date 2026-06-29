@@ -15,7 +15,7 @@ function statusCopy(status: BudgetStatus) {
 }
 
 export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
-  const { categorySummaries, coachReport, coachResponse, subscriptionCandidates, summary } = computed;
+  const { coachReport, coachResponse, subscriptionCandidates, summary } = computed;
   const isOverBudget = summary.remainingBudget < 0;
   const guideAmountLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 하루 한도" : "오늘 권장 사용 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : coachReport.dailyBudget;
@@ -25,6 +25,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
       ? `저축 목표를 ${formatWon(summary.adjustedSavingGoal)}로 낮춰 잡은 현실적 하루 한도`
       : "월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액";
   const isAiLoading = coachResponse.status === "loading";
+  const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
   const aiStatusCopy = {
     error: "AI 응답을 표시하지 못했습니다. 안전한 대체 결과를 준비합니다.",
     fallback: "외부 AI 응답 실패 시 로컬 분석으로 대체했습니다.",
@@ -131,39 +132,16 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
 
           <section className="coach-section card">
             <div className="coach-section-head">
-              <ClipboardList size={19} />
-              <strong>분야별 지출 흐름</strong>
-            </div>
-            <div className="category-bars">
-              {categorySummaries.length === 0 ? (
-                <div className="empty-line">소비 데이터가 들어오면 카테고리 흐름이 표시됩니다.</div>
-              ) : (
-                categorySummaries.slice(0, 5).map((item) => (
-                  <div className="category-bar" key={item.category}>
-                    <span>
-                      <strong>{item.category}</strong>
-                      <small>{Math.round(item.ratio)}%</small>
-                    </span>
-                    <div className="bar-track">
-                      <span className={`bar-fill is-${item.status}`} style={{ width: `${Math.min(100, item.ratio)}%` }} />
-                    </div>
-                    <strong>{formatWon(item.amount)}</strong>
-                  </div>
-                ))
-              )}
-            </div>
-          </section>
-
-          <section className="coach-section card">
-            <div className="coach-section-head">
               <WalletCards size={19} />
-              <strong>구독 점검</strong>
+              <strong>정기 결제 점검</strong>
             </div>
             <div className="subscription-list">
               {subscriptionCandidates.length === 0 ? (
                 <div className="empty-line">구독 후보가 없습니다.</div>
+              ) : attentionSubscriptions.length === 0 ? (
+                <div className="empty-line">정기 결제는 현재 상한 안에서 안정적입니다.</div>
               ) : (
-                subscriptionCandidates.map((item) => (
+                attentionSubscriptions.map((item) => (
                   <article className="subscription-row" key={item.merchant}>
                     <span>
                       <strong>{item.merchant}</strong>

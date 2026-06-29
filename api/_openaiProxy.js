@@ -169,7 +169,7 @@ export const coachReportSchema = {
     },
     categoryPlans: {
       type: "array",
-      maxItems: 4,
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,

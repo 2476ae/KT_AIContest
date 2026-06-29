@@ -24,6 +24,16 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
     : summary.isAdjusted
       ? `초기 목표 ${formatWon(state.goal.spendingLimit)}을 넘겨 ${formatWon(summary.adjustedSpendingLimit)}까지 현실 조정했습니다.`
       : "목표 소비액 안에서 남은 조정 여력입니다.";
+  const subscriptionPressure = state.goal.subscriptionLimit > 0 ? summary.subscriptionTotal / state.goal.subscriptionLimit : 0;
+  const subscriptionSpendingRatio = state.goal.spendingLimit > 0 ? summary.subscriptionTotal / state.goal.spendingLimit : 0;
+  const subscriptionCardText =
+    summary.subscriptionTotal === 0
+      ? "정기 결제가 확인되면 이곳에 표시됩니다."
+      : subscriptionPressure >= 1 && subscriptionSpendingRatio >= 0.12
+        ? `상한 ${formatWon(state.goal.subscriptionLimit)}을 넘어 사용 빈도 확인이 필요합니다.`
+        : subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12
+          ? `상한 ${formatWon(state.goal.subscriptionLimit)}에 가까워 가볍게 점검해보세요.`
+          : "전체 예산 대비 안정적인 수준입니다.";
 
   return (
     <>
@@ -150,7 +160,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
         <article className="mini-card card">
           <span className="mini-card-title">구독 지출</span>
           <strong className="mini-card-value">{formatWon(summary.subscriptionTotal)}</strong>
-          <p className="mini-card-text">구독 상한 {formatWon(state.goal.subscriptionLimit)} 기준으로 점검합니다.</p>
+          <p className="mini-card-text">{subscriptionCardText}</p>
         </article>
         <article className={`mini-card card${isOverBudget ? " is-over" : ""}`}>
           <span className="mini-card-title">{remainingFlowLabel}</span>

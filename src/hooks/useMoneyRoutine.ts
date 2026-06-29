@@ -146,7 +146,7 @@ export function useMoneyRoutine() {
     const summary = getSummary(monthTransactions, state.goal, state.calendarMonth);
     const calendarDays = getCalendarDays(monthTransactions, state.goal, state.calendarMonth);
     const categorySummaries = getCategorySummaries(monthTransactions);
-    const subscriptionCandidates = getSubscriptionCandidates(monthTransactions);
+    const subscriptionCandidates = getSubscriptionCandidates(monthTransactions, state.goal);
     const selectedDay = calendarDays.find((day) => day.date === state.selectedDate) ?? calendarDays.find((day) => day.isCurrentMonth);
     const recentTransactions = [...monthTransactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
 

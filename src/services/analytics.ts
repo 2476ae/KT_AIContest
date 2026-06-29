@@ -175,21 +175,37 @@ export function getCategorySummaries(transactions: Transaction[]): CategorySumma
     .sort((a, b) => b.amount - a.amount);
 }
 
-export function getSubscriptionCandidates(transactions: Transaction[]): SubscriptionCandidate[] {
+export function getSubscriptionCandidates(transactions: Transaction[], goal?: Goal): SubscriptionCandidate[] {
   const grouped = transactions.reduce<Record<string, Transaction[]>>((record, transaction) => {
     if (transaction.isSubscription || transaction.category === "구독") {
       record[transaction.merchant] = [...(record[transaction.merchant] ?? []), transaction];
     }
     return record;
   }, {});
+  const subscriptionTotal = Object.values(grouped)
+    .flat()
+    .reduce((sum, transaction) => sum + transaction.amount, 0);
+  const subscriptionLimit = goal?.subscriptionLimit ?? 0;
+  const limitRatio = subscriptionLimit > 0 ? subscriptionTotal / subscriptionLimit : 0;
+  const spendingRatio = goal?.spendingLimit ? subscriptionTotal / goal.spendingLimit : 0;
+  const isOverallFixedCostMeaningful = spendingRatio >= 0.12;
 
   return Object.values(grouped)
     .map((items) => {
       const first = items[0];
       const monthlyAmount = items.reduce((sum, item) => sum + item.amount, 0);
       const paymentDay = toDate(first.date).getDate();
+      const itemLimitRatio = subscriptionLimit > 0 ? monthlyAmount / subscriptionLimit : 0;
+      const itemSpendingRatio = goal?.spendingLimit ? monthlyAmount / goal.spendingLimit : 0;
+      const isLargeItem = itemLimitRatio >= 0.28 && itemSpendingRatio >= 0.045;
+      const isMeaningfulNearLimitItem = limitRatio >= 0.85 && isOverallFixedCostMeaningful && itemLimitRatio >= 0.18;
+      const isOverLimitItem = limitRatio >= 1 && isOverallFixedCostMeaningful && itemLimitRatio >= 0.18;
       const recommendation: SubscriptionCandidate["recommendation"] =
-        monthlyAmount >= 15000 ? "점검" : monthlyAmount >= 11000 ? "해지 검토" : "유지";
+        isOverLimitItem || itemLimitRatio >= 0.36
+          ? "해지 검토"
+          : isMeaningfulNearLimitItem || isLargeItem
+            ? "점검"
+            : "유지";
 
       return {
         merchant: first.merchant,
@@ -197,9 +213,15 @@ export function getSubscriptionCandidates(transactions: Transaction[]): Subscrip
         paymentDay,
         recommendation,
         reason:
-          recommendation === "유지"
-            ? "월 고정비 중 부담이 낮은 편입니다."
-            : "고정 지출 비중을 낮출 여지가 있습니다.",
+          recommendation === "해지 검토"
+            ? limitRatio >= 1
+              ? "구독 상한을 넘어 우선순위 확인이 필요합니다."
+              : "단일 정기 결제 비중이 높아 사용 빈도 확인이 필요합니다."
+            : recommendation === "점검"
+              ? limitRatio >= 0.85
+                ? "구독 상한에 가까워 큰 항목만 확인해보세요."
+                : "단일 정기 결제 비중이 조금 높은 편입니다."
+              : "구독 상한 안에서 안정적으로 유지 중입니다.",
       };
     })
     .sort((a, b) => b.monthlyAmount - a.monthlyAmount);
@@ -231,24 +253,31 @@ function buildMissions(
     });
   }
 
-  const subscription = subscriptions.find((item) => item.recommendation !== "유지");
+  const subscriptionPressure = goal.subscriptionLimit > 0 ? summary.subscriptionTotal / goal.subscriptionLimit : 0;
+  const subscriptionSpendingRatio = goal.spendingLimit > 0 ? summary.subscriptionTotal / goal.spendingLimit : 0;
+  const subscription =
+    subscriptions.find((item) => item.recommendation === "해지 검토") ??
+    (subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12 ? subscriptions.find((item) => item.recommendation === "점검") : undefined);
   if (subscription) {
     missions.push({
       id: "mission-subscription",
-      title: `${subscription.merchant} 점검하기`,
-      reason: "반복 결제는 체감보다 월 예산에 크게 남습니다.",
+      title: `${subscription.merchant} 사용 빈도 확인`,
+      reason: subscriptionPressure >= 1 ? "정기 결제 합계가 구독 상한을 넘었어요." : "정기 결제 합계가 구독 상한에 가까워요.",
       expectedSaving: subscription.monthlyAmount,
-      action: "최근 사용 빈도와 다음 결제일을 함께 확인해보세요.",
+      action: "최근 사용 빈도와 다음 결제일만 확인해보세요.",
       completed: false,
     });
   }
 
   missions.push({
-    id: "mission-no-spend",
-    title: "무지출 하루 만들기",
-    reason: `남은 ${summary.daysLeft}일 동안 하루 예산을 지키기 위한 완충일입니다.`,
-    expectedSaving: Math.min(12000, Math.max(5000, Math.round(summary.dailyBudget * 0.3 / 1000) * 1000)),
-    action: "교통비를 제외한 선택 소비를 하루 쉬어가세요.",
+    id: "mission-daily-budget",
+    title: summary.status === "stable" ? "하루 한도 안에서 쓰기" : "선택 소비 하루 쉬기",
+    reason:
+      summary.status === "stable"
+        ? `오늘은 ${formatWon(summary.dailyBudget)} 안에서 흐름을 유지해요.`
+        : `남은 ${summary.daysLeft}일 동안 하루 예산을 지키기 위한 완충일입니다.`,
+    expectedSaving: Math.min(12000, Math.max(5000, Math.round(summary.dailyBudget * 0.25 / 1000) * 1000)),
+    action: summary.status === "stable" ? "예정된 소비만 기록하고 추가 결제는 한 번 더 확인하세요." : "교통비를 제외한 선택 소비를 하루 쉬어가세요.",
     completed: false,
   });
 
@@ -273,7 +302,10 @@ function getCategoryAction(category: Category) {
 }
 
 function buildCategoryPlans(categories: CategorySummary[]): CategoryPlan[] {
-  return categories.slice(0, 4).map((category) => {
+  const priorityCategories = categories.filter((category) => category.status !== "stable");
+  const visibleCategories = priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 2);
+
+  return visibleCategories.slice(0, 3).map((category) => {
     const savingRate = category.status === "over" ? 0.14 : category.status === "watch" ? 0.09 : 0.05;
     const expectedSaving = Math.max(3000, Math.round(category.amount * savingRate / 1000) * 1000);
     const plannedAmount = Math.max(0, category.amount - expectedSaving);
@@ -293,7 +325,7 @@ function buildCategoryPlans(categories: CategorySummary[]): CategoryPlan[] {
 export function getCoachReport(transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id): CoachReport {
   const summary = getSummary(transactions, goal, monthId);
   const categories = getCategorySummaries(transactions);
-  const subscriptions = getSubscriptionCandidates(transactions);
+  const subscriptions = getSubscriptionCandidates(transactions, goal);
   const focus = getPrimaryFocus(goal, categories);
   const targetSavingGoal = summary.isAdjusted ? summary.adjustedSavingGoal : goal.savingGoal;
   const savingPossibility: CoachReport["savingPossibility"] =
@@ -301,6 +333,8 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
   const status = summary.status;
   const missions = buildMissions(goal, summary, categories, subscriptions);
   const categoryPlans = buildCategoryPlans(categories);
+  const subscriptionPressure = goal.subscriptionLimit > 0 ? summary.subscriptionTotal / goal.subscriptionLimit : 0;
+  const subscriptionSpendingRatio = goal.spendingLimit > 0 ? summary.subscriptionTotal / goal.spendingLimit : 0;
   const focusText = focus ? `${focus.category} 지출` : "선택 소비";
   const todayAction =
     summary.remainingBudget < 0
@@ -324,8 +358,10 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
       focus
         ? `${focus.category}이(가) 이번 달 지출의 ${Math.round(focus.ratio)}%를 차지합니다.`
         : "소비 데이터가 들어오면 우선 조정 항목을 계산합니다.",
-      subscriptions.length > 0
-        ? `구독/반복 결제로 보이는 항목이 ${subscriptions.length}건 있습니다.`
+      subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12
+        ? `정기 결제 합계가 구독 상한의 ${Math.round(subscriptionPressure * 100)}%입니다.`
+        : summary.subscriptionTotal > 0
+          ? "정기 결제는 전체 예산 대비 안정적입니다."
         : "구독으로 보이는 고정 지출은 아직 없습니다.",
       summary.isAdjusted
         ? `목표 저축액은 ${formatWon(goal.savingGoal)}에서 ${formatWon(summary.adjustedSavingGoal)}로 현실 조정했습니다.`
@@ -335,7 +371,9 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
     missions,
     subscriptionAdvice:
       subscriptions.length > 0
-        ? subscriptions.slice(0, 2).map((item) => `${item.merchant}은(는) ${item.paymentDay}일 결제, 월 ${formatWon(item.monthlyAmount)} 수준입니다.`)
+        ? subscriptions
+            .slice(0, subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12 ? 2 : 1)
+            .map((item) => `${item.merchant}은(는) ${item.paymentDay}일 결제, 월 ${formatWon(item.monthlyAmount)} 수준입니다.`)
         : ["구독 후보가 생기면 결제일과 예상 절약액을 함께 보여줄게요."],
     basis: `${monthId} 소비 ${transactions.length}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 목표 저축액 ${formatWon(summary.adjustedSavingGoal)}`,
   };

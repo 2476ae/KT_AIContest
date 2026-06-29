@@ -73,6 +73,16 @@ describe("analytics service", () => {
     expect(subscriptions[0].merchant).toBe("노션AI");
   });
 
+  it("does not over-warn about subscriptions when the fixed-cost ratio is low", () => {
+    const relaxedGoal = { ...DEFAULT_GOAL, subscriptionLimit: 200000 };
+    const subscriptions = getSubscriptionCandidates(transactions, relaxedGoal);
+    const report = getCoachReport(transactions, relaxedGoal, DEMO_MONTH.id);
+
+    expect(subscriptions.every((item) => item.recommendation === "유지")).toBe(true);
+    expect(report.missions.some((mission) => mission.id === "mission-subscription")).toBe(false);
+    expect(report.insights).toContain("정기 결제는 전체 예산 대비 안정적입니다.");
+  });
+
   it("creates coach report display data", () => {
     const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
 
@@ -80,6 +90,7 @@ describe("analytics service", () => {
     expect(report.categoryPlans.length).toBeGreaterThan(0);
     expect(report.categoryPlans[0].expectedSaving).toBeGreaterThan(0);
     expect(report.missions.length).toBeGreaterThanOrEqual(2);
+    expect(report.missions.some((mission) => mission.id === "mission-subscription")).toBe(false);
     expect(report.subscriptionAdvice[0]).toContain("월");
   });
 

@@ -11,7 +11,8 @@
 - 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 로컬 미리보기 결과를 사용해 초기 렌더 외부 호출을 막는다.
 - 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
 - 월 목표 소비액을 초과해도 하루 권장 한도를 즉시 0원으로 고정하지 않는다. `getSummary`가 월수입, 목표 저축액, 남은 일수를 기준으로 `현실 조정 목표`와 `조정 저축 목표`를 계산하고, 이 로컬 계산값이 OpenAI 문구보다 우선한다.
-- 코치 리포트는 `categoryPlans`로 분야별 소비 계획 카드를 제공한다. 긴 문장은 provider 검증 단계에서 잘라 카드 UI를 보호한다.
+- 코치 리포트는 `categoryPlans`로 분야별 소비 계획 카드를 최대 3개 제공한다. 긴 문장은 provider 검증 단계에서 잘라 카드 UI를 보호한다.
+- 정기 결제 조언은 `subscriptionLimit`만 보지 않고 전체 소비 목표 대비 비중도 함께 본다. 전체 예산에서 부담이 낮으면 구독 해지/점검을 핵심 미션으로 강조하지 않는다.
 - 기존 동기 API(`classifyTransactionResponse`, `createCoachReportResponse`)는 로컬/테스트 호환용으로 유지한다.
 - 외부 AI provider가 실패하면 로컬 규칙 기반 결과로 fallback되어 거래 저장과 화면 렌더링이 계속된다.
 
