@@ -10,9 +10,9 @@
   <rect x="171" y="294" width="50" height="50" rx="14" fill="#EAF2FF"/>
   <rect x="243" y="294" width="50" height="50" rx="14" fill="#00A878"/>
   <rect x="315" y="294" width="50" height="50" rx="14" fill="#FFF5DF"/>
-  <circle cx="358" cy="348" r="82" fill="#00A878"/>
-  <circle cx="358" cy="348" r="58" fill="#E7F8F1"/>
-  <path d="M307 321H328L338 365L350 321H367L378 365L388 321H409L390 392H372L358 346L344 392H326L307 321Z" fill="#00A878"/>
-  <path d="M314 344H402" stroke="#00A878" stroke-width="15" stroke-linecap="round"/>
-  <path d="M320 368H396" stroke="#00A878" stroke-width="15" stroke-linecap="round"/>
+  <circle cx="382" cy="348" r="82" fill="#00A878"/>
+  <circle cx="382" cy="348" r="58" fill="#E7F8F1"/>
+  <path d="M331 321H352L362 365L374 321H391L402 365L412 321H433L414 392H396L382 346L368 392H350L331 321Z" fill="#00A878"/>
+  <path d="M338 344H426" stroke="#00A878" stroke-width="15" stroke-linecap="round"/>
+  <path d="M344 368H420" stroke="#00A878" stroke-width="15" stroke-linecap="round"/>
 </svg>
