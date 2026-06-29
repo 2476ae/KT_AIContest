@@ -10,7 +10,7 @@
 - 일반 빌드: `npm run build`
 - GitHub Pages 빌드: `npm run build:github-pages`
 
-2026-06-29 확인 결과, `https://2476ae.github.io/KT_AIContest/`는 아직 404를 반환한다. 이는 저장소의 GitHub Pages Source가 아직 활성화되지 않았기 때문이다.
+2026-06-29 기준 저장소 이름은 `2476ae/KT_AIContest`이고, GitHub Pages Source는 GitHub Actions로 설정되어 있다. 배포 workflow가 성공하면 `https://2476ae.github.io/KT_AIContest/`에서 확인한다.
 
 ## 1. GitHub Pages 활성화
 
