@@ -20,7 +20,7 @@ const bottomTabs: Array<{ id: TabId; label: string; icon: LucideIcon }> = [
   { id: "settings", label: "설정", icon: Settings },
 ];
 
-const appIconSrc = `${import.meta.env.BASE_URL}money-routine-icon-192.png`;
+const appIconSrc = `${import.meta.env.BASE_URL}money-routine-icon-v2-192.png`;
 
 export function AppShell({ children, state, actions }: AppShellProps) {
   return (

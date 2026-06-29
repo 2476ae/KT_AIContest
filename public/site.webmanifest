@@ -9,19 +9,19 @@
   "theme_color": "#2478FF",
   "icons": [
     {
-      "src": "./money-routine-icon.svg",
+      "src": "./money-routine-icon-v2.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
     },
     {
-      "src": "./money-routine-icon-192.png",
+      "src": "./money-routine-icon-v2-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./money-routine-icon-512.png",
+      "src": "./money-routine-icon-v2-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
