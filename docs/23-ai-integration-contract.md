@@ -128,6 +128,9 @@ window.dispatchEvent(new CustomEvent("money-routine:financial-transactions", {
 - `src/services/appState.ts`의 `syncFinancialFeedState`가 `source + externalId` 기반 안정 ID로 병합한다.
 - 같은 거래가 다시 들어오면 중복 추가가 아니라 기존 거래 업데이트로 처리한다.
 - 입금 거래(`direction: "credit"`)는 소비 내역에 반영하지 않는다.
+- 단일 거래는 `detail.transaction`, 여러 거래는 `detail.transactions`로 받을 수 있다.
+- 한 이벤트는 최대 200건까지 처리하고, 잘못된 날짜/금액/사용처와 과도한 단일 금액은 건너뛴다.
+- 브라우저 저장소 과부하를 막기 위해 병합 후 최근 1,200건 중심으로 유지한다.
 - 반영 후 홈, 캘린더, 알림, AI 코치 로컬 미리보기 계산이 즉시 갱신된다.
 - 실시간 거래 반영만으로는 OpenAI API를 자동 호출하지 않는다. AI 코치 외부 분석은 여전히 사용자의 `OpenAI 분석 업데이트` 클릭에서만 실행된다.
 

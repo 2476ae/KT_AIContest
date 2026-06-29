@@ -3,6 +3,7 @@ import { DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
 import { alignCoachReportBudgetFields, getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
 import {
+  applyFinancialFeedTransactionsState,
   applyImportedTransactionsState,
   addTransactionState,
   deleteTransactionState,
@@ -14,7 +15,6 @@ import {
   resetGoalState,
   setActiveTabState,
   setSelectedDateState,
-  syncFinancialFeedState,
   updateGoalState,
   updateTransactionState,
 } from "../services/appState";
@@ -29,21 +29,22 @@ import {
 import { COACH_AI_DEBOUNCE_MS, createCoachReportCacheKey, shouldRequestCoachReportAi } from "../services/aiRequestPolicy";
 import { transactionsToCsv } from "../services/csv";
 import { getMonthId } from "../services/date";
-import type { FinancialFeedTransactionInput } from "../services/financialFeed";
+import { normalizeFinancialFeedTransactions, type FinancialFeedTransactionInput } from "../services/financialFeed";
 import type { AppState, CoachReport, Goal, TabId, Transaction } from "../types";
 
 interface FinancialFeedEventDetail {
   source?: string;
+  transaction?: FinancialFeedTransactionInput;
   transactions?: FinancialFeedTransactionInput[];
 }
 
 function readStoredState(): AppState {
-  const stored = window.localStorage.getItem(DEMO_MONTH.storageKey);
-  if (!stored) {
-    return INITIAL_APP_STATE;
-  }
-
   try {
+    const stored = window.localStorage.getItem(DEMO_MONTH.storageKey);
+    if (!stored) {
+      return INITIAL_APP_STATE;
+    }
+
     return mergeStoredState(JSON.parse(stored));
   } catch {
     return INITIAL_APP_STATE;
@@ -51,7 +52,11 @@ function readStoredState(): AppState {
 }
 
 function persistState(state: AppState) {
-  window.localStorage.setItem(DEMO_MONTH.storageKey, JSON.stringify(state));
+  try {
+    window.localStorage.setItem(DEMO_MONTH.storageKey, JSON.stringify(state));
+  } catch (error) {
+    console.warn("머니루틴 상태를 브라우저 저장소에 저장하지 못했습니다.", error);
+  }
 }
 
 export function useMoneyRoutine() {
@@ -79,7 +84,12 @@ export function useMoneyRoutine() {
   }, [updateState]);
 
   const resetAll = useCallback(() => {
-    window.localStorage.removeItem(DEMO_MONTH.storageKey);
+    try {
+      window.localStorage.removeItem(DEMO_MONTH.storageKey);
+    } catch (error) {
+      console.warn("머니루틴 저장 상태를 삭제하지 못했습니다.", error);
+    }
+
     setState(INITIAL_APP_STATE);
   }, []);
 
@@ -147,16 +157,15 @@ export function useMoneyRoutine() {
   );
 
   const syncFinancialFeed = useCallback((transactions: FinancialFeedTransactionInput[], source = "financial-feed") => {
-    let syncResult: ReturnType<typeof syncFinancialFeedState> | undefined;
-
+    const result = normalizeFinancialFeedTransactions(transactions, source);
     setState((current) => {
-      syncResult = syncFinancialFeedState(current, transactions, source);
-      persistState(syncResult.state);
-      return syncResult.state;
+      const next = applyFinancialFeedTransactionsState(current, result.transactions);
+      persistState(next);
+      return next;
     });
 
-    return syncResult ?? syncFinancialFeedState(state, [], source);
-  }, [state]);
+    return result;
+  }, []);
 
   const exportCsv = useCallback(() => transactionsToCsv(state.transactions), [state.transactions]);
 
@@ -164,11 +173,13 @@ export function useMoneyRoutine() {
     function handleFinancialFeedEvent(event: Event) {
       const detail = (event as CustomEvent<FinancialFeedEventDetail>).detail;
 
-      if (!detail || !Array.isArray(detail.transactions)) {
+      const transactions = Array.isArray(detail?.transactions) ? detail.transactions : detail?.transaction ? [detail.transaction] : [];
+
+      if (transactions.length === 0) {
         return;
       }
 
-      syncFinancialFeed(detail.transactions, detail.source);
+      syncFinancialFeed(transactions, detail?.source);
     }
 
     window.addEventListener("money-routine:financial-transactions", handleFinancialFeedEvent);

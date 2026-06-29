@@ -13,6 +13,22 @@ export const INITIAL_APP_STATE: AppState = {
   hasLoadedSample: false,
 };
 
+const MAX_STORED_TRANSACTIONS = 1200;
+
+function sortTransactionsByDate(transactions: Transaction[]) {
+  return [...transactions].sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function keepLatestTransactions(transactions: Transaction[]) {
+  const sorted = sortTransactionsByDate(transactions);
+
+  if (sorted.length <= MAX_STORED_TRANSACTIONS) {
+    return sorted;
+  }
+
+  return sorted.slice(sorted.length - MAX_STORED_TRANSACTIONS);
+}
+
 export function mergeStoredState(stored: unknown): AppState {
   if (!stored || typeof stored !== "object") {
     return INITIAL_APP_STATE;
@@ -139,9 +155,17 @@ export function applyImportedTransactionsState(
 }
 
 function mergeTransactions(current: Transaction[], incoming: Transaction[]) {
-  return [...current.filter((item) => !incoming.some((transaction) => transaction.id === item.id)), ...incoming].sort((a, b) =>
-    a.date.localeCompare(b.date),
-  );
+  const mergedById = new Map<string, Transaction>();
+
+  current.forEach((transaction) => {
+    mergedById.set(transaction.id, transaction);
+  });
+
+  incoming.forEach((transaction) => {
+    mergedById.set(transaction.id, transaction);
+  });
+
+  return keepLatestTransactions([...mergedById.values()]);
 }
 
 export function applyFinancialFeedTransactionsState(
