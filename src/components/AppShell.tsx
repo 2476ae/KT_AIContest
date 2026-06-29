@@ -20,13 +20,15 @@ const bottomTabs: Array<{ id: TabId; label: string; icon: LucideIcon }> = [
   { id: "settings", label: "설정", icon: Settings },
 ];
 
+const appIconSrc = `${import.meta.env.BASE_URL}money-routine-icon-192.png`;
+
 export function AppShell({ children, state, actions }: AppShellProps) {
   return (
     <main className="app-shell">
       <div className="app-page">
         <header className="topbar">
           <button className="brand-lockup" type="button" onClick={() => actions.setActiveTab("home")}>
-            <span className="brand-mark">M</span>
+            <img className="brand-mark" src={appIconSrc} alt="" aria-hidden="true" />
             <span className="brand-copy">
               <span className="brand-title">머니루틴</span>
               <span className="brand-subtitle">소비 캘린더 · 목표 코치</span>

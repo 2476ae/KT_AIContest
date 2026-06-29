@@ -106,16 +106,13 @@ button:disabled {
 }
 
 .brand-mark {
-  display: grid;
-  width: 34px;
-  height: 34px;
+  display: block;
+  width: 38px;
+  height: 38px;
   flex: 0 0 auto;
-  place-items: center;
-  border-radius: var(--radius);
-  background: var(--primary);
-  color: #ffffff;
-  font-size: 19px;
-  font-weight: 900;
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(36, 120, 255, 0.18);
+  object-fit: cover;
 }
 
 .brand-copy {
@@ -150,7 +147,7 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 34px;
+  min-height: 40px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -169,7 +166,7 @@ button:disabled {
 
 .icon-button {
   position: relative;
-  width: 34px;
+  width: 40px;
 }
 
 .notification-dot {
@@ -216,6 +213,9 @@ button:disabled {
 }
 
 .goal-chip {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
   flex: 0 0 auto;
   padding: 8px 10px;
   border-radius: var(--radius);
@@ -409,7 +409,11 @@ button:disabled {
 }
 
 .text-button {
-  padding: 0;
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 2px;
   background: transparent;
 }
 
@@ -468,7 +472,7 @@ button:disabled {
 .calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  gap: 4px;
 }
 
 .weekdays {
@@ -1495,6 +1499,22 @@ button:disabled {
 }
 
 @media (max-width: 430px) {
+  .chip-button,
+  .icon-button,
+  .goal-chip,
+  .filter-chip,
+  .category-pill,
+  .month-switcher button,
+  .segmented-control button,
+  .text-button {
+    min-height: 44px;
+  }
+
+  .icon-button,
+  .month-switcher button {
+    width: 44px;
+  }
+
   .form-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1542,6 +1562,11 @@ button:disabled {
 
   .bottom-nav {
     width: min(760px, calc(100% - 48px));
+  }
+
+  .weekdays,
+  .calendar-grid {
+    gap: 6px;
   }
 
   .hero-card,
