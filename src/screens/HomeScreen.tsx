@@ -11,13 +11,19 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   const hasData = state.transactions.length > 0;
   const progress = Math.min(100, Math.round(summary.progress));
   const isOverBudget = summary.remainingBudget < 0;
-  const guideAmountLabel = isOverBudget ? "목표 초과 금액" : "오늘 권장 한도";
+  const guideAmountLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 한도" : "오늘 권장 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.dailyBudget;
-  const remainingFlowLabel = isOverBudget ? "목표 초과" : "잔액 흐름";
+  const savingLabel = summary.isAdjusted ? "조정 저축 목표" : "저축 예상";
+  const savingAmount = summary.isAdjusted ? summary.adjustedSavingGoal : summary.savingProjection;
+  const goalChipLabel = summary.isAdjusted ? "현실 목표" : "월 목표";
+  const goalChipAmount = summary.isAdjusted ? summary.adjustedSpendingLimit : state.goal.spendingLimit;
+  const remainingFlowLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 여력" : "잔액 흐름";
   const remainingFlowAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.remainingBudget;
   const remainingFlowText = isOverBudget
-    ? "목표 소비액을 넘긴 금액입니다. 이번 주는 필수 지출만 남겨두세요."
-    : "목표 소비액 안에서 남은 조정 여력입니다.";
+    ? "월수입 기준 조정 한도도 넘긴 금액입니다. 이번 주는 필수 지출만 남겨두세요."
+    : summary.isAdjusted
+      ? `초기 목표 ${formatWon(state.goal.spendingLimit)}을 넘겨 ${formatWon(summary.adjustedSpendingLimit)}까지 현실 조정했습니다.`
+      : "목표 소비액 안에서 남은 조정 여력입니다.";
 
   return (
     <>
@@ -30,7 +36,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
             <h1 className="hero-amount">{hasData ? formatWon(summary.totalSpent) : "0원"}</h1>
           </div>
           <button className="goal-chip" type="button" onClick={() => actions.setActiveTab("goals")} data-testid="home-goal-chip">
-            월 목표 {formatWon(state.goal.spendingLimit)}
+            {goalChipLabel} {formatWon(goalChipAmount)}
           </button>
         </div>
 
@@ -61,8 +67,8 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
                 <span className="metric-value">{formatWon(guideAmount)}</span>
               </div>
               <div className="metric-tile">
-                <span className="metric-label">저축 예상</span>
-                <span className="metric-value">{formatWon(summary.savingProjection)}</span>
+                <span className="metric-label">{savingLabel}</span>
+                <span className="metric-value">{formatWon(savingAmount)}</span>
               </div>
               <div className="metric-tile">
                 <span className="metric-label">고정 구독비</span>
@@ -136,7 +142,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
 
       <div className="section-title">
         <h2>이번 주 조정 미션</h2>
-        <span>목표 저축 {formatWon(state.goal.savingGoal)}</span>
+        <span>{summary.isAdjusted ? "조정 저축" : "목표 저축"} {formatWon(summary.isAdjusted ? summary.adjustedSavingGoal : state.goal.savingGoal)}</span>
       </div>
       <MissionList missions={coachReport.missions} compact />
 

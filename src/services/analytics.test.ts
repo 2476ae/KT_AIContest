@@ -15,16 +15,46 @@ describe("analytics service", () => {
     expect(summary.dailyBudget).toBe(322210);
   });
 
-  it("explains overspending as an exceeded amount", () => {
+  it("creates a realistic adjusted budget after the original target is exceeded", () => {
     const overGoal = { ...DEFAULT_GOAL, spendingLimit: 300000 };
     const summary = getSummary(transactions, overGoal, DEMO_MONTH.id);
     const report = getCoachReport(transactions, overGoal, DEMO_MONTH.id);
 
-    expect(summary.status).toBe("over");
-    expect(summary.remainingBudget).toBeLessThan(0);
-    expect(summary.dailyBudget).toBe(0);
-    expect(report.headline).toContain("초과");
-    expect(report.todayAction).toContain("초과");
+    expect(summary.status).toBe("watch");
+    expect(summary.isAdjusted).toBe(true);
+    expect(summary.adjustedSpendingLimit).toBe(407790);
+    expect(summary.remainingBudget).toBe(10000);
+    expect(summary.dailyBudget).toBe(10000);
+    expect(report.headline).toContain("현실 조정 목표");
+    expect(report.todayAction).toContain("사용할 수 있어요");
+  });
+
+  it("keeps a practical daily budget by reducing the saving target within monthly income", () => {
+    const goal = {
+      ...DEFAULT_GOAL,
+      monthlyIncome: 2000000,
+      savingGoal: 1000000,
+      spendingLimit: 1000000,
+    };
+    const heavySpending = [
+      {
+        id: "tx-heavy",
+        date: "2026-06-25",
+        merchant: "생활비",
+        amount: 1100000,
+        memo: "목표 초과",
+        paymentType: "card" as const,
+        category: "생활" as const,
+        isSubscription: false,
+      },
+    ];
+    const summary = getSummary(heavySpending, goal, DEMO_MONTH.id);
+
+    expect(summary.isAdjusted).toBe(true);
+    expect(summary.adjustedSpendingLimit).toBe(1200000);
+    expect(summary.adjustedSavingGoal).toBe(800000);
+    expect(summary.daysLeft).toBe(5);
+    expect(summary.dailyBudget).toBe(20000);
   });
 
   it("builds a full month calendar grid", () => {

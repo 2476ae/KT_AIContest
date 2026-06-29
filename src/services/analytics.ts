@@ -42,17 +42,53 @@ export function getDaysLeft(transactions: Transaction[], monthId = DEMO_MONTH.id
   return Math.max(diff, 1);
 }
 
+function getPracticalDailyBudget(goal: Goal) {
+  const raw = goal.spendingLimit * 0.02;
+  const clamped = Math.min(30000, Math.max(10000, raw));
+
+  return Math.round(clamped / 1000) * 1000;
+}
+
+function getAdjustedBudgetTarget(totalSpent: number, goal: Goal, daysLeft: number) {
+  const originalRemainingBudget = goal.spendingLimit - totalSpent;
+
+  if (originalRemainingBudget >= 0) {
+    return {
+      adjustedSavingGoal: goal.savingGoal,
+      adjustedSpendingLimit: goal.spendingLimit,
+      isAdjusted: false,
+      remainingBudget: originalRemainingBudget,
+    };
+  }
+
+  const incomeCap = Math.max(0, goal.monthlyIncome);
+  const savingConcessionLimit = goal.spendingLimit + Math.max(0, goal.savingGoal * 0.2);
+  const practicalLimit = totalSpent + getPracticalDailyBudget(goal) * daysLeft;
+  const requestedLimit = Math.max(goal.spendingLimit, totalSpent, savingConcessionLimit, practicalLimit);
+  const adjustedSpendingLimit = incomeCap > 0 ? Math.min(incomeCap, requestedLimit) : requestedLimit;
+
+  return {
+    adjustedSavingGoal: Math.max(0, incomeCap - adjustedSpendingLimit),
+    adjustedSpendingLimit,
+    isAdjusted: adjustedSpendingLimit > goal.spendingLimit,
+    remainingBudget: adjustedSpendingLimit - totalSpent,
+  };
+}
+
 export function getSummary(transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id): Summary {
   const totalSpent = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   const subscriptionTotal = transactions
     .filter((transaction) => transaction.isSubscription || transaction.category === "구독")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
   const progress = goal.spendingLimit > 0 ? (totalSpent / goal.spendingLimit) * 100 : 0;
-  const remainingBudget = goal.spendingLimit - totalSpent;
   const daysLeft = getDaysLeft(transactions, monthId);
+  const originalRemainingBudget = goal.spendingLimit - totalSpent;
+  const originalDailyBudget = Math.max(0, Math.floor(originalRemainingBudget / daysLeft));
+  const adjustedTarget = getAdjustedBudgetTarget(totalSpent, goal, daysLeft);
+  const remainingBudget = adjustedTarget.remainingBudget;
   const dailyBudget = Math.max(0, Math.floor(remainingBudget / daysLeft));
   const savingProjection = Math.max(0, goal.monthlyIncome - totalSpent);
-  const status: BudgetStatus = progress >= 100 ? "over" : progress >= 78 ? "watch" : "stable";
+  const status: BudgetStatus = remainingBudget < 0 ? "over" : adjustedTarget.isAdjusted || progress >= 78 ? "watch" : "stable";
 
   return {
     totalSpent,
@@ -63,6 +99,11 @@ export function getSummary(transactions: Transaction[], goal: Goal, monthId = DE
     savingProjection,
     subscriptionTotal,
     status,
+    isAdjusted: adjustedTarget.isAdjusted,
+    adjustedSpendingLimit: adjustedTarget.adjustedSpendingLimit,
+    adjustedSavingGoal: adjustedTarget.adjustedSavingGoal,
+    originalRemainingBudget,
+    originalDailyBudget,
   };
 }
 
@@ -218,21 +259,26 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
   const categories = getCategorySummaries(transactions);
   const subscriptions = getSubscriptionCandidates(transactions);
   const focus = getPrimaryFocus(goal, categories);
+  const targetSavingGoal = summary.isAdjusted ? summary.adjustedSavingGoal : goal.savingGoal;
   const savingPossibility: CoachReport["savingPossibility"] =
-    summary.savingProjection >= goal.savingGoal ? "높음" : summary.savingProjection >= goal.savingGoal * 0.75 ? "보통" : "낮음";
+    summary.savingProjection >= targetSavingGoal ? "높음" : summary.savingProjection >= targetSavingGoal * 0.75 ? "보통" : "낮음";
   const status = summary.status;
   const missions = buildMissions(goal, summary, categories, subscriptions);
   const focusText = focus ? `${focus.category} 지출` : "선택 소비";
   const todayAction =
     summary.remainingBudget < 0
-      ? `목표를 ${formatWon(Math.abs(summary.remainingBudget))} 초과했어요. 오늘은 필수 지출만 남기고 추가 결제를 멈춰보세요.`
+      ? `월수입 기준으로도 남은 한도가 부족해요. 오늘은 필수 지출만 남기고 추가 결제를 멈춰보세요.`
+      : summary.isAdjusted
+        ? `초기 목표를 ${formatWon(Math.abs(summary.originalRemainingBudget))} 넘겼지만, 저축 목표를 ${formatWon(summary.adjustedSavingGoal)}로 조정하면 오늘 ${formatWon(summary.dailyBudget)}까지는 사용할 수 있어요.`
       : `${focusText}을 이번 주 한 번만 줄이면 목표 저축에 더 가까워져요.`;
 
   return {
     headline:
-      summary.remainingBudget >= 0
+      summary.isAdjusted
+        ? `초기 목표 ${formatWon(goal.spendingLimit)}을 넘겨 현실 조정 목표를 ${formatWon(summary.adjustedSpendingLimit)}로 다시 잡았어요.`
+        : summary.remainingBudget >= 0
         ? `남은 ${summary.daysLeft}일 동안 하루 ${formatWon(summary.dailyBudget)} 안에서 쓰면 목표 소비액 안에 머물 수 있어요.`
-        : `목표 소비액을 ${formatWon(Math.abs(summary.remainingBudget))} 초과했어요. 이번 주는 고정비보다 선택 소비 조정이 먼저예요.`,
+        : `월수입 기준 조정 한도도 ${formatWon(Math.abs(summary.remainingBudget))} 부족해요. 이번 주는 고정비보다 선택 소비 조정이 먼저예요.`,
     status,
     dailyBudget: summary.dailyBudget,
     savingPossibility,
@@ -244,14 +290,16 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
       subscriptions.length > 0
         ? `구독/반복 결제로 보이는 항목이 ${subscriptions.length}건 있습니다.`
         : "구독으로 보이는 고정 지출은 아직 없습니다.",
-      `목표 저축액 ${formatWon(goal.savingGoal)} 기준 현재 예상 저축은 ${formatWon(summary.savingProjection)}입니다.`,
+      summary.isAdjusted
+        ? `목표 저축액은 ${formatWon(goal.savingGoal)}에서 ${formatWon(summary.adjustedSavingGoal)}로 현실 조정했습니다.`
+        : `목표 저축액 ${formatWon(goal.savingGoal)} 기준 현재 예상 저축은 ${formatWon(summary.savingProjection)}입니다.`,
     ],
     missions,
     subscriptionAdvice:
       subscriptions.length > 0
         ? subscriptions.slice(0, 2).map((item) => `${item.merchant}은(는) ${item.paymentDay}일 결제, 월 ${formatWon(item.monthlyAmount)} 수준입니다.`)
         : ["구독 후보가 생기면 결제일과 예상 절약액을 함께 보여줄게요."],
-    basis: `${monthId} 소비 ${transactions.length}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 목표 저축액 ${formatWon(goal.savingGoal)}`,
+    basis: `${monthId} 소비 ${transactions.length}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 목표 저축액 ${formatWon(summary.adjustedSavingGoal)}`,
   };
 }
 

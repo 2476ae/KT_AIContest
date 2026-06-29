@@ -91,6 +91,11 @@ export interface Summary {
   savingProjection: number;
   subscriptionTotal: number;
   status: BudgetStatus;
+  isAdjusted: boolean;
+  adjustedSpendingLimit: number;
+  adjustedSavingGoal: number;
+  originalRemainingBudget: number;
+  originalDailyBudget: number;
 }
 
 export interface AppState {

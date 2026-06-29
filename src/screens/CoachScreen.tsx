@@ -17,11 +17,13 @@ function statusCopy(status: BudgetStatus) {
 export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const { categorySummaries, coachReport, coachResponse, subscriptionCandidates, summary } = computed;
   const isOverBudget = summary.remainingBudget < 0;
-  const guideAmountLabel = isOverBudget ? "목표 초과 금액" : "오늘 권장 사용 한도";
+  const guideAmountLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 하루 한도" : "오늘 권장 사용 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : coachReport.dailyBudget;
   const guideHelpText = isOverBudget
-    ? "이미 월 목표를 넘겼어요. 오늘은 필수 지출만 남기고 추가 소비를 멈추는 게 좋아요."
-    : "월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액";
+    ? "월수입 기준 조정 한도도 부족해요. 오늘은 필수 지출만 남기는 게 좋아요."
+    : summary.isAdjusted
+      ? `저축 목표를 ${formatWon(summary.adjustedSavingGoal)}로 낮춰 잡은 현실적 하루 한도`
+      : "월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액";
   const isAiLoading = coachResponse.status === "loading";
   const aiStatusCopy = {
     error: "AI 응답을 표시하지 못했습니다. 안전한 대체 결과를 준비합니다.",
