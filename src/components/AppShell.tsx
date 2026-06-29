@@ -1,7 +1,8 @@
-import { Bell, Bot, CalendarDays, Home, Plus, Settings, ShieldCheck, Target } from "lucide-react";
+import { Bell, Bot, CalendarDays, CheckCircle2, CreditCard, Home, Plus, RefreshCw, Settings, ShieldCheck, Target, WalletCards, X } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { formatWon } from "../services/analytics";
 import { formatMonthLabel } from "../services/date";
 import type { AppState, TabId } from "../types";
 
@@ -23,9 +24,82 @@ const bottomTabs: Array<{ id: TabId; label: string; icon: LucideIcon }> = [
 
 const appIconSrc = `${import.meta.env.BASE_URL}money-routine-icon-v2-192.png`;
 
+interface NotificationItem {
+  id: string;
+  title: string;
+  body: string;
+  meta: string;
+  icon: LucideIcon;
+  tone: "primary" | "subscription" | "danger" | "saving";
+}
+
+function formatAlertDate(date: string) {
+  const [, month, day] = date.split("-").map(Number);
+  return `${month}월 ${day}일`;
+}
+
+function paymentSource(paymentType: string) {
+  if (paymentType === "transport") {
+    return "교통카드";
+  }
+  if (paymentType === "cash") {
+    return "현금 입력";
+  }
+  if (paymentType === "transfer") {
+    return "계좌 이체";
+  }
+  return "카드 앱";
+}
+
+function buildNotifications(state: AppState): NotificationItem[] {
+  const sortedTransactions = [...state.transactions].sort((a, b) => b.date.localeCompare(a.date));
+
+  if (sortedTransactions.length === 0) {
+    return [];
+  }
+
+  const notifications: NotificationItem[] = [
+    {
+      id: "sync-summary",
+      title: "소비 내역 동기화 완료",
+      body: `${formatMonthLabel(state.calendarMonth)} 소비 ${state.transactions.length}건이 업데이트됐어요.`,
+      meta: "방금 전",
+      icon: RefreshCw,
+      tone: "primary",
+    },
+  ];
+
+  const subscription = sortedTransactions.find((transaction) => transaction.isSubscription);
+  if (subscription) {
+    notifications.push({
+      id: `subscription-${subscription.id}`,
+      title: "정기 결제 감지",
+      body: `${subscription.merchant} ${formatWon(subscription.amount)} 결제가 반영됐어요.`,
+      meta: formatAlertDate(subscription.date),
+      icon: WalletCards,
+      tone: "subscription",
+    });
+  }
+
+  sortedTransactions.slice(0, 5).forEach((transaction) => {
+    notifications.push({
+      id: `transaction-${transaction.id}`,
+      title: `${transaction.merchant} 소비 반영`,
+      body: `${paymentSource(transaction.paymentType)} · ${transaction.category} · ${formatWon(transaction.amount)}`,
+      meta: formatAlertDate(transaction.date),
+      icon: CreditCard,
+      tone: transaction.amount >= 30000 ? "danger" : "saving",
+    });
+  });
+
+  return notifications.slice(0, 7);
+}
+
 export function AppShell({ children, state, actions }: AppShellProps) {
   const [openPanel, setOpenPanel] = useState<"alerts" | "trust" | null>(null);
-  const hasMonthlyAlerts = state.hasLoadedSample || state.transactions.length > 0;
+  const notifications = useMemo(() => buildNotifications(state), [state]);
+  const hasNotifications = notifications.length > 0;
+  const notificationCountLabel = notifications.length > 9 ? "9+" : String(notifications.length);
 
   function togglePanel(panel: "alerts" | "trust") {
     setOpenPanel((current) => (current === panel ? null : panel));
@@ -68,13 +142,13 @@ export function AppShell({ children, state, actions }: AppShellProps) {
               className="icon-button"
               type="button"
               onClick={() => togglePanel("alerts")}
-              aria-label="월간 알림"
-              aria-controls="top-alerts-panel"
+              aria-label="알림 내역"
+              aria-controls="notification-panel"
               aria-expanded={openPanel === "alerts"}
               data-testid="top-notification-button"
             >
               <Bell size={17} />
-              {hasMonthlyAlerts && <span className="notification-dot" />}
+              {hasNotifications && <span className="notification-badge">{notificationCountLabel}</span>}
             </button>
           </div>
 
@@ -93,28 +167,76 @@ export function AppShell({ children, state, actions }: AppShellProps) {
             </section>
           )}
 
-          {openPanel === "alerts" && (
-            <section className="top-popover" id="top-alerts-panel" aria-live="polite" data-testid="top-alerts-panel">
-              <span className="top-popover-icon">
-                <Bell size={19} />
-              </span>
-              <span className="top-popover-copy">
-                <strong>{hasMonthlyAlerts ? "월간 소비 알림" : "확인할 알림 없음"}</strong>
-                <small>
-                  {hasMonthlyAlerts
-                    ? `${formatMonthLabel(state.calendarMonth)} 데이터 ${state.transactions.length}건이 반영되어 코치 분석을 확인할 수 있습니다.`
-                    : "거래를 추가하거나 샘플 데이터를 불러오면 목표 진행 알림이 표시됩니다."}
-                </small>
-              </span>
-              <button className="top-popover-action" type="button" onClick={() => moveFromPanel(hasMonthlyAlerts ? "coach" : "add")}>
-                {hasMonthlyAlerts ? "코치" : "추가"}
-              </button>
-            </section>
-          )}
         </header>
 
         {children}
       </div>
+
+      {openPanel === "alerts" && (
+        <>
+          <button className="notification-backdrop" type="button" aria-label="알림 닫기" onClick={() => setOpenPanel(null)} />
+          <aside className="notification-panel" id="notification-panel" aria-label="알림 내역" data-testid="notification-panel">
+            <div className="notification-panel-head">
+              <span>
+                <strong>알림 내역</strong>
+                <small>연결된 금융앱에서 반영된 소비 업데이트</small>
+              </span>
+              <button className="notification-close" type="button" onClick={() => setOpenPanel(null)} aria-label="알림 닫기">
+                <X size={18} />
+              </button>
+            </div>
+
+            {hasNotifications ? (
+              <>
+                <div className="notification-summary">
+                  <span className="notification-summary-icon">
+                    <CheckCircle2 size={18} />
+                  </span>
+                  <span>
+                    <strong>{notifications.length}개 알림이 있어요</strong>
+                    <small>새 소비가 들어오면 목표와 코치 분석에 자동 반영됩니다.</small>
+                  </span>
+                </div>
+
+                <div className="notification-list">
+                  {notifications.map(({ id, title, body, meta, icon: Icon, tone }) => (
+                    <article className={`notification-item is-${tone}`} key={id}>
+                      <span className="notification-item-icon">
+                        <Icon size={17} />
+                      </span>
+                      <span className="notification-item-copy">
+                        <strong>{title}</strong>
+                        <small>{body}</small>
+                      </span>
+                      <time>{meta}</time>
+                    </article>
+                  ))}
+                </div>
+
+                <div className="notification-actions">
+                  <button className="secondary-button" type="button" onClick={() => moveFromPanel("calendar")}>
+                    캘린더 보기
+                  </button>
+                  <button className="primary-button" type="button" onClick={() => moveFromPanel("coach")}>
+                    코치 확인
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div className="notification-empty">
+                <span className="notification-empty-icon">
+                  <Bell size={22} />
+                </span>
+                <strong>아직 확인할 알림이 없어요</strong>
+                <small>금융앱 연결 또는 소비 내역 추가 후 업데이트 알림이 여기에 표시됩니다.</small>
+                <button className="primary-button" type="button" onClick={() => moveFromPanel("add")}>
+                  내역 추가
+                </button>
+              </div>
+            )}
+          </aside>
+        </>
+      )}
 
       <nav className="bottom-nav" aria-label="하단 내비게이션">
         {bottomTabs.map(({ id, label, icon: Icon }) => {
