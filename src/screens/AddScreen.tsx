@@ -54,17 +54,23 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
     setFormErrors([]);
 
     const parsedAmount = parseMoneyInput(amount);
-    const response = await classifyTransactionResponseAsync({ merchant, memo, isSubscription });
-    const classified = response.data;
-    const resolvedCategory = category === "auto" ? classified.category : category;
+    let resolvedCategory: Category;
+    let classificationReason: string;
+
+    if (category === "auto") {
+      const response = await classifyTransactionResponseAsync({ merchant, memo, isSubscription });
+      const classified = response.data;
+      resolvedCategory = classified.category;
+      classificationReason = `자동 분류됨 · ${classified.reason}`;
+    } else {
+      resolvedCategory = category;
+      classificationReason = "직접 선택됨";
+    }
 
     actions.addTransaction({
       amount: parsedAmount,
       category: resolvedCategory,
-      classificationReason:
-        category === "auto"
-          ? `자동 분류됨 · ${classified.reason}`
-          : `직접 선택됨 · 추천 분류는 ${classified.category}입니다.`,
+      classificationReason,
       date,
       isSubscription,
       memo: memo.trim(),

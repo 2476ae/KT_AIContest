@@ -5,8 +5,8 @@
 - `AiProvider`는 동기 결과와 `Promise` 결과를 모두 받을 수 있다.
 - OpenAI API는 서버 프록시에서만 호출하고, 브라우저에는 API key를 넣지 않는다.
 - 프론트는 `VITE_AI_PROVIDER=openai-proxy` 또는 `VITE_AI_PROXY_BASE_URL`이 있을 때 `openAiProxyProvider`를 등록한다.
-- 직접 입력 화면은 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
-- 코치 AI 리포트는 코치 탭에 진입했을 때만 `createCoachReportResponseAsync`로 호출한다.
+- 직접 입력 화면은 자동 분류를 선택한 저장에서만 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
+- 코치 AI 리포트는 코치 화면의 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
 - 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 로컬 미리보기 결과를 사용해 초기 렌더 외부 호출을 막는다.
 - 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
 - 기존 동기 API(`classifyTransactionResponse`, `createCoachReportResponse`)는 로컬/테스트 호환용으로 유지한다.
@@ -89,16 +89,16 @@ interface AiProvider {
 
 - 기존 동기 래퍼인 `classifyTransactionResponse`, `createCoachReportResponse`는 로컬 provider와 테스트 호환용이다.
 - 비동기 provider를 연결한 상태에서 동기 래퍼를 직접 호출하면 fallback 응답이 반환될 수 있다.
-- 직접 입력 저장은 async 래퍼를 사용한다.
-- 코치 리포트의 외부 AI 호출은 `src/services/aiRequestPolicy.ts` 기준으로 코치 탭에서만 실행된다.
+- 직접 입력 저장은 자동 분류 선택 시에만 async 래퍼를 사용한다.
+- 코치 리포트의 외부 AI 호출은 `src/services/aiRequestPolicy.ts` 기준으로 코치 탭에서 사용자가 명시적으로 요청했을 때만 실행된다.
 
 ## 호출 정책
 
 - 초기 렌더, 홈, 캘린더, 목표, 설정 탭에서는 외부 코치 AI를 호출하지 않는다.
-- 코치 탭에 진입하면 250ms debounce 후 현재 월/목표/거래 입력값으로 리포트를 요청한다.
+- 코치 탭 진입만으로는 외부 AI를 호출하지 않는다. 사용자가 `OpenAI 분석 업데이트` 버튼을 누르면 250ms debounce 후 현재 월/목표/거래 입력값으로 리포트를 요청한다.
 - 같은 provider와 같은 입력값이면 cache된 응답을 재사용한다.
-- 거래 자동 분류는 직접 입력 저장 버튼을 눌렀을 때만 호출한다.
-- CSV import는 거래별 외부 분류를 추가로 호출하지 않고, 코치 탭 진입 시 리포트 요청 대상 데이터만 갱신한다.
+- 거래 자동 분류는 직접 입력에서 `자동 분류`를 선택한 상태로 저장 버튼을 눌렀을 때만 호출한다. 사용자가 카테고리를 직접 선택하면 외부 분류를 호출하지 않는다.
+- CSV import는 거래별 외부 분류를 추가로 호출하지 않고, 코치 리포트 요청 대상 데이터만 갱신한다.
 
 ## 분류 입력
 
@@ -240,13 +240,13 @@ interface AiProviderMetadata {
 1. 서버 프록시 배포 환경에 `OPENAI_API_KEY`를 등록한다.
 2. Vercel 배포에서는 `VITE_AI_PROVIDER=openai-proxy`를 등록하고, GitHub Pages 백업 빌드에서만 `VITE_AI_PROXY_BASE_URL`을 등록한다.
 3. `AI_ALLOWED_ORIGINS`에 실제 제출 origin을 포함한다.
-4. 코치 탭 진입 시 `OpenAI 분석` provider 상태가 표시되는지 확인한다.
+4. 코치 화면에서 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `OpenAI 분석` provider 상태가 표시되는지 확인한다.
 5. API 실패 시 로컬 규칙 fallback이 표시되는지 확인한다.
 
 이미 준비된 항목:
 
 - `MaybePromise` 기반 provider 계약
 - `loading`, `ready`, `fallback`, `error` 상태 표시
-- 직접 입력 저장의 async 분류 대기
-- 코치 화면의 async 리포트 갱신
+- 직접 입력 자동 분류 저장의 async 분류 대기
+- 코치 화면 버튼 기반 async 리포트 갱신
 - provider 실패 시 로컬 규칙 fallback

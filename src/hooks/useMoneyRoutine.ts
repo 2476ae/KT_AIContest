@@ -57,6 +57,7 @@ export function useMoneyRoutine() {
       monthId: INITIAL_APP_STATE.calendarMonth,
     }),
   );
+  const [coachRequestKey, setCoachRequestKey] = useState<string | null>(null);
 
   const updateState = useCallback((updater: (current: AppState) => AppState) => {
     setState((current) => {
@@ -174,10 +175,15 @@ export function useMoneyRoutine() {
     [coachInput],
   );
 
+  const requestCoachReport = useCallback(() => {
+    setCoachRequestKey(coachCacheKey);
+  }, [coachCacheKey]);
+
   useEffect(() => {
     const cachedResponse = coachResponseCache.current.get(coachCacheKey);
+    const isUserRequested = coachRequestKey === coachCacheKey;
 
-    if (!shouldRequestCoachReportAi(state.activeTab)) {
+    if (!shouldRequestCoachReportAi(state.activeTab, isUserRequested)) {
       setCoachResponse(cachedResponse ?? createCoachReportPreviewResponse(coachInput));
       return;
     }
@@ -205,7 +211,7 @@ export function useMoneyRoutine() {
       isCurrent = false;
       window.clearTimeout(timeoutId);
     };
-  }, [coachCacheKey, coachInput, state.activeTab]);
+  }, [coachCacheKey, coachInput, coachRequestKey, state.activeTab]);
 
   const computed = useMemo(
     () => ({
@@ -226,6 +232,7 @@ export function useMoneyRoutine() {
       importCsv,
       loadSample,
       moveCalendarMonth,
+      requestCoachReport,
       resetAll,
       resetGoal,
       setActiveTab,

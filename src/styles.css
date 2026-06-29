@@ -1626,6 +1626,11 @@ button:disabled {
   padding: 14px;
 }
 
+.ai-state-copy {
+  flex: 1;
+  min-width: 0;
+}
+
 .ai-state-card.is-fallback {
   border-color: rgba(246, 166, 35, 0.28);
 }
@@ -1665,6 +1670,28 @@ button:disabled {
   font-size: 12px;
   font-weight: 720;
   line-height: 1.4;
+}
+
+.ai-refresh-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 36px;
+  flex: 0 0 auto;
+  padding: 0 12px;
+  border: 1px solid rgba(36, 120, 255, 0.18);
+  border-radius: var(--radius);
+  background: #fff;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 880;
+  box-shadow: var(--shadow-soft);
+}
+
+.ai-refresh-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.72;
 }
 
 .coach-analysis-shell {
@@ -2038,6 +2065,18 @@ button:disabled {
 
   .form-actions .primary-button {
     grid-column: 1 / -1;
+  }
+
+  .ai-state-card {
+    flex-wrap: wrap;
+  }
+
+  .ai-state-copy {
+    flex-basis: calc(100% - 48px);
+  }
+
+  .ai-refresh-button {
+    width: 100%;
   }
 }
 

@@ -17,13 +17,14 @@ function transaction(amount: number): Transaction {
 }
 
 describe("AI request policy", () => {
-  it("requests coach AI only from the coach tab", () => {
-    expect(shouldRequestCoachReportAi("coach")).toBe(true);
-    expect(shouldRequestCoachReportAi("home")).toBe(false);
-    expect(shouldRequestCoachReportAi("calendar")).toBe(false);
-    expect(shouldRequestCoachReportAi("add")).toBe(false);
-    expect(shouldRequestCoachReportAi("goals")).toBe(false);
-    expect(shouldRequestCoachReportAi("settings")).toBe(false);
+  it("requests coach AI only after an explicit coach-tab request", () => {
+    expect(shouldRequestCoachReportAi("coach", true)).toBe(true);
+    expect(shouldRequestCoachReportAi("coach", false)).toBe(false);
+    expect(shouldRequestCoachReportAi("home", true)).toBe(false);
+    expect(shouldRequestCoachReportAi("calendar", true)).toBe(false);
+    expect(shouldRequestCoachReportAi("add", true)).toBe(false);
+    expect(shouldRequestCoachReportAi("goals", true)).toBe(false);
+    expect(shouldRequestCoachReportAi("settings", true)).toBe(false);
   });
 
   it("creates cache keys from provider and coach input", () => {

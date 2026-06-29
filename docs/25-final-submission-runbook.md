@@ -57,7 +57,7 @@ AI 채팅에 넘길 핵심 기준:
 - OpenAI API key는 `api/ai/classify.js`, `api/ai/coach.js`가 실행되는 서버 프록시 환경에만 둔다.
 - 프론트는 `VITE_AI_PROVIDER=openai-proxy` 설정 시 OpenAI 프록시 provider를 사용한다. Vercel 전체 배포에서는 `VITE_AI_PROXY_BASE_URL`을 비워 같은 도메인의 `/api/ai/*`를 호출하고, GitHub Pages 백업 배포에서만 Vercel 프록시 URL을 지정한다.
 - 프론트는 `Promise` 기반 provider, `loading`, `ready`, `fallback`, `error` 표시 흐름을 이미 받을 수 있다.
-- 초기 렌더와 홈/목표/설정 탭에서는 외부 AI를 호출하지 않고, 코치 탭 진입 후 debounce/cache 정책으로 리포트를 요청한다.
+- 초기 렌더와 홈/목표/설정/코치 탭 진입만으로는 외부 AI를 호출하지 않고, 코치 화면의 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 debounce/cache 정책으로 리포트를 요청한다.
 - 실패 시 화면 전체가 깨지면 안 된다.
 - `ready`, `loading`, `fallback`, `error` 상태가 코치 화면에 자연스럽게 표시되어야 한다.
 - 거래 저장은 AI 실패와 독립적으로 완료되어야 한다.

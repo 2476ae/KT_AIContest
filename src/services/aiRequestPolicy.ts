@@ -3,8 +3,8 @@ import type { TabId } from "../types";
 
 export const COACH_AI_DEBOUNCE_MS = 250;
 
-export function shouldRequestCoachReportAi(activeTab: TabId) {
-  return activeTab === "coach";
+export function shouldRequestCoachReportAi(activeTab: TabId, isUserRequested: boolean) {
+  return activeTab === "coach" && isUserRequested;
 }
 
 export function createCoachReportCacheKey(input: CoachReportInput, providerId: string) {

@@ -1,4 +1,4 @@
-import { AlertTriangle, Bot, CheckCircle2, ClipboardList, Loader2, WalletCards } from "lucide-react";
+import { AlertTriangle, Bot, CheckCircle2, ClipboardList, Loader2, RefreshCw, WalletCards } from "lucide-react";
 import { MissionList } from "../components/MissionList";
 import { formatWon } from "../services/analytics";
 import type { BudgetStatus } from "../types";
@@ -14,7 +14,7 @@ function statusCopy(status: BudgetStatus) {
   return "안정";
 }
 
-export function CoachScreen({ computed }: MoneyRoutineViewModel) {
+export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const { categorySummaries, coachReport, coachResponse, subscriptionCandidates, summary } = computed;
   const isOverBudget = summary.remainingBudget < 0;
   const guideAmountLabel = isOverBudget ? "목표 초과 금액" : "오늘 권장 사용 한도";
@@ -27,7 +27,10 @@ export function CoachScreen({ computed }: MoneyRoutineViewModel) {
     error: "AI 응답을 표시하지 못했습니다. 안전한 대체 결과를 준비합니다.",
     fallback: "외부 AI 응답 실패 시 로컬 분석으로 대체했습니다.",
     loading: "AI 분석 결과를 불러오는 중입니다.",
-    ready: `${coachResponse.provider.label} 결과를 표시하고 있습니다.`,
+    ready:
+      coachResponse.provider.mode === "external"
+        ? `${coachResponse.provider.label} 결과를 표시하고 있습니다.`
+        : "로컬 미리보기를 표시하고 있습니다. 버튼을 누르면 OpenAI 분석을 1회 요청합니다.",
   }[coachResponse.status];
 
   return (
@@ -64,11 +67,21 @@ export function CoachScreen({ computed }: MoneyRoutineViewModel) {
             <span className="ai-state-icon">
               <Bot size={19} />
             </span>
-            <span>
+            <span className="ai-state-copy">
               <strong>AI 분석 연결 상태</strong>
               <small>{aiStatusCopy}</small>
               {coachResponse.error && <small>{coachResponse.error}</small>}
             </span>
+            <button
+              className="ai-refresh-button"
+              type="button"
+              onClick={actions.requestCoachReport}
+              disabled={isAiLoading}
+              data-testid="coach-request-ai-button"
+            >
+              {isAiLoading ? <Loader2 className="spin-icon" size={16} /> : <RefreshCw size={16} />}
+              {isAiLoading ? "분석 중" : "OpenAI 분석 업데이트"}
+            </button>
           </section>
 
           <div className="section-title">
