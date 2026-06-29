@@ -51,6 +51,17 @@ dist
 
 7. Deploy를 누른다.
 
+OpenAI 프록시를 Vercel에서 함께 사용할 경우 Environment Variables에 다음 값을 추가한다.
+
+- `OPENAI_API_KEY`: 서버 전용 OpenAI API key
+- `OPENAI_MODEL`: 선택 사항, 기본값 `gpt-4.1-mini`
+- `AI_ALLOWED_ORIGINS`: `https://2476ae.github.io,http://localhost:5173`
+
+GitHub Pages 프론트에서 이 Vercel 프록시를 호출하려면 GitHub repository Variables에 다음 값을 추가한다.
+
+- `VITE_AI_PROVIDER`: `openai-proxy`
+- `VITE_AI_PROXY_BASE_URL`: Vercel 배포 URL
+
 확인 기준:
 
 - HTTPS URL이 생성된다.

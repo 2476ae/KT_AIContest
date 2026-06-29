@@ -22,7 +22,7 @@ npm run build:github-pages
 npm run verify
 ```
 
-2026-06-29 기준 `npm run verify`는 Vitest 6개 파일, 24개 테스트와 Vite production build를 통과합니다. GitHub Pages 제출 번들은 `npm run build:github-pages`로 확인합니다.
+2026-06-29 기준 `npm run verify`는 Vitest 8개 파일, 29개 테스트와 Vite production build를 통과합니다. GitHub Pages 제출 번들은 `npm run build:github-pages`로 확인합니다.
 
 ## 배포
 
@@ -33,6 +33,23 @@ npm run verify
 - GitHub Pages: `.github/workflows/deploy-github-pages.yml`, `npm run build:github-pages`
 
 GitHub Pages URL은 `https://2476ae.github.io/KT_AIContest/`입니다. 저장소 Settings > Pages에서 Source를 GitHub Actions로 설정하면 `master` 푸시 후 workflow가 배포합니다.
+
+## OpenAI API 연결
+
+브라우저에는 OpenAI API key를 넣지 않습니다. 프론트는 `src/services/openAiProxyProvider.ts`를 통해 서버 프록시만 호출하고, 서버 프록시는 `api/ai/classify.js`, `api/ai/coach.js`에서 OpenAI Responses API를 호출합니다.
+
+프론트 활성화 env:
+
+- `VITE_AI_PROVIDER=openai-proxy`
+- `VITE_AI_PROXY_BASE_URL=https://your-openai-proxy.example.com`
+
+서버 프록시 env:
+
+- `OPENAI_API_KEY`
+- `OPENAI_MODEL` 기본값 `gpt-4.1-mini`
+- `AI_ALLOWED_ORIGINS` 예: `https://2476ae.github.io,http://localhost:5173`
+
+GitHub Pages를 제출 URL로 유지하는 경우 `VITE_AI_PROXY_BASE_URL`은 별도 Vercel/Node 프록시 배포 URL을 바라보게 설정합니다.
 
 ## 프론트엔드 구현 범위
 

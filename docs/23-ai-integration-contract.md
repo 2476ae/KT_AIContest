@@ -3,6 +3,8 @@
 ## 2026-06-29 프론트 준비 상태
 
 - `AiProvider`는 동기 결과와 `Promise` 결과를 모두 받을 수 있다.
+- OpenAI API는 서버 프록시에서만 호출하고, 브라우저에는 API key를 넣지 않는다.
+- 프론트는 `VITE_AI_PROVIDER=openai-proxy` 또는 `VITE_AI_PROXY_BASE_URL`이 있을 때 `openAiProxyProvider`를 등록한다.
 - 직접 입력 화면은 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
 - 코치 AI 리포트는 코치 탭에 진입했을 때만 `createCoachReportResponseAsync`로 호출한다.
 - 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 로컬 미리보기 결과를 사용해 초기 렌더 외부 호출을 막는다.
@@ -21,9 +23,13 @@
 파일:
 
 - `src/services/aiAdapter.ts`
+- `src/services/openAiProxyProvider.ts`
+- `src/services/registerAiProvider.ts`
 - `src/hooks/useMoneyRoutine.ts`
 - `src/screens/CoachScreen.tsx`
 - `src/screens/AddScreen.tsx`
+- `api/ai/classify.js`
+- `api/ai/coach.js`
 
 프론트에서 사용하는 공개 함수:
 
@@ -38,6 +44,32 @@
 - `createCoachReportPreviewResponse(input)`
 - `classifyTransaction(input)`
 - `createCoachReport(input)`
+
+## OpenAI 프록시 연결
+
+프론트는 다음 두 endpoint를 호출한다.
+
+- `POST /api/ai/classify`
+- `POST /api/ai/coach`
+
+GitHub Pages처럼 정적 호스팅만 사용하는 경우 같은 origin에 `/api`를 둘 수 없으므로, `VITE_AI_PROXY_BASE_URL`에 별도 Vercel/Node 프록시 URL을 넣는다.
+
+프론트 빌드 env:
+
+```env
+VITE_AI_PROVIDER=openai-proxy
+VITE_AI_PROXY_BASE_URL=https://your-openai-proxy.example.com
+```
+
+서버 프록시 env:
+
+```env
+OPENAI_API_KEY=...
+OPENAI_MODEL=gpt-4.1-mini
+AI_ALLOWED_ORIGINS=https://2476ae.github.io,http://localhost:5173
+```
+
+서버 프록시는 OpenAI Responses API의 structured output을 사용해 `ClassificationResult`와 `CoachReport` JSON을 반환한다.
 
 ## Provider 인터페이스
 
@@ -202,15 +234,13 @@ interface AiProviderMetadata {
 - 실패 문구는 짧고 비난 없이 표시한다.
 - 이전 성공 결과 또는 로컬 규칙 결과를 사용할 수 있으면 fallback으로 표시한다.
 
-## 실제 API 연결 시 필요한 작업
+## 실제 API 연결 체크리스트
 
-1. API client 파일 추가
-2. 환경변수 이름 확정
-3. provider metadata 확정
-4. `setAiProvider(externalProvider, metadata)` 호출 위치 확정
-5. 분류/코치 리포트 응답 스키마 검증 추가
-6. 실패 시 `fallback` 또는 `error` 정책 확정
-7. 테스트에서 성공, 지연, 실패, 잘못된 응답을 모두 확인
+1. 서버 프록시 배포 환경에 `OPENAI_API_KEY`를 등록한다.
+2. GitHub Pages 빌드 변수에 `VITE_AI_PROVIDER`, `VITE_AI_PROXY_BASE_URL`을 등록한다.
+3. `AI_ALLOWED_ORIGINS`에 실제 제출 origin을 포함한다.
+4. 코치 탭 진입 시 `OpenAI 분석` provider 상태가 표시되는지 확인한다.
+5. API 실패 시 로컬 규칙 fallback이 표시되는지 확인한다.
 
 이미 준비된 항목:
 

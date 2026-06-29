@@ -35,9 +35,15 @@ jobs:
 
       - name: Verify frontend
         run: npm run verify
+        env:
+          VITE_AI_PROVIDER: ${{ vars.VITE_AI_PROVIDER }}
+          VITE_AI_PROXY_BASE_URL: ${{ vars.VITE_AI_PROXY_BASE_URL }}
 
       - name: Build GitHub Pages bundle
         run: npm run build:github-pages
+        env:
+          VITE_AI_PROVIDER: ${{ vars.VITE_AI_PROVIDER }}
+          VITE_AI_PROXY_BASE_URL: ${{ vars.VITE_AI_PROXY_BASE_URL }}
 
       - name: Check Pages availability
         id: pages
