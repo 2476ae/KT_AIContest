@@ -267,7 +267,7 @@
 
 확인 항목:
 
-- Vitest 9개 파일, 40개 테스트 통과
+- Vitest 9개 파일, 41개 테스트 통과
 - Vite production build 통과
 - GitHub Pages base build 통과
 - 핵심 서비스 로직이 브라우저 없이 테스트 가능

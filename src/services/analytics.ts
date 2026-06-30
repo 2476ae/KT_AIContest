@@ -55,7 +55,7 @@ function getAdjustedBudgetTarget(totalSpent: number, goal: Goal, daysLeft: numbe
 
   if (originalRemainingBudget >= 0) {
     return {
-      adjustedSavingGoal: goal.savingGoal,
+      adjustedSavingGoal: Math.max(0, goal.monthlyIncome - goal.spendingLimit),
       adjustedSpendingLimit: goal.spendingLimit,
       isAdjusted: false,
       remainingBudget: originalRemainingBudget,
@@ -240,6 +240,14 @@ function hasAmpleBudgetRoom(goal: Goal, summary: Summary) {
   const dailyTarget = getDailyTarget(goal);
 
   return summary.status === "stable" && summary.remainingBudget > 0 && (dailyTarget === 0 || summary.dailyBudget >= dailyTarget * 2);
+}
+
+function getCoachBasis(monthId: string, transactionCount: number, goal: Goal, summary: Summary) {
+  if (summary.isAdjusted) {
+    return `${monthId} 소비 ${transactionCount}건, 초기 목표 소비액 ${formatWon(goal.spendingLimit)}, 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 조정 후 예상 저축 ${formatWon(summary.adjustedSavingGoal)}`;
+  }
+
+  return `${monthId} 소비 ${transactionCount}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 남은 소비 한도 ${formatWon(summary.remainingBudget)}, 현재 기준 남는 금액 ${formatWon(summary.savingProjection)}`;
 }
 
 function buildMissions(
@@ -437,7 +445,7 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
             .slice(0, subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12 ? 2 : 1)
             .map((item) => `${item.merchant}은(는) ${item.paymentDay}일 결제, 월 ${formatWon(item.monthlyAmount)} 수준입니다.`)
         : ["구독 후보가 생기면 결제일과 예상 절약액을 함께 보여줄게요."],
-    basis: `${monthId} 소비 ${transactions.length}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 조정 후 예상 저축 ${formatWon(summary.adjustedSavingGoal)}`,
+    basis: getCoachBasis(monthId, transactions.length, goal, summary),
   };
 }
 

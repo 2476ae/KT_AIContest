@@ -57,6 +57,24 @@ describe("analytics service", () => {
     expect(summary.dailyBudget).toBe(20000);
   });
 
+  it("uses non-adjusted basis copy when the target has not been adjusted", () => {
+    const goal = {
+      ...DEFAULT_GOAL,
+      monthlyIncome: 1300000,
+      savingGoal: 200000,
+      spendingLimit: 700000,
+    };
+    const summary = getSummary(transactions, goal, DEMO_MONTH.id);
+    const report = getCoachReport(transactions, goal, DEMO_MONTH.id);
+
+    expect(summary.isAdjusted).toBe(false);
+    expect(summary.adjustedSavingGoal).toBe(600000);
+    expect(report.basis).toContain("목표 소비액 700,000원");
+    expect(report.basis).toContain("현재 기준 남는 금액 902,210원");
+    expect(report.basis).not.toContain("현실 조정 목표");
+    expect(report.basis).not.toContain("조정 후 예상 저축 200,000원");
+  });
+
   it("builds a full month calendar grid", () => {
     const days = getCalendarDays(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
     const june10 = days.find((day) => day.date === "2026-06-10");
