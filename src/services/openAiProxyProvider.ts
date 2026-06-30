@@ -8,6 +8,7 @@ export interface OpenAiProxyProviderOptions {
   coachDailyLimit?: number;
   dailyRequestLimit?: number;
   disableClientRateLimit?: boolean;
+  enableClientRateLimit?: boolean;
   fetcher?: typeof fetch;
   timeoutMs?: number;
 }
@@ -35,6 +36,18 @@ function getEnvNumber(name: string, fallback: number) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function getEnvBoolean(name: string, fallback = false) {
+  const value = (import.meta.env as Record<string, string | undefined>)[name]?.trim().toLowerCase();
+  if (value === "true" || value === "1" || value === "yes") {
+    return true;
+  }
+  if (value === "false" || value === "0" || value === "no") {
+    return false;
+  }
+
+  return fallback;
+}
+
 function readUsageRecord(): { classify: number; coach: number; date: string; total: number } {
   if (typeof window === "undefined") {
     return { classify: 0, coach: 0, date: getTodayKey(), total: 0 };
@@ -59,6 +72,12 @@ function readUsageRecord(): { classify: number; coach: number; date: string; tot
 
 function reserveClientAiRequest(kind: "classify" | "coach", options: OpenAiProxyProviderOptions) {
   if (options.disableClientRateLimit || typeof window === "undefined") {
+    return;
+  }
+
+  const isRateLimitEnabled =
+    options.enableClientRateLimit ?? getEnvBoolean("VITE_AI_CLIENT_RATE_LIMIT_ENABLED", false);
+  if (!isRateLimitEnabled) {
     return;
   }
 

@@ -79,6 +79,18 @@ function readPositiveNumber(value, fallback) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function readBoolean(value, fallback = false) {
+  const normalized = String(value || "").trim().toLowerCase();
+  if (normalized === "true" || normalized === "1" || normalized === "yes") {
+    return true;
+  }
+  if (normalized === "false" || normalized === "0" || normalized === "no") {
+    return false;
+  }
+
+  return fallback;
+}
+
 function getClientKey(req) {
   const forwardedFor = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim();
   return forwardedFor || String(req.headers["x-real-ip"] || req.socket?.remoteAddress || "unknown");
@@ -90,6 +102,10 @@ function getUsageStore() {
 }
 
 export function assertAiRateLimit(req, kind) {
+  if (!readBoolean(process.env.AI_RATE_LIMIT_ENABLED, false)) {
+    return;
+  }
+
   const date = new Date().toISOString().slice(0, 10);
   const key = `${date}:${getClientKey(req)}`;
   const store = getUsageStore();

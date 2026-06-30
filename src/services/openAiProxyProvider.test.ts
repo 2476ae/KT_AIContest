@@ -126,7 +126,7 @@ describe("OpenAI proxy provider", () => {
     expect(result.categoryPlans[0].action).toContain("정해보세요");
   });
 
-  it("blocks repeated client coach calls after the daily limit", async () => {
+  it("does not block repeated client coach calls by default", async () => {
     const previousWindow = globalThis.window;
     const storage = new Map<string, string>();
     const calls: string[] = [];
@@ -145,6 +145,48 @@ describe("OpenAI proxy provider", () => {
       const provider = createOpenAiProxyProvider({
         coachDailyLimit: 1,
         dailyRequestLimit: 1,
+        fetcher: async (url) => {
+          calls.push(String(url));
+          return jsonResponse(validCoachReport);
+        },
+      });
+      const input = {
+        transactions: loadSampleTransactions(),
+        goal: DEFAULT_GOAL,
+        monthId: DEMO_MONTH.id,
+      };
+
+      await expect(provider.createCoachReport(input)).resolves.toMatchObject({ status: "watch" });
+      await expect(provider.createCoachReport(input)).resolves.toMatchObject({ status: "watch" });
+      expect(calls).toHaveLength(2);
+    } finally {
+      Object.defineProperty(globalThis, "window", {
+        configurable: true,
+        value: previousWindow,
+      });
+    }
+  });
+
+  it("blocks repeated client coach calls only when the daily limit is explicitly enabled", async () => {
+    const previousWindow = globalThis.window;
+    const storage = new Map<string, string>();
+    const calls: string[] = [];
+
+    Object.defineProperty(globalThis, "window", {
+      configurable: true,
+      value: {
+        localStorage: {
+          getItem: (key: string) => storage.get(key) ?? null,
+          setItem: (key: string, value: string) => storage.set(key, value),
+        },
+      },
+    });
+
+    try {
+      const provider = createOpenAiProxyProvider({
+        coachDailyLimit: 1,
+        dailyRequestLimit: 1,
+        enableClientRateLimit: true,
         fetcher: async (url) => {
           calls.push(String(url));
           return jsonResponse(validCoachReport);

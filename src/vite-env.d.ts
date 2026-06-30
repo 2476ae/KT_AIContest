@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
   readonly VITE_AI_CLASSIFY_DAILY_LIMIT?: string;
+  readonly VITE_AI_CLIENT_RATE_LIMIT_ENABLED?: string;
   readonly VITE_AI_COACH_DAILY_LIMIT?: string;
   readonly VITE_AI_DAILY_REQUEST_LIMIT?: string;
   readonly VITE_AI_PROVIDER?: "openai-proxy" | string;
