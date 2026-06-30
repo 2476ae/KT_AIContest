@@ -88,10 +88,22 @@ describe("analytics service", () => {
 
     expect(report.headline).toContain("하루");
     expect(report.categoryPlans.length).toBeGreaterThan(0);
-    expect(report.categoryPlans[0].expectedSaving).toBeGreaterThan(0);
+    expect(report.categoryPlans[0].plannedAmount).toBeGreaterThanOrEqual(report.categoryPlans[0].currentAmount);
     expect(report.missions.length).toBeGreaterThanOrEqual(2);
     expect(report.missions.some((mission) => mission.id === "mission-subscription")).toBe(false);
     expect(report.subscriptionAdvice[0]).toContain("월");
+  });
+
+  it("does not push reduction missions when the daily budget has ample room", () => {
+    const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
+
+    expect(report.dailyBudget).toBe(322210);
+    expect(report.todayAction).toContain("기록");
+    expect(report.missions.some((mission) => mission.title.includes("줄이기"))).toBe(false);
+    expect(report.missions.some((mission) => mission.action.includes("쉬기"))).toBe(false);
+    expect(report.missions.some((mission) => mission.impactLabel === "남은 한도")).toBe(true);
+    expect(report.categoryPlans.every((plan) => plan.plannedAmount >= plan.currentAmount)).toBe(true);
+    expect(report.categoryPlans.every((plan) => plan.expectedSaving === 0)).toBe(true);
   });
 
   it("keeps budget-critical coach copy aligned with local spending math", () => {

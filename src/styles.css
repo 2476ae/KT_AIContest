@@ -1064,13 +1064,33 @@ button:disabled {
 }
 
 .mission-saving {
+  display: grid;
+  gap: 2px;
+  min-width: 58px;
   padding: 7px 8px;
   border-radius: var(--radius);
   background: var(--saving-soft);
   color: var(--saving);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mission-saving small,
+.mission-saving strong {
+  display: block;
+  line-height: 1.05;
+}
+
+.mission-saving small {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 820;
+}
+
+.mission-saving strong {
+  color: var(--saving);
   font-size: 11px;
   font-weight: 930;
-  white-space: nowrap;
 }
 
 .mini-card-grid,
@@ -1957,6 +1977,25 @@ button:disabled {
   font-size: 11px;
   font-weight: 860;
   white-space: nowrap;
+}
+
+.category-plan-meter {
+  overflow: hidden;
+  height: 7px;
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.08);
+}
+
+.category-plan-meter span {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--primary);
+}
+
+.category-plan-meter.is-over span {
+  background: var(--danger);
 }
 
 .category-plan-amounts {

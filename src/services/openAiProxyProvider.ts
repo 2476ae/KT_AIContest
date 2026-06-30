@@ -135,6 +135,7 @@ function ensureCoachMission(value: unknown, index: number): CoachMission {
     title: polishCompactSentence(value.title, "소비 미션", 24),
     reason: polishCompactSentence(value.reason, "목표 달성을 위한 조정입니다.", 52),
     expectedSaving: Math.max(0, Math.round(ensureNumber(value.expectedSaving))),
+    impactLabel: "예상 절감",
     action: polishCompactSentence(value.action, "오늘 실행할 수 있는 작은 조정을 선택하세요.", 56),
     completed: ensureBoolean(value.completed),
   };

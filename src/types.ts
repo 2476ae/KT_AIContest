@@ -66,6 +66,8 @@ export interface CoachMission {
   title: string;
   reason: string;
   expectedSaving: number;
+  impactLabel?: string;
+  impactText?: string;
   action: string;
   completed: boolean;
 }

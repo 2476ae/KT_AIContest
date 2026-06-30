@@ -108,30 +108,39 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               {coachReport.categoryPlans.length === 0 ? (
                 <div className="empty-line">소비 데이터가 들어오면 분야별 계획을 제안합니다.</div>
               ) : (
-                coachReport.categoryPlans.map((plan) => (
-                  <article className={`category-plan-card is-${plan.status}`} key={plan.category}>
-                    <div className="category-plan-head">
-                      <strong>{plan.category}</strong>
-                      <span>{statusCopy(plan.status)}</span>
-                    </div>
-                    <div className="category-plan-amounts">
-                      <span>
-                        <small>현재</small>
-                        <strong>{formatWon(plan.currentAmount)}</strong>
-                      </span>
-                      <span>
-                        <small>계획</small>
-                        <strong>{formatWon(plan.plannedAmount)}</strong>
-                      </span>
-                      <span>
-                        <small>절약</small>
-                        <strong>{formatWon(plan.expectedSaving)}</strong>
-                      </span>
-                    </div>
-                    <p>{plan.reason}</p>
-                    <em>{plan.action}</em>
-                  </article>
-                ))
+                coachReport.categoryPlans.map((plan) => {
+                  const planDelta = plan.plannedAmount - plan.currentAmount;
+                  const meterValue = plan.plannedAmount > 0 ? Math.min(100, Math.round((plan.currentAmount / plan.plannedAmount) * 100)) : 0;
+                  const deltaLabel = planDelta >= 0 ? "남은 여유" : "초과분";
+
+                  return (
+                    <article className={`category-plan-card is-${plan.status}`} key={plan.category}>
+                      <div className="category-plan-head">
+                        <strong>{plan.category}</strong>
+                        <span>{statusCopy(plan.status)}</span>
+                      </div>
+                      <div className={`category-plan-meter${planDelta < 0 ? " is-over" : ""}`} aria-label={`${plan.category} 월 가이드 대비 현재 ${meterValue}%`}>
+                        <span style={{ width: `${meterValue}%` }} />
+                      </div>
+                      <div className="category-plan-amounts">
+                        <span>
+                          <small>현재</small>
+                          <strong>{formatWon(plan.currentAmount)}</strong>
+                        </span>
+                        <span>
+                          <small>월 가이드</small>
+                          <strong>{formatWon(plan.plannedAmount)}</strong>
+                        </span>
+                        <span>
+                          <small>{deltaLabel}</small>
+                          <strong>{formatWon(Math.abs(planDelta))}</strong>
+                        </span>
+                      </div>
+                      <p>{plan.reason}</p>
+                      <em>{plan.action}</em>
+                    </article>
+                  );
+                })
               )}
             </div>
           </section>
