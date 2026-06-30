@@ -126,6 +126,35 @@ describe("OpenAI proxy provider", () => {
     expect(result.categoryPlans[0].action).toContain("정해보세요");
   });
 
+  it("keeps the coach report when optional card arrays contain malformed items", async () => {
+    const provider = createOpenAiProxyProvider({
+      fetcher: async () =>
+        jsonResponse({
+          ...validCoachReport,
+          categoryPlans: [
+            {
+              ...validCoachReport.categoryPlans[0],
+              category: "없는분야",
+            },
+            null,
+          ],
+          missions: [null, validCoachReport.missions[0]],
+          basisItems: [null],
+        }),
+    });
+
+    const result = await provider.createCoachReport({
+      transactions: loadSampleTransactions(),
+      goal: DEFAULT_GOAL,
+      monthId: DEMO_MONTH.id,
+    });
+
+    expect(result.headline).toBe(validCoachReport.headline);
+    expect(result.categoryPlans[0].category).toBe("기타");
+    expect(result.missions).toHaveLength(1);
+    expect(result.basisItems).toEqual([]);
+  });
+
   it("does not block repeated client coach calls by default", async () => {
     const previousWindow = globalThis.window;
     const storage = new Map<string, string>();

@@ -136,12 +136,28 @@ function ensureClippedStringArray(value: unknown, maxItems: number, maxLength: n
   return ensureStringArray(value).slice(0, maxItems).map((item) => clipText(item, "", maxLength)).filter(Boolean);
 }
 
-function ensureCategory(value: unknown): Category {
+function ensureCategory(value: unknown, fallback: Category = "기타"): Category {
   if (typeof value === "string" && CATEGORIES.includes(value as Category)) {
     return value as Category;
   }
 
-  throw new Error("OpenAI proxy returned an unsupported category.");
+  return fallback;
+}
+
+function safelyMapItems<T>(value: unknown, maxItems: number, mapper: (item: unknown, index: number) => T): T[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.slice(0, maxItems).reduce<T[]>((items, item, index) => {
+    try {
+      items.push(mapper(item, index));
+    } catch {
+      // Drop only the malformed card item instead of discarding the whole AI report.
+    }
+
+    return items;
+  }, []);
 }
 
 function ensureCoachMission(value: unknown, index: number): CoachMission {
@@ -214,11 +230,11 @@ function ensureCoachReport(value: unknown): CoachReport {
     savingPossibility,
     todayAction: polishCompactSentence(value.todayAction, "오늘 할 일 1개 선택", 52),
     insights: ensureStringArray(value.insights).slice(0, 4).map((item) => polishCompactSentence(item, "", 58)).filter(Boolean),
-    categoryPlans: (Array.isArray(value.categoryPlans) ? value.categoryPlans : []).slice(0, 4).map(ensureCategoryPlan),
-    missions: (Array.isArray(value.missions) ? value.missions : []).slice(0, 4).map(ensureCoachMission),
+    categoryPlans: safelyMapItems(value.categoryPlans, 4, ensureCategoryPlan),
+    missions: safelyMapItems(value.missions, 4, ensureCoachMission),
     subscriptionAdvice: ensureClippedStringArray(value.subscriptionAdvice, 3, 58),
     basis: clipText(value.basis, "월 거래와 목표 기준", 64),
-    basisItems: (Array.isArray(value.basisItems) ? value.basisItems : []).slice(0, 5).map(ensureCoachBasisItem),
+    basisItems: safelyMapItems(value.basisItems, 5, ensureCoachBasisItem),
   };
 }
 
