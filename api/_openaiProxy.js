@@ -128,18 +128,22 @@ export function validateCoachInput(input) {
     throw new HttpError(400, "Invalid coach input.");
   }
 
-  return {
-    goal: input.goal,
-    monthId: String(input.monthId || "").slice(0, 20),
-    transactions: Array.isArray(input.transactions)
-      ? input.transactions.slice(0, 80).map((transaction) => ({
+  const normalizeTransactions = (transactions) =>
+    Array.isArray(transactions)
+      ? transactions.slice(0, 80).map((transaction) => ({
           date: String(transaction.date || "").slice(0, 10),
           merchant: String(transaction.merchant || "").slice(0, 60),
           amount: Number(transaction.amount) || 0,
           category: CATEGORIES.includes(transaction.category) ? transaction.category : "기타",
           isSubscription: Boolean(transaction.isSubscription),
         }))
-      : [],
+      : [];
+
+  return {
+    goal: input.goal,
+    monthId: String(input.monthId || "").slice(0, 20),
+    transactions: normalizeTransactions(input.transactions),
+    previousMonthTransactions: normalizeTransactions(input.previousMonthTransactions),
   };
 }
 

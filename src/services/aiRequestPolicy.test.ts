@@ -43,9 +43,16 @@ describe("AI request policy", () => {
       goal: DEFAULT_GOAL,
       monthId: DEMO_MONTH.id,
     };
+    const changedPreviousInput = {
+      transactions: [transaction(4300)],
+      previousMonthTransactions: [{ ...transaction(12000), id: "tx-cache-previous", date: "2026-05-11" }],
+      goal: DEFAULT_GOAL,
+      monthId: DEMO_MONTH.id,
+    };
 
     expect(createCoachReportCacheKey(baseInput, "external-ai")).toBe(createCoachReportCacheKey(sameInput, "external-ai"));
     expect(createCoachReportCacheKey(baseInput, "external-ai")).not.toBe(createCoachReportCacheKey(changedInput, "external-ai"));
+    expect(createCoachReportCacheKey(baseInput, "external-ai")).not.toBe(createCoachReportCacheKey(changedPreviousInput, "external-ai"));
     expect(createCoachReportCacheKey(baseInput, "external-ai")).not.toBe(createCoachReportCacheKey(baseInput, "other-ai"));
   });
 });

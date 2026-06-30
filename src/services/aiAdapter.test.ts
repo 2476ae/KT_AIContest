@@ -14,6 +14,10 @@ import {
 } from "./aiAdapter";
 
 describe("ai adapter", () => {
+  const sampleTransactions = loadSampleTransactions();
+  const juneTransactions = sampleTransactions.filter((transaction) => transaction.date.startsWith("2026-06"));
+  const mayTransactions = sampleTransactions.filter((transaction) => transaction.date.startsWith("2026-05"));
+
   it("uses replaceable provider contract for coach reports", () => {
     const previous = getAiProvider();
 
@@ -42,7 +46,8 @@ describe("ai adapter", () => {
       );
 
       const report = createCoachReport({
-        transactions: loadSampleTransactions(),
+        transactions: juneTransactions,
+        previousMonthTransactions: mayTransactions,
         goal: DEFAULT_GOAL,
         monthId: DEMO_MONTH.id,
       });
@@ -80,7 +85,8 @@ describe("ai adapter", () => {
         isSubscription: true,
       });
       const report = createCoachReportResponse({
-        transactions: loadSampleTransactions(),
+        transactions: juneTransactions,
+        previousMonthTransactions: mayTransactions,
         goal: DEFAULT_GOAL,
         monthId: DEMO_MONTH.id,
       });
@@ -130,7 +136,8 @@ describe("ai adapter", () => {
         isSubscription: false,
       });
       const report = await createCoachReportResponseAsync({
-        transactions: loadSampleTransactions(),
+        transactions: juneTransactions,
+        previousMonthTransactions: mayTransactions,
         goal: DEFAULT_GOAL,
         monthId: DEMO_MONTH.id,
       });

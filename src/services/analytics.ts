@@ -130,15 +130,11 @@ export function getCalendarDays(transactions: Transaction[], goal: Goal, monthId
     );
     const isCurrentMonth = cursor.getMonth() === month;
 
-    let status: DaySummary["status"] = "empty";
-    if (amount > dailyBaseline && amount > 0) {
+    let status: DaySummary["status"] = isCurrentMonth ? "safe" : "empty";
+    if (isCurrentMonth && amount > dailyBaseline && amount > 0) {
       status = "over";
-    } else if (hasSubscription) {
+    } else if (isCurrentMonth && hasSubscription) {
       status = "subscription";
-    } else if (amount === 0 || amount <= dailyBaseline * 0.5) {
-      status = "safe";
-    } else {
-      status = "normal";
     }
 
     days.push({
@@ -242,12 +238,43 @@ function hasAmpleBudgetRoom(goal: Goal, summary: Summary) {
   return summary.status === "stable" && summary.remainingBudget > 0 && (dailyTarget === 0 || summary.dailyBudget >= dailyTarget * 2);
 }
 
-function getCoachBasis(monthId: string, transactionCount: number, goal: Goal, summary: Summary) {
-  if (summary.isAdjusted) {
-    return `${monthId} 소비 ${transactionCount}건, 초기 목표 소비액 ${formatWon(goal.spendingLimit)}, 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 조정 후 예상 저축 ${formatWon(summary.adjustedSavingGoal)}`;
+function formatRatio(value: number) {
+  return `${Math.round(value)}%`;
+}
+
+function getPatternBasis(categories: CategorySummary[], previousCategories: CategorySummary[]) {
+  if (previousCategories.length === 0 || categories.length === 0) {
+    return "";
   }
 
-  return `${monthId} 소비 ${transactionCount}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 남은 소비 한도 ${formatWon(summary.remainingBudget)}, 현재 기준 남는 금액 ${formatWon(summary.savingProjection)}`;
+  const previousByCategory = new Map(previousCategories.map((category) => [category.category, category]));
+
+  return categories
+    .slice(0, 2)
+    .map((category) => {
+      const previous = previousByCategory.get(category.category);
+      return previous ? `${category.category} ${formatRatio(previous.ratio)}→${formatRatio(category.ratio)}` : "";
+    })
+    .filter(Boolean)
+    .join(", ");
+}
+
+function getCoachBasis(
+  monthId: string,
+  transactionCount: number,
+  goal: Goal,
+  summary: Summary,
+  categories: CategorySummary[],
+  previousCategories: CategorySummary[],
+) {
+  const patternBasis = getPatternBasis(categories, previousCategories);
+  const patternText = patternBasis ? `, 지난달 대비 ${patternBasis}` : "";
+
+  if (summary.isAdjusted) {
+    return `${monthId} 소비 ${transactionCount}건, 초기 목표 소비액 ${formatWon(goal.spendingLimit)}, 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 조정 후 예상 저축 ${formatWon(summary.adjustedSavingGoal)}${patternText}`;
+  }
+
+  return `${monthId} 소비 ${transactionCount}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 남은 소비 한도 ${formatWon(summary.remainingBudget)}, 현재 기준 남는 금액 ${formatWon(summary.savingProjection)}${patternText}`;
 }
 
 function buildMissions(
@@ -357,19 +384,43 @@ function getCategoryAction(category: Category, hasAmpleRoom: boolean) {
   return actions[category];
 }
 
-function buildCategoryPlans(categories: CategorySummary[], summary: Summary, goal: Goal): CategoryPlan[] {
+function buildCategoryPlans(
+  categories: CategorySummary[],
+  summary: Summary,
+  goal: Goal,
+  previousCategories: CategorySummary[] = [],
+): CategoryPlan[] {
   const hasAmpleRoom = hasAmpleBudgetRoom(goal, summary);
-  const priorityCategories = hasAmpleRoom ? [] : categories.filter((category) => category.status !== "stable");
+  const previousByCategory = new Map(previousCategories.map((category) => [category.category, category]));
+  const patternIncreasedCategories = categories.filter((category) => {
+    const previous = previousByCategory.get(category.category);
+    return previous ? category.ratio >= previous.ratio + 3 : false;
+  });
+  const priorityCategories = hasAmpleRoom
+    ? patternIncreasedCategories
+    : categories.filter((category) => category.status !== "stable" || patternIncreasedCategories.includes(category));
   const visibleCategories = priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 3);
   const totalVisibleAmount = visibleCategories.reduce((sum, category) => sum + category.amount, 0);
   const remainingBudget = Math.max(0, summary.remainingBudget);
 
   return visibleCategories.slice(0, 3).map((category) => {
+    const previous = previousByCategory.get(category.category);
+    const previousRatio = previous?.ratio;
+    const currentRatio = category.ratio;
+    const isPatternIncreased = typeof previousRatio === "number" && currentRatio >= previousRatio + 3;
+    const guideRatio =
+      typeof previousRatio === "number"
+        ? isPatternIncreased && !hasAmpleRoom
+          ? Math.max(previousRatio, currentRatio - 3)
+          : Math.max(currentRatio, previousRatio)
+        : currentRatio;
     const weight = totalVisibleAmount > 0 ? category.amount / totalVisibleAmount : 1 / Math.max(visibleCategories.length, 1);
     const futureRoom = remainingBudget * weight;
     const roomRate = hasAmpleRoom ? 1 : category.status === "over" ? 0.42 : category.status === "watch" ? 0.62 : 0.78;
-    const plannedAmount = Math.max(category.amount, Math.round((category.amount + futureRoom * roomRate) / 1000) * 1000);
-    const expectedSaving = hasAmpleRoom ? 0 : Math.max(0, Math.round((futureRoom - futureRoom * roomRate) / 1000) * 1000);
+    const patternGuideAmount = Math.round((summary.adjustedSpendingLimit * guideRatio) / 100 / 1000) * 1000;
+    const flowGuideAmount = Math.round((category.amount + futureRoom * roomRate) / 1000) * 1000;
+    const plannedAmount = Math.max(category.amount, patternGuideAmount, flowGuideAmount);
+    const expectedSaving = hasAmpleRoom || plannedAmount <= category.amount ? 0 : Math.max(0, Math.round((futureRoom - futureRoom * roomRate) / 1000) * 1000);
     const planStatus: BudgetStatus =
       summary.remainingBudget < 0 ? "over" : !hasAmpleRoom && category.status !== "stable" ? category.status : "stable";
 
@@ -379,17 +430,32 @@ function buildCategoryPlans(categories: CategorySummary[], summary: Summary, goa
       currentAmount: category.amount,
       plannedAmount,
       expectedSaving,
-      reason: hasAmpleRoom
-        ? `${category.category}은(는) 전체의 ${Math.round(category.ratio)}%지만 현재 한도 여유가 충분합니다.`
-        : `${category.category}은(는) 전체의 ${Math.round(category.ratio)}%입니다. 남은 한도 안에서 추가 지출만 조정하세요.`,
-      action: getCategoryAction(category.category, hasAmpleRoom),
+      previousRatio,
+      currentRatio,
+      guideRatio,
+      reason:
+        typeof previousRatio === "number"
+          ? `지난달 ${formatRatio(previousRatio)} → 이번달 ${formatRatio(currentRatio)}입니다. 이번달 가이드는 ${formatRatio(guideRatio)}로 잡았어요.`
+          : hasAmpleRoom
+            ? `${category.category}은(는) 전체의 ${Math.round(category.ratio)}%지만 현재 한도 여유가 충분합니다.`
+            : `${category.category}은(는) 전체의 ${Math.round(category.ratio)}%입니다. 남은 한도 안에서 추가 지출만 조정하세요.`,
+      action:
+        typeof previousRatio === "number" && !isPatternIncreased
+          ? "지난달 패턴과 비슷해 현재 흐름을 유지해도 괜찮아요."
+          : getCategoryAction(category.category, hasAmpleRoom),
     };
   });
 }
 
-export function getCoachReport(transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id): CoachReport {
+export function getCoachReport(
+  transactions: Transaction[],
+  goal: Goal,
+  monthId = DEMO_MONTH.id,
+  previousMonthTransactions: Transaction[] = [],
+): CoachReport {
   const summary = getSummary(transactions, goal, monthId);
   const categories = getCategorySummaries(transactions);
+  const previousCategories = getCategorySummaries(previousMonthTransactions);
   const subscriptions = getSubscriptionCandidates(transactions, goal);
   const focus = getPrimaryFocus(goal, categories);
   const targetSavingGoal = goal.savingGoal;
@@ -397,7 +463,7 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
     summary.savingProjection >= targetSavingGoal ? "높음" : summary.savingProjection >= targetSavingGoal * 0.75 ? "보통" : "낮음";
   const status = summary.status;
   const missions = buildMissions(goal, summary, categories, subscriptions);
-  const categoryPlans = buildCategoryPlans(categories, summary, goal);
+  const categoryPlans = buildCategoryPlans(categories, summary, goal, previousCategories);
   const subscriptionPressure = goal.subscriptionLimit > 0 ? summary.subscriptionTotal / goal.subscriptionLimit : 0;
   const subscriptionSpendingRatio = goal.spendingLimit > 0 ? summary.subscriptionTotal / goal.spendingLimit : 0;
   const focusText = focus ? `${focus.category} 지출` : "선택 소비";
@@ -424,7 +490,9 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
     todayAction,
     insights: [
       hasAmpleRoom
-        ? `남은 한도가 커서 ${focusText} 감액보다 지출 기록 유지가 더 중요합니다.`
+        ? previousCategories.length > 0
+          ? `지난달 소비 패턴과 비교해 늘어난 분야만 가볍게 확인합니다.`
+          : `남은 한도가 커서 ${focusText} 감액보다 지출 기록 유지가 더 중요합니다.`
         : focus
         ? `${focus.category}이(가) 이번 달 지출의 ${Math.round(focus.ratio)}%를 차지합니다.`
         : "소비 데이터가 들어오면 우선 조정 항목을 계산합니다.",
@@ -445,12 +513,18 @@ export function getCoachReport(transactions: Transaction[], goal: Goal, monthId 
             .slice(0, subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12 ? 2 : 1)
             .map((item) => `${item.merchant}은(는) ${item.paymentDay}일 결제, 월 ${formatWon(item.monthlyAmount)} 수준입니다.`)
         : ["구독 후보가 생기면 결제일과 예상 절약액을 함께 보여줄게요."],
-    basis: getCoachBasis(monthId, transactions.length, goal, summary),
+    basis: getCoachBasis(monthId, transactions.length, goal, summary, categories, previousCategories),
   };
 }
 
-export function alignCoachReportBudgetFields(report: CoachReport, transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id): CoachReport {
-  const localReport = getCoachReport(transactions, goal, monthId);
+export function alignCoachReportBudgetFields(
+  report: CoachReport,
+  transactions: Transaction[],
+  goal: Goal,
+  monthId = DEMO_MONTH.id,
+  previousMonthTransactions: Transaction[] = [],
+): CoachReport {
+  const localReport = getCoachReport(transactions, goal, monthId, previousMonthTransactions);
 
   return {
     ...report,

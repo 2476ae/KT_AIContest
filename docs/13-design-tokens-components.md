@@ -295,9 +295,8 @@ font-family:
 
 | 상태 | UI 표현 |
 | --- | --- |
-| `empty` | 기본 회색 셀 |
-| `normal` | 기본 회색 셀 + 금액 |
-| `safe` | 민트 셀 + 점 |
+| `empty` | 현재 월 밖의 기본 회색 셀 |
+| `safe` | 적정 소비일, 민트 셀 + 점 |
 | `subscription` | 앰버 셀 + 점 |
 | `over` | 코랄 셀 + 점 |
 | `selected` | 파란 셀 + 흰 텍스트 |

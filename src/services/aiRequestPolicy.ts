@@ -20,5 +20,13 @@ export function createCoachReportCacheKey(input: CoachReportInput, providerId: s
       category: transaction.category,
       isSubscription: transaction.isSubscription,
     })),
+    previousMonthTransactions: (input.previousMonthTransactions ?? []).map((transaction) => ({
+      id: transaction.id,
+      date: transaction.date,
+      merchant: transaction.merchant,
+      amount: transaction.amount,
+      category: transaction.category,
+      isSubscription: transaction.isSubscription,
+    })),
   });
 }

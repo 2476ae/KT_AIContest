@@ -28,7 +28,7 @@ import {
 } from "../services/aiAdapter";
 import { COACH_AI_DEBOUNCE_MS, createCoachReportCacheKey, shouldRequestCoachReportAi } from "../services/aiRequestPolicy";
 import { transactionsToCsv } from "../services/csv";
-import { getMonthId } from "../services/date";
+import { addMonths, getMonthId } from "../services/date";
 import { normalizeFinancialFeedTransactions, type FinancialFeedTransactionInput } from "../services/financialFeed";
 import type { AppState, CoachReport, Goal, TabId, Transaction } from "../types";
 
@@ -191,6 +191,8 @@ export function useMoneyRoutine() {
 
   const baseComputed = useMemo(() => {
     const monthTransactions = state.transactions.filter((transaction) => getMonthId(transaction.date) === state.calendarMonth);
+    const previousMonthId = addMonths(state.calendarMonth, -1);
+    const previousMonthTransactions = state.transactions.filter((transaction) => getMonthId(transaction.date) === previousMonthId);
     const summary = getSummary(monthTransactions, state.goal, state.calendarMonth);
     const calendarDays = getCalendarDays(monthTransactions, state.goal, state.calendarMonth);
     const categorySummaries = getCategorySummaries(monthTransactions);
@@ -201,6 +203,7 @@ export function useMoneyRoutine() {
     return {
       summary,
       monthTransactions,
+      previousMonthTransactions,
       calendarDays,
       selectedDay,
       categorySummaries,
@@ -212,10 +215,11 @@ export function useMoneyRoutine() {
   const coachInput: CoachReportInput = useMemo(
     () => ({
       transactions: baseComputed.monthTransactions,
+      previousMonthTransactions: baseComputed.previousMonthTransactions,
       goal: state.goal,
       monthId: state.calendarMonth,
     }),
-    [baseComputed.monthTransactions, state.calendarMonth, state.goal],
+    [baseComputed.monthTransactions, baseComputed.previousMonthTransactions, state.calendarMonth, state.goal],
   );
 
   const coachCacheKey = useMemo(
@@ -265,7 +269,13 @@ export function useMoneyRoutine() {
     () => ({
       ...baseComputed,
       coachResponse,
-      coachReport: alignCoachReportBudgetFields(coachResponse.data, baseComputed.monthTransactions, state.goal, state.calendarMonth),
+      coachReport: alignCoachReportBudgetFields(
+        coachResponse.data,
+        baseComputed.monthTransactions,
+        state.goal,
+        state.calendarMonth,
+        baseComputed.previousMonthTransactions,
+      ),
     }),
     [baseComputed, coachResponse, state.calendarMonth, state.goal],
   );

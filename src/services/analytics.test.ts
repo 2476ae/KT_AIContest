@@ -4,7 +4,9 @@ import { loadSampleTransactions } from "../data";
 import { alignCoachReportBudgetFields, getCalendarDays, getCoachReport, getSummary, getSubscriptionCandidates } from "./analytics";
 
 describe("analytics service", () => {
-  const transactions = loadSampleTransactions();
+  const allTransactions = loadSampleTransactions();
+  const transactions = allTransactions.filter((transaction) => transaction.date.startsWith("2026-06"));
+  const previousTransactions = allTransactions.filter((transaction) => transaction.date.startsWith("2026-05"));
 
   it("calculates sample spending summary", () => {
     const summary = getSummary(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
@@ -78,10 +80,13 @@ describe("analytics service", () => {
   it("builds a full month calendar grid", () => {
     const days = getCalendarDays(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
     const june10 = days.find((day) => day.date === "2026-06-10");
+    const currentMonthDays = days.filter((day) => day.isCurrentMonth);
 
     expect(days).toHaveLength(35);
     expect(june10?.amount).toBe(52000);
     expect(june10?.status).toBe("over");
+    expect(currentMonthDays.every((day) => ["over", "subscription", "safe"].includes(day.status))).toBe(true);
+    expect(currentMonthDays.some((day) => day.status === "empty")).toBe(false);
   });
 
   it("detects subscription candidates", () => {
@@ -102,14 +107,28 @@ describe("analytics service", () => {
   });
 
   it("creates coach report display data", () => {
-    const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
+    const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id, previousTransactions);
 
     expect(report.headline).toContain("하루");
     expect(report.categoryPlans.length).toBeGreaterThan(0);
     expect(report.categoryPlans[0].plannedAmount).toBeGreaterThanOrEqual(report.categoryPlans[0].currentAmount);
+    expect(report.categoryPlans[0].previousRatio).toBeGreaterThan(0);
+    expect(report.categoryPlans[0].reason).toContain("지난달");
     expect(report.missions.length).toBeGreaterThanOrEqual(2);
     expect(report.missions.some((mission) => mission.id === "mission-subscription")).toBe(false);
     expect(report.subscriptionAdvice[0]).toContain("월");
+  });
+
+  it("uses previous month category ratios as category plan context", () => {
+    const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id, previousTransactions);
+    const patternPlan = report.categoryPlans.find((plan) => typeof plan.previousRatio === "number");
+
+    expect(patternPlan).toBeDefined();
+    expect(patternPlan?.previousRatio).toBeGreaterThan(0);
+    expect(patternPlan?.currentRatio).toBeGreaterThan(0);
+    expect(patternPlan?.guideRatio).toBeGreaterThan(0);
+    expect(patternPlan?.reason).toMatch(/지난달 \d+% → 이번달 \d+%/);
+    expect(report.basis).toContain("지난달 대비");
   });
 
   it("does not push reduction missions when the daily budget has ample room", () => {

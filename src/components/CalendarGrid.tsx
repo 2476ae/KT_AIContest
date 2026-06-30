@@ -18,7 +18,7 @@ export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all" 
       !(
         (filter === "over" && day.status === "over") ||
         (filter === "subscription" && day.status === "subscription") ||
-        (filter === "safe" && (day.status === "safe" || day.amount === 0))
+        (filter === "safe" && day.status === "safe")
       ),
   }));
 

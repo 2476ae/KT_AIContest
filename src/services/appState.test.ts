@@ -54,9 +54,11 @@ describe("app state service", () => {
 
   it("loads sample transactions into the June demo calendar", () => {
     const state = loadSampleState(INITIAL_APP_STATE, loadSampleTransactions());
-    const summary = getSummary(state.transactions, state.goal, state.calendarMonth);
+    const monthTransactions = state.transactions.filter((transaction) => transaction.date.startsWith("2026-06"));
+    const summary = getSummary(monthTransactions, state.goal, state.calendarMonth);
 
-    expect(state.transactions).toHaveLength(35);
+    expect(state.transactions).toHaveLength(66);
+    expect(monthTransactions).toHaveLength(35);
     expect(state.calendarMonth).toBe(DEMO_MONTH.id);
     expect(state.selectedDate).toBe("2026-06-29");
     expect(state.hasLoadedSample).toBe(true);

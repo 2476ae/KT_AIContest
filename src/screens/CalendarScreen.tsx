@@ -27,7 +27,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
       }
       return record;
     },
-    { empty: 0, normal: 0, over: 0, safe: 0, subscription: 0 },
+    { empty: 0, over: 0, safe: 0, subscription: 0 },
   );
   const selectedTop = selectedDay ? getTopCategory(selectedDay.transactions) : undefined;
 

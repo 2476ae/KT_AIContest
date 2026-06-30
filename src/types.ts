@@ -35,7 +35,7 @@ export interface Goal {
 }
 
 export type BudgetStatus = "stable" | "watch" | "over";
-export type DayStatus = "empty" | "safe" | "normal" | "subscription" | "over";
+export type DayStatus = "empty" | "safe" | "subscription" | "over";
 
 export interface DaySummary {
   date: string;
@@ -78,6 +78,9 @@ export interface CategoryPlan {
   currentAmount: number;
   plannedAmount: number;
   expectedSaving: number;
+  previousRatio?: number;
+  currentRatio?: number;
+  guideRatio?: number;
   reason: string;
   action: string;
 }

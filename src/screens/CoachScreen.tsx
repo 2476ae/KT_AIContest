@@ -112,6 +112,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
                   const planDelta = plan.plannedAmount - plan.currentAmount;
                   const meterValue = plan.plannedAmount > 0 ? Math.min(100, Math.round((plan.currentAmount / plan.plannedAmount) * 100)) : 0;
                   const deltaLabel = planDelta >= 0 ? "남은 여유" : "초과분";
+                  const hasPattern = typeof plan.previousRatio === "number" && typeof plan.currentRatio === "number" && typeof plan.guideRatio === "number";
 
                   return (
                     <article className={`category-plan-card is-${plan.status}`} key={plan.category}>
@@ -119,6 +120,13 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
                         <strong>{plan.category}</strong>
                         <span>{statusCopy(plan.status)}</span>
                       </div>
+                      {hasPattern && (
+                        <div className="category-plan-trend" aria-label={`${plan.category} 지난달 ${Math.round(plan.previousRatio ?? 0)}%, 이번달 ${Math.round(plan.currentRatio ?? 0)}%, 가이드 ${Math.round(plan.guideRatio ?? 0)}%`}>
+                          <span>지난달 {Math.round(plan.previousRatio ?? 0)}%</span>
+                          <span>이번달 {Math.round(plan.currentRatio ?? 0)}%</span>
+                          <span>가이드 {Math.round(plan.guideRatio ?? 0)}%</span>
+                        </div>
+                      )}
                       <div className={`category-plan-meter${planDelta < 0 ? " is-over" : ""}`} aria-label={`${plan.category} 월 가이드 대비 현재 ${meterValue}%`}>
                         <span style={{ width: `${meterValue}%` }} />
                       </div>

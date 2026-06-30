@@ -43,10 +43,14 @@ describe("csv service", () => {
   it("keeps the bundled sample CSV deploy-ready", () => {
     const transactions = loadSampleTransactions();
     const total = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
+    const mayTransactions = transactions.filter((transaction) => transaction.date.startsWith("2026-05"));
+    const juneTransactions = transactions.filter((transaction) => transaction.date.startsWith("2026-06"));
     const subscriptions = transactions.filter((transaction) => transaction.isSubscription || transaction.category === "구독");
 
-    expect(transactions).toHaveLength(35);
-    expect(total).toBe(397790);
+    expect(transactions).toHaveLength(66);
+    expect(mayTransactions).toHaveLength(31);
+    expect(juneTransactions).toHaveLength(35);
+    expect(total).toBe(737380);
     expect(subscriptions.length).toBeGreaterThanOrEqual(5);
   });
 

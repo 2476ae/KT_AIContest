@@ -269,8 +269,7 @@ focusCategories: 카페, 배달, 구독
 ### 선택일 상태
 
 ```text
-safe: 하루 예산의 50% 이하 또는 무지출
-normal: 하루 예산 이내
+safe: 현재 월의 적정 소비일 또는 무지출
 subscription: 구독 결제가 포함된 날
 over: 하루 예산 초과
 ```

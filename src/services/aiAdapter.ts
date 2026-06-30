@@ -15,6 +15,7 @@ export interface ClassificationResult {
 
 export interface CoachReportInput {
   transactions: Transaction[];
+  previousMonthTransactions?: Transaction[];
   goal: Goal;
   monthId: string;
 }
@@ -55,7 +56,7 @@ function classifyTransactionLocal(input: ClassificationInput): ClassificationRes
 }
 
 function createCoachReportLocal(input: CoachReportInput): CoachReport {
-  return getCoachReport(input.transactions, input.goal, input.monthId);
+  return getCoachReport(input.transactions, input.goal, input.monthId, input.previousMonthTransactions ?? []);
 }
 
 export const localAiProvider: AiProvider = {
