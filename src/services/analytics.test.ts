@@ -28,7 +28,7 @@ describe("analytics service", () => {
     expect(summary.remainingBudget).toBe(10000);
     expect(summary.dailyBudget).toBe(10000);
     expect(report.headline).toContain("현실 목표");
-    expect(report.todayAction).toContain("사용 가능");
+    expect(report.todayAction).toContain("괜찮아요");
   });
 
   it("keeps a practical daily budget by reducing the saving target within monthly income", () => {

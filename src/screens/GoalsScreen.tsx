@@ -74,7 +74,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
     }
 
     actions.updateGoal(draftGoal);
-    setGoalMessage("목표를 저장했어요. 홈, 캘린더, AI 코치 화면이 같은 기준으로 다시 계산됩니다.");
+    setGoalMessage("목표를 저장했어요. 홈과 AI 코치에 바로 반영돼요.");
     setSaveAttempted(false);
   }
 
@@ -167,7 +167,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           <div className="goal-feedback is-watch">{validation.warnings[0]}</div>
         )}
         {validation.warnings.length === 0 && visibleErrors.length === 0 && (
-          <div className="goal-feedback">저장하면 모든 화면이 이 목표 기준으로 다시 계산됩니다.</div>
+          <div className="goal-feedback">저장 후 홈과 AI 코치에 바로 반영돼요.</div>
         )}
         {goalMessage && <div className="success-line">{goalMessage}</div>}
         <div className="form-actions">

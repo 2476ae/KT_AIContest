@@ -57,7 +57,7 @@ AI 채팅에 넘길 핵심 기준:
 - OpenAI API key는 `api/ai/classify.js`, `api/ai/coach.js`가 실행되는 서버 프록시 환경에만 둔다.
 - 프론트는 `VITE_AI_PROVIDER=openai-proxy` 설정 시 OpenAI 프록시 provider를 사용한다. Vercel 전체 배포에서는 `VITE_AI_PROXY_BASE_URL`을 비워 같은 도메인의 `/api/ai/*`를 호출하고, GitHub Pages 백업 배포에서만 Vercel 프록시 URL을 지정한다.
 - 프론트는 `Promise` 기반 provider, `loading`, `ready`, `fallback`, `error` 표시 흐름을 이미 받을 수 있다.
-- 초기 렌더와 홈/목표/설정/AI 코치 탭 진입만으로는 외부 AI를 호출하지 않고, AI 코치 화면의 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 debounce/cache 정책으로 리포트를 요청한다.
+- 초기 렌더와 홈/목표/설정/AI 코치 탭 진입만으로는 외부 AI를 호출하지 않고, AI 코치 화면의 `AI 분석 업데이트` 버튼을 눌렀을 때만 debounce/cache 정책으로 리포트를 요청한다.
 - 실패 시 화면 전체가 깨지면 안 된다.
 - `ready`, `loading`, `fallback`, `error` 상태가 AI 코치 화면에 자연스럽게 표시되어야 한다.
 - 거래 저장은 AI 실패와 독립적으로 완료되어야 한다.
@@ -132,7 +132,7 @@ npm run build:github-pages
 AI 활용 설명:
 
 ```text
-AI는 사용처명, 금액, 날짜, 메모를 바탕으로 소비 유형을 분류하고, 월 목표 소비액과 목표 저축액을 기준으로 남은 기간의 하루 사용 가능 금액과 절약 미션을 제안합니다. 제출 버전은 금융 인증정보를 요구하지 않고 샘플 데이터, 직접 입력, CSV 업로드만 사용합니다.
+AI는 사용처명, 금액, 날짜, 메모를 바탕으로 소비 유형을 분류하고, 월 목표 소비액과 목표 저축액을 기준으로 오늘 권장 한도와 조정 미션을 제안합니다. 제출 버전은 금융 인증정보를 요구하지 않고 샘플 데이터, 직접 입력, CSV 업로드만 사용합니다.
 ```
 
 제출 전 필수 첨부 또는 기입 항목:

@@ -17,18 +17,18 @@ function statusCopy(status: BudgetStatus) {
 export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const { coachReport, coachResponse, subscriptionCandidates, summary } = computed;
   const isOverBudget = summary.remainingBudget < 0;
-  const guideAmountLabel = isOverBudget ? "초과 금액" : summary.isAdjusted ? "현실 한도" : "오늘 한도";
+  const guideAmountLabel = isOverBudget ? "조정 필요 금액" : summary.isAdjusted ? "현실 한도" : "오늘 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : coachReport.dailyBudget;
   const guideHint = isOverBudget
-    ? "필수 지출만"
+    ? "필수 지출 위주"
     : summary.isAdjusted
       ? "조정 목표 반영"
       : `남은 ${summary.daysLeft}일 기준`;
   const isAiLoading = coachResponse.status === "loading";
   const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
   const aiStatusCopy = {
-    error: "로컬 분석으로 대체",
-    fallback: "로컬 분석으로 대체",
+    error: "기본 분석 표시",
+    fallback: "기본 분석 표시",
     loading: "분석 중",
     ready:
       coachResponse.provider.mode === "external"
@@ -79,7 +79,6 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
             <span className="ai-state-copy">
               <strong>AI 상태</strong>
               <small>{aiStatusCopy}</small>
-              {coachResponse.error && <small>{coachResponse.error}</small>}
             </span>
             <button
               className="ai-refresh-button"
@@ -89,7 +88,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               data-testid="coach-request-ai-button"
             >
               {isAiLoading ? <Loader2 className="spin-icon" size={16} /> : <RefreshCw size={16} />}
-              {isAiLoading ? "분석 중" : "OpenAI 분석 업데이트"}
+              {isAiLoading ? "분석 중" : "AI 분석 업데이트"}
             </button>
           </section>
 

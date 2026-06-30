@@ -228,7 +228,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
             <div className="notification-panel-head">
               <span>
                 <strong>알림 내역</strong>
-                <small>연결된 금융앱에서 반영된 소비 업데이트</small>
+                <small>반영된 소비 업데이트</small>
               </span>
               <button className="notification-close" type="button" onClick={() => setOpenPanel(null)} aria-label="알림 닫기">
                 <X size={18} />
@@ -277,7 +277,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
                   <Bell size={22} />
                 </span>
                 <strong>아직 확인할 알림이 없어요</strong>
-                <small>금융앱 연결 또는 소비 내역 추가 후 업데이트 알림이 여기에 표시됩니다.</small>
+                <small>소비 내역을 추가하면 업데이트 알림이 여기에 표시됩니다.</small>
                 <button className="primary-button" type="button" onClick={() => moveFromPanel("add")}>
                   내역 추가
                 </button>

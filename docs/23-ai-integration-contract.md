@@ -6,7 +6,7 @@
 - OpenAI API는 서버 프록시에서만 호출하고, 브라우저에는 API key를 넣지 않는다.
 - 프론트는 `VITE_AI_PROVIDER=openai-proxy` 또는 `VITE_AI_PROXY_BASE_URL`이 있을 때 `openAiProxyProvider`를 등록한다.
 - 직접 입력 화면은 자동 분류를 선택한 저장에서만 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
-- AI 코치 리포트는 AI 코치 화면의 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
+- AI 코치 리포트는 AI 코치 화면의 `AI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
 - 관리자 테스트 편의를 위해 브라우저와 서버 프록시의 일일 횟수 제한은 기본 비활성화 상태다. 필요할 때만 `VITE_AI_CLIENT_RATE_LIMIT_ENABLED=true`, `AI_RATE_LIMIT_ENABLED=true`로 다시 켠다.
 - 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 로컬 미리보기 결과를 사용해 초기 렌더 외부 호출을 막는다.
 - AI 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
@@ -133,12 +133,12 @@ window.dispatchEvent(new CustomEvent("money-routine:financial-transactions", {
 - 한 이벤트는 최대 200건까지 처리하고, 잘못된 날짜/금액/사용처와 과도한 단일 금액은 건너뛴다.
 - 브라우저 저장소 과부하를 막기 위해 병합 후 최근 1,200건 중심으로 유지한다.
 - 반영 후 홈, 캘린더, 알림, AI 코치 로컬 미리보기 계산이 즉시 갱신된다.
-- 실시간 거래 반영만으로는 OpenAI API를 자동 호출하지 않는다. AI 코치 외부 분석은 여전히 사용자의 `OpenAI 분석 업데이트` 클릭에서만 실행된다.
+- 실시간 거래 반영만으로는 OpenAI API를 자동 호출하지 않는다. AI 코치 외부 분석은 여전히 사용자의 `AI 분석 업데이트` 클릭에서만 실행된다.
 
 ## 호출 정책
 
 - 초기 렌더, 홈, 캘린더, 목표, 설정 탭에서는 외부 AI 코치를 호출하지 않는다.
-- AI 코치 탭 진입만으로는 외부 AI를 호출하지 않는다. 사용자가 `OpenAI 분석 업데이트` 버튼을 누르면 250ms debounce 후 현재 월/목표/거래 입력값으로 리포트를 요청한다.
+- AI 코치 탭 진입만으로는 외부 AI를 호출하지 않는다. 사용자가 `AI 분석 업데이트` 버튼을 누르면 250ms debounce 후 현재 월/목표/거래 입력값으로 리포트를 요청한다.
 - 같은 provider와 같은 입력값이면 cache된 응답을 재사용한다.
 - 거래 자동 분류는 직접 입력에서 `자동 분류`를 선택한 상태로 저장 버튼을 눌렀을 때만 호출한다. 사용자가 카테고리를 직접 선택하면 외부 분류를 호출하지 않는다.
 - CSV import는 거래별 외부 분류를 추가로 호출하지 않고, AI 코치 리포트 요청 대상 데이터만 갱신한다.
@@ -311,7 +311,7 @@ interface AiProviderMetadata {
 1. 서버 프록시 배포 환경에 `OPENAI_API_KEY`를 등록한다.
 2. Vercel 배포에서는 `VITE_AI_PROVIDER=openai-proxy`를 등록하고, GitHub Pages 백업 빌드에서만 `VITE_AI_PROXY_BASE_URL`을 등록한다.
 3. `AI_ALLOWED_ORIGINS`에 실제 제출 origin을 포함한다.
-4. AI 코치 화면에서 `OpenAI 분석 업데이트` 버튼을 눌렀을 때만 `OpenAI 분석` provider 상태가 표시되는지 확인한다.
+4. AI 코치 화면에서 `AI 분석 업데이트` 버튼을 눌렀을 때만 OpenAI provider 상태가 표시되는지 확인한다.
 5. API 실패 시 로컬 규칙 fallback이 표시되는지 확인한다.
 
 이미 준비된 항목:

@@ -214,13 +214,13 @@ export function getSubscriptionCandidates(transactions: Transaction[], goal?: Go
         reason:
           recommendation === "해지 검토"
             ? limitRatio >= 1
-              ? "구독 상한을 넘어 우선순위 확인이 필요합니다."
-              : "단일 정기 결제 비중이 높아 사용 빈도 확인이 필요합니다."
+              ? "상한을 넘어 먼저 살펴볼 항목입니다."
+              : "비중이 커서 사용 빈도만 확인해보세요."
             : recommendation === "점검"
               ? limitRatio >= 0.85
                 ? "구독 상한에 가까워 큰 항목만 확인해보세요."
-                : "단일 정기 결제 비중이 조금 높은 편입니다."
-              : "구독 상한 안에서 안정적으로 유지 중입니다.",
+                : "비중이 조금 높아 가볍게 볼 항목입니다."
+              : "상한 안에서 안정적입니다.",
       };
     })
     .sort((a, b) => b.monthlyAmount - a.monthlyAmount);
@@ -407,10 +407,10 @@ function buildMissions(
     missions.push({
       id: "mission-focus",
       title: `${focus.category} 한 번 줄이기`,
-      reason: "상위 지출",
+      reason: "눈에 띄는 지출",
       expectedSaving: saving,
       impactLabel: "예상 절감",
-      action: `${focus.category} 결제 1회 대체`,
+      action: `${focus.category} 결제 1회만 바꾸기`,
       completed: false,
     });
   }
@@ -424,30 +424,30 @@ function buildMissions(
     missions.push({
       id: "mission-subscription",
       title: `${subscription.merchant} 사용 빈도 확인`,
-      reason: subscriptionPressure >= 1 ? "상한 초과" : "상한 근접",
+      reason: subscriptionPressure >= 1 ? "점검 필요" : "가볍게 점검",
       expectedSaving: subscription.monthlyAmount,
       impactLabel: "점검 금액",
-      action: "사용 빈도 확인",
+      action: "사용 빈도만 확인",
       completed: false,
     });
   }
 
   missions.push({
     id: "mission-daily-budget",
-    title: hasAmpleRoom ? "큰 결제 전 확인" : summary.status === "stable" ? "한도 안에서 쓰기" : "선택 소비 쉬기",
+    title: hasAmpleRoom ? "큰 결제 전 확인" : summary.status === "stable" ? "한도 안에서 쓰기" : "선택 소비 쉬어가기",
     reason:
       hasAmpleRoom
-        ? "여유 큼"
+        ? "여유 충분"
         : summary.status === "stable"
         ? `한도 ${formatWon(summary.dailyBudget)}`
         : `남은 ${summary.daysLeft}일`,
     expectedSaving: hasAmpleRoom ? summary.dailyBudget : Math.min(12000, Math.max(5000, Math.round(summary.dailyBudget * 0.25 / 1000) * 1000)),
     impactLabel: hasAmpleRoom ? "남은 한도" : "예상 절감",
     action: hasAmpleRoom
-      ? "한도와 저축 예상 확인"
+      ? "한도와 저축 예상 보기"
       : summary.status === "stable"
         ? "예정 소비만 기록"
-        : "선택 소비 하루 쉬기",
+        : "선택 소비 하루 쉬어가기",
     completed: false,
   });
 
@@ -474,13 +474,13 @@ function getCategoryAction(category: Category, hasAmpleRoom: boolean) {
 
   const actions: Record<Category, string> = {
     식비: "배달/외식을 한 끼만 집밥이나 학식으로 바꾸기",
-    "카페/간식": "커피나 간식 결제를 하루 한 번 쉬기",
-    교통: "택시나 추가 이동을 한 번 줄이기",
+    "카페/간식": "커피나 간식 결제 하루 쉬어가기",
+    교통: "추가 이동 한 번만 조정하기",
     쇼핑: "장바구니 결제를 하루 보류하기",
-    여가: "이번 주 유료 여가 결제를 한 번 쉬기",
-    구독: "최근 안 쓴 정기 결제 1건 해지 검토",
+    여가: "유료 여가 결제 하루 쉬어가기",
+    구독: "안 쓰는 정기 결제 1건만 확인",
     교육: "중복 강의나 자료 결제 전 재확인",
-    의료: "필수 의료비는 유지하고 비급한 지출만 미루기",
+    의료: "필수 의료비는 유지하고 급하지 않은 지출만 미루기",
     생활: "생활용품 묶음 구매 전 재고 확인",
     기타: "용도가 흐린 결제는 메모 후 재구매 판단",
   };
@@ -595,12 +595,12 @@ export function getCoachReport(
   const hasAmpleRoom = hasAmpleBudgetRoom(goal, summary);
   const todayAction =
     summary.remainingBudget < 0
-      ? "오늘은 필수 지출만 남기세요."
+      ? "오늘은 필수 지출 위주로 가요."
       : summary.isAdjusted
-        ? `오늘 ${formatWon(summary.dailyBudget)}까지 사용 가능`
+        ? `오늘 ${formatWon(summary.dailyBudget)}까지 괜찮아요.`
       : hasAmpleRoom
-        ? "계획한 소비만 기록하세요."
-      : `${focusText} 1회만 줄여요.`;
+        ? "계획한 소비를 기록해요."
+      : `${focusText} 1회만 가볍게 조정해요.`;
 
   return {
     headline:
@@ -608,7 +608,7 @@ export function getCoachReport(
         ? `현실 목표 ${formatWon(summary.adjustedSpendingLimit)}`
         : summary.remainingBudget >= 0
         ? `오늘 한도 ${formatWon(summary.dailyBudget)}`
-        : `조정 한도 ${formatWon(Math.abs(summary.remainingBudget))} 부족`,
+        : `조정 필요 ${formatWon(Math.abs(summary.remainingBudget))}`,
     status,
     dailyBudget: summary.dailyBudget,
     savingPossibility,

@@ -20,20 +20,20 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   const remainingFlowLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 여력" : "잔액 흐름";
   const remainingFlowAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.remainingBudget;
   const remainingFlowText = isOverBudget
-    ? "필수 지출만"
+    ? "필수 지출 위주"
     : summary.isAdjusted
       ? "현실 목표 반영"
-      : "사용 가능";
+      : "여유 있음";
   const subscriptionPressure = state.goal.subscriptionLimit > 0 ? summary.subscriptionTotal / state.goal.subscriptionLimit : 0;
   const subscriptionSpendingRatio = state.goal.spendingLimit > 0 ? summary.subscriptionTotal / state.goal.spendingLimit : 0;
   const subscriptionCardText =
     summary.subscriptionTotal === 0
-      ? "미확인"
+      ? "아직 없음"
       : subscriptionPressure >= 1 && subscriptionSpendingRatio >= 0.12
-        ? "상한 초과"
+        ? "점검 필요"
         : subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12
-          ? "상한 근접"
-          : "안정";
+          ? "가볍게 점검"
+          : "안정적";
 
   return (
     <>

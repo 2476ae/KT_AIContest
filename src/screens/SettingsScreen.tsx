@@ -12,10 +12,16 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
     URL.revokeObjectURL(url);
   }
 
+  function confirmResetAll() {
+    if (window.confirm("현재 목표와 소비 내역을 기본 상태로 되돌릴까요?")) {
+      actions.resetAll();
+    }
+  }
+
   return (
     <>
       <section className="screen-head">
-        <span className="eyebrow">데모 안정화</span>
+        <span className="eyebrow">앱 관리</span>
         <h1>설정</h1>
       </section>
 
@@ -44,13 +50,13 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
             <small>현재 화면 데이터를 파일로 저장</small>
           </span>
         </button>
-        <button className="action-row card" type="button" onClick={actions.resetAll} data-testid="settings-reset-all">
+        <button className="action-row card" type="button" onClick={confirmResetAll} data-testid="settings-reset-all">
           <span className="action-icon">
             <RotateCcw size={20} />
           </span>
           <span>
             <strong>초기화</strong>
-            <small>목표와 거래를 기본 상태로 복원</small>
+            <small>확인 후 기본 상태로 복원</small>
           </span>
         </button>
       </section>
@@ -71,7 +77,7 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
         </span>
         <span>
           <strong>실시간 반영 준비</strong>
-          <small>연결 지출은 중복 없이 홈, 캘린더, AI 코치와 알림에 반영됩니다.</small>
+          <small>새 소비는 홈, 캘린더, AI 코치와 알림에 함께 반영됩니다.</small>
         </span>
       </section>
     </>
