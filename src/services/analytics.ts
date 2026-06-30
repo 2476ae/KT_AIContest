@@ -322,8 +322,8 @@ function getCoachBasisItems(
   const subscriptionTone: CoachBasisItem["tone"] = subscriptionPressure >= 1 ? "over" : subscriptionPressure >= 0.85 ? "watch" : "stable";
   const patternShift = getPrimaryPatternShift(categories, previousCategories);
   const budgetDetail = summary.isAdjusted
-    ? `초기 목표 ${formatWon(goal.spendingLimit)}에서 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}로 계산했습니다.`
-    : `목표 ${formatWon(goal.spendingLimit)} 중 ${formatWon(summary.totalSpent)}을 사용했고 ${formatWon(summary.remainingBudget)}이 남았습니다.`;
+    ? `현실 목표 ${formatWon(summary.adjustedSpendingLimit)} 기준`
+    : `남은 한도 ${formatWon(summary.remainingBudget)}`;
 
   const items: CoachBasisItem[] = [
     {
@@ -337,14 +337,14 @@ function getCoachBasisItems(
       id: "daily-limit",
       title: "오늘 한도",
       value: formatWon(summary.dailyBudget),
-      detail: `남은 ${summary.daysLeft}일 동안 목표 안에 머물기 위한 하루 기준입니다.`,
+      detail: `남은 ${summary.daysLeft}일 기준`,
       tone: summary.dailyBudget > 0 ? "primary" : "over",
     },
     {
       id: "saving-outlook",
       title: summary.isAdjusted ? "조정 후 저축" : "저축 전망",
       value: formatWon(savingValue),
-      detail: `월수입 ${formatWon(goal.monthlyIncome)}에서 현재 소비를 뺀 금액을 목표 저축 ${formatWon(goal.savingGoal)}와 비교했습니다.`,
+      detail: `목표 저축 ${formatWon(goal.savingGoal)}와 비교`,
       tone: savingTone,
     },
   ];
@@ -354,7 +354,7 @@ function getCoachBasisItems(
       id: "category-pattern",
       title: "지난달 패턴",
       value: `${patternShift.category} ${formatPointDiff(patternShift.diff)}`,
-      detail: `지난달 ${formatRatio(patternShift.previousRatio)}에서 이번달 ${formatRatio(patternShift.currentRatio)}로 변한 분야를 기준으로 계획을 조정했습니다.`,
+      detail: `${formatRatio(patternShift.previousRatio)} → ${formatRatio(patternShift.currentRatio)}`,
       tone: Math.abs(patternShift.diff) >= 8 ? "watch" : "stable",
     });
   } else {
@@ -362,7 +362,7 @@ function getCoachBasisItems(
       id: "category-pattern",
       title: "소비 패턴",
       value: `${transactionCount}건 분석`,
-      detail: `${monthId} 거래를 기준으로 분야별 비중을 계산했습니다.`,
+      detail: "분야별 비중 계산",
       tone: "primary",
     });
   }
@@ -373,8 +373,8 @@ function getCoachBasisItems(
     value: formatWon(summary.subscriptionTotal),
     detail:
       goal.subscriptionLimit > 0
-        ? `정기 결제 상한 ${formatWon(goal.subscriptionLimit)}의 ${Math.round(subscriptionPressure * 100)}% 수준입니다.`
-        : "정기 결제 상한이 설정되면 부담 정도를 함께 판단합니다.",
+        ? `상한 대비 ${Math.round(subscriptionPressure * 100)}%`
+        : "상한 미설정",
     tone: subscriptionTone,
   });
 
@@ -395,11 +395,11 @@ function buildMissions(
     missions.push({
       id: "mission-record",
       title: "계획한 소비 기록하기",
-      reason: `오늘은 ${formatWon(summary.dailyBudget)}까지 여유가 있어 감액보다 기록 유지가 우선입니다.`,
+      reason: "한도 여유 있음",
       expectedSaving: 0,
       impactLabel: "실행",
       impactText: "기록",
-      action: "필요한 결제는 진행하되 결제 후 바로 기록하세요.",
+      action: "결제 후 바로 기록",
       completed: false,
     });
   } else if (focus) {
@@ -407,10 +407,10 @@ function buildMissions(
     missions.push({
       id: "mission-focus",
       title: `${focus.category} 한 번 줄이기`,
-      reason: `${focus.category} 지출이 이번 달 상위 항목입니다.`,
+      reason: "상위 지출",
       expectedSaving: saving,
       impactLabel: "예상 절감",
-      action: `이번 주 ${focus.category} 결제를 한 번만 다른 선택지로 바꿔보세요.`,
+      action: `${focus.category} 결제 1회 대체`,
       completed: false,
     });
   }
@@ -424,30 +424,30 @@ function buildMissions(
     missions.push({
       id: "mission-subscription",
       title: `${subscription.merchant} 사용 빈도 확인`,
-      reason: subscriptionPressure >= 1 ? "정기 결제 합계가 구독 상한을 넘었어요." : "정기 결제 합계가 구독 상한에 가까워요.",
+      reason: subscriptionPressure >= 1 ? "상한 초과" : "상한 근접",
       expectedSaving: subscription.monthlyAmount,
       impactLabel: "점검 금액",
-      action: "최근 사용 빈도와 다음 결제일만 확인해보세요.",
+      action: "사용 빈도 확인",
       completed: false,
     });
   }
 
   missions.push({
     id: "mission-daily-budget",
-    title: hasAmpleRoom ? "큰 결제 전 한도 확인" : summary.status === "stable" ? "하루 한도 안에서 쓰기" : "선택 소비 하루 쉬기",
+    title: hasAmpleRoom ? "큰 결제 전 확인" : summary.status === "stable" ? "한도 안에서 쓰기" : "선택 소비 쉬기",
     reason:
       hasAmpleRoom
-        ? "여유가 커도 큰 결제는 월 목표와 한 번 비교하세요."
+        ? "여유 큼"
         : summary.status === "stable"
-        ? `오늘은 ${formatWon(summary.dailyBudget)} 안에서 흐름을 유지해요.`
-        : `남은 ${summary.daysLeft}일 동안 하루 예산을 지키기 위한 완충일입니다.`,
+        ? `한도 ${formatWon(summary.dailyBudget)}`
+        : `남은 ${summary.daysLeft}일`,
     expectedSaving: hasAmpleRoom ? summary.dailyBudget : Math.min(12000, Math.max(5000, Math.round(summary.dailyBudget * 0.25 / 1000) * 1000)),
     impactLabel: hasAmpleRoom ? "남은 한도" : "예상 절감",
     action: hasAmpleRoom
-      ? "큰 결제를 추가하기 전 남은 한도와 저축 예상을 확인하세요."
+      ? "한도와 저축 예상 확인"
       : summary.status === "stable"
-        ? "예정된 소비만 기록하고 추가 결제는 한 번 더 확인하세요."
-        : "교통비를 제외한 선택 소비를 하루 쉬어가세요.",
+        ? "예정 소비만 기록"
+        : "선택 소비 하루 쉬기",
     completed: false,
   });
 
@@ -560,13 +560,13 @@ function buildCategoryPlans(
       guideRatio,
       reason:
         typeof previousRatio === "number"
-          ? `지난달 ${formatRatio(previousRatio)} → 이번달 ${formatRatio(currentRatio)}입니다. 이번달 가이드는 ${formatRatio(guideRatio)}로 잡았어요.`
+          ? `지난달 ${formatRatio(previousRatio)} → 이번달 ${formatRatio(currentRatio)}`
           : hasAmpleRoom
-            ? `${category.category}은(는) 전체의 ${Math.round(category.ratio)}%지만 현재 한도 여유가 충분합니다.`
-            : `${category.category}은(는) 전체의 ${Math.round(category.ratio)}%입니다. 남은 한도 안에서 추가 지출만 조정하세요.`,
+            ? `전체의 ${Math.round(category.ratio)}%, 여유 있음`
+            : `전체의 ${Math.round(category.ratio)}%, 추가 지출 조정`,
       action:
         typeof previousRatio === "number" && !isPatternIncreased
-          ? "지난달 패턴과 비슷해 현재 흐름을 유지해도 괜찮아요."
+          ? "현재 흐름 유지"
           : getCategoryAction(category.category, hasAmpleRoom),
     };
   });
@@ -595,20 +595,20 @@ export function getCoachReport(
   const hasAmpleRoom = hasAmpleBudgetRoom(goal, summary);
   const todayAction =
     summary.remainingBudget < 0
-      ? `월수입 기준으로도 남은 한도가 부족해요. 오늘은 필수 지출만 남기고 추가 결제를 멈춰보세요.`
+      ? "오늘은 필수 지출만 남기세요."
       : summary.isAdjusted
-        ? `초기 소비 목표를 ${formatWon(Math.abs(summary.originalRemainingBudget))} 넘겼지만, 월 목표를 ${formatWon(summary.adjustedSpendingLimit)}으로 조정하면 오늘 ${formatWon(summary.dailyBudget)}까지는 사용할 수 있어요.`
+        ? `오늘 ${formatWon(summary.dailyBudget)}까지 사용 가능`
       : hasAmpleRoom
-        ? `오늘은 ${formatWon(summary.dailyBudget)}까지 여유가 있어 줄이기보다 계획한 소비를 기록하는 데 집중하세요.`
-      : `${focusText}을 이번 주 한 번만 줄이면 목표 저축에 더 가까워져요.`;
+        ? "계획한 소비만 기록하세요."
+      : `${focusText} 1회만 줄여요.`;
 
   return {
     headline:
       summary.isAdjusted
-        ? `초기 목표 ${formatWon(goal.spendingLimit)}을 넘겨 현실 조정 목표를 ${formatWon(summary.adjustedSpendingLimit)}으로 다시 잡았어요.`
+        ? `현실 목표 ${formatWon(summary.adjustedSpendingLimit)}`
         : summary.remainingBudget >= 0
-        ? `남은 ${summary.daysLeft}일 동안 하루 ${formatWon(summary.dailyBudget)} 안에서 쓰면 목표 소비액 안에 머물 수 있어요.`
-        : `월수입 기준 조정 한도도 ${formatWon(Math.abs(summary.remainingBudget))} 부족해요. 이번 주는 고정비보다 선택 소비 조정이 먼저예요.`,
+        ? `오늘 한도 ${formatWon(summary.dailyBudget)}`
+        : `조정 한도 ${formatWon(Math.abs(summary.remainingBudget))} 부족`,
     status,
     dailyBudget: summary.dailyBudget,
     savingPossibility,
@@ -627,8 +627,8 @@ export function getCoachReport(
           ? "정기 결제는 전체 예산 대비 안정적입니다."
         : "구독으로 보이는 고정 지출은 아직 없습니다.",
       summary.isAdjusted
-        ? `조정 후 예상 저축은 ${formatWon(summary.adjustedSavingGoal)}입니다. 원래 저축 목표와 함께 비교해보세요.`
-        : `목표 저축액 ${formatWon(goal.savingGoal)} 기준 현재 예상 저축은 ${formatWon(summary.savingProjection)}입니다.`,
+        ? `조정 후 저축 ${formatWon(summary.adjustedSavingGoal)}`
+        : `저축 예상 ${formatWon(summary.savingProjection)}`,
     ],
     categoryPlans,
     missions,

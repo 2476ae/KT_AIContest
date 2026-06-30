@@ -17,23 +17,23 @@ function statusCopy(status: BudgetStatus) {
 export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const { coachReport, coachResponse, subscriptionCandidates, summary } = computed;
   const isOverBudget = summary.remainingBudget < 0;
-  const guideAmountLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 하루 한도" : "오늘 권장 사용 한도";
+  const guideAmountLabel = isOverBudget ? "초과 금액" : summary.isAdjusted ? "현실 한도" : "오늘 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : coachReport.dailyBudget;
-  const guideHelpText = isOverBudget
-    ? "월수입 기준 조정 한도도 부족해요. 오늘은 필수 지출만 남기는 게 좋아요."
+  const guideHint = isOverBudget
+    ? "필수 지출만"
     : summary.isAdjusted
-      ? `월 소비 목표를 ${formatWon(summary.adjustedSpendingLimit)}으로 현실 조정한 하루 권장 한도`
-      : "월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액";
+      ? "조정 목표 반영"
+      : `남은 ${summary.daysLeft}일 기준`;
   const isAiLoading = coachResponse.status === "loading";
   const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
   const aiStatusCopy = {
-    error: "AI 응답을 표시하지 못했습니다. 안전한 대체 결과를 준비합니다.",
-    fallback: "외부 AI 응답 실패 시 로컬 분석으로 대체했습니다.",
-    loading: "AI 분석 결과를 불러오는 중입니다.",
+    error: "로컬 분석으로 대체",
+    fallback: "로컬 분석으로 대체",
+    loading: "분석 중",
     ready:
       coachResponse.provider.mode === "external"
-        ? `${coachResponse.provider.label} 결과를 표시하고 있습니다.`
-        : "로컬 미리보기를 표시하고 있습니다. 버튼을 누르면 OpenAI 분석을 1회 요청합니다.",
+        ? `${coachResponse.provider.label} 연결됨`
+        : "로컬 미리보기",
   }[coachResponse.status];
 
   return (
@@ -55,8 +55,8 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
             <span className="coach-loading-icon">
               <Loader2 className="spin-icon" size={21} />
             </span>
-            <strong>AI 분석 결과를 불러오는 중입니다...</strong>
-            <small>기본 금액은 로컬 계산으로 먼저 보호하고, OpenAI 문장만 도착하면 교체됩니다. 조금만 기다려주세요.</small>
+            <strong>AI 분석 중</strong>
+            <small>결과가 도착하면 자동 반영됩니다.</small>
           </div>
         )}
 
@@ -68,7 +68,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
             <div className={`coach-budget-callout${isOverBudget ? " is-over" : ""}`}>
               <span>{guideAmountLabel}</span>
               <strong>{formatWon(guideAmount)}</strong>
-              <small>{guideHelpText}</small>
+              <small>{guideHint}</small>
             </div>
           </section>
 
@@ -77,7 +77,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               <Bot size={19} />
             </span>
             <span className="ai-state-copy">
-              <strong>AI 분석 연결 상태</strong>
+              <strong>AI 상태</strong>
               <small>{aiStatusCopy}</small>
               {coachResponse.error && <small>{coachResponse.error}</small>}
             </span>
@@ -144,7 +144,6 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
                           <strong>{formatWon(Math.abs(planDelta))}</strong>
                         </span>
                       </div>
-                      <p>{plan.reason}</p>
                       <em>{plan.action}</em>
                     </article>
                   );
@@ -194,7 +193,6 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
                 </article>
               ))}
             </div>
-            <p className="basis-copy">{coachReport.basis}</p>
           </section>
         </div>
       </section>

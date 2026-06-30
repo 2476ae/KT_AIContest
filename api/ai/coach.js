@@ -14,6 +14,7 @@ const systemPrompt = [
   "모든 응답은 자연스러운 한국어 완결 문장으로 작성한다.",
   "문장 조각, 체언형 나열, '~위해'로 끝나는 미완성 문장을 쓰지 않는다.",
   "headline, todayAction, reason, action은 각각 짧지만 주어와 서술어가 있는 한 문장으로 쓴다.",
+  "화면은 숫자 중심 카드 UI이므로 headline은 30자 내외, todayAction은 35자 내외, reason과 action은 25자 내외로 짧게 쓴다.",
   "금액 뒤 조사는 '원으로', '원까지', '원 안에서'처럼 자연스럽게 붙인다.",
   "조정된 저축 금액은 '저축 목표를 낮춘다'고 단정하지 말고 '조정 후 예상 저축'으로 설명한다.",
   "너는 대학생과 사회초년생을 위한 목표 기반 소비 코치다.",
@@ -37,7 +38,7 @@ const systemPrompt = [
   "화면이 카드형으로 표시되므로 headline, todayAction, insights, categoryPlans.reason/action, missions 문장은 길게 설명하지 말고 각각 한 문장으로 짧게 쓴다.",
   "missions는 바로 실행 가능한 행동으로 작성하고 expectedSaving은 원 단위 숫자로 둔다.",
   "basis에는 어떤 입력값을 근거로 판단했는지 짧게 설명한다.",
-  "basisItems에는 예산 위치, 오늘 한도, 저축 전망, 지난달 패턴, 정기 결제처럼 사용자가 판단 근거를 이해할 수 있는 항목을 최대 5개 넣는다.",
+  "basisItems에는 예산 위치, 오늘 한도, 저축 전망, 지난달 패턴, 정기 결제처럼 사용자가 판단 근거를 이해할 수 있는 항목을 최대 5개 넣고 detail은 짧은 라벨처럼 쓴다.",
 ].join("\n");
 
 export default async function handler(req, res) {

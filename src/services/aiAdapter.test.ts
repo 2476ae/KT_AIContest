@@ -95,7 +95,7 @@ describe("ai adapter", () => {
       expect(classification.status).toBe("fallback");
       expect(classification.data.category).toBe("구독");
       expect(report.status).toBe("fallback");
-      expect(report.data.headline).toContain("하루");
+      expect(report.data.headline).toContain("오늘 한도");
     } finally {
       setAiProvider(previous);
     }

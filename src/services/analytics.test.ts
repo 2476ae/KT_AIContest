@@ -27,8 +27,8 @@ describe("analytics service", () => {
     expect(summary.adjustedSpendingLimit).toBe(407790);
     expect(summary.remainingBudget).toBe(10000);
     expect(summary.dailyBudget).toBe(10000);
-    expect(report.headline).toContain("현실 조정 목표");
-    expect(report.todayAction).toContain("사용할 수 있어요");
+    expect(report.headline).toContain("현실 목표");
+    expect(report.todayAction).toContain("사용 가능");
   });
 
   it("keeps a practical daily budget by reducing the saving target within monthly income", () => {
@@ -109,7 +109,7 @@ describe("analytics service", () => {
   it("creates coach report display data", () => {
     const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id, previousTransactions);
 
-    expect(report.headline).toContain("하루");
+    expect(report.headline).toContain("오늘 한도");
     expect(report.categoryPlans.length).toBeGreaterThan(0);
     expect(report.categoryPlans[0].plannedAmount).toBeGreaterThanOrEqual(report.categoryPlans[0].currentAmount);
     expect(report.categoryPlans[0].previousRatio).toBeGreaterThan(0);
@@ -131,8 +131,8 @@ describe("analytics service", () => {
     ]);
     expect(report.basisItems.find((item) => item.id === "budget-position")?.value).toContain("% 사용");
     expect(report.basisItems.find((item) => item.id === "daily-limit")?.value).toBe("322,210원");
-    expect(report.basisItems.find((item) => item.id === "category-pattern")?.detail).toContain("지난달");
-    expect(report.basisItems.find((item) => item.id === "subscription-pressure")?.detail).toContain("정기 결제 상한");
+    expect(report.basisItems.find((item) => item.id === "category-pattern")?.detail).toContain("→");
+    expect(report.basisItems.find((item) => item.id === "subscription-pressure")?.detail).toContain("상한 대비");
   });
 
   it("uses previous month category ratios as category plan context", () => {

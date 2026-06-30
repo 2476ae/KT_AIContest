@@ -152,10 +152,10 @@ function ensureCoachMission(value: unknown, index: number): CoachMission {
   return {
     id: clipText(value.id, `openai-mission-${index}`, 40),
     title: polishCompactSentence(value.title, "소비 미션", 24),
-    reason: polishCompactSentence(value.reason, "목표 달성을 위한 조정입니다.", 52),
+    reason: polishCompactSentence(value.reason, "목표 조정", 36),
     expectedSaving: Math.max(0, Math.round(ensureNumber(value.expectedSaving))),
     impactLabel: "예상 절감",
-    action: polishCompactSentence(value.action, "오늘 실행할 수 있는 작은 조정을 선택하세요.", 56),
+    action: polishCompactSentence(value.action, "오늘 실행할 행동 선택", 40),
     completed: ensureBoolean(value.completed),
   };
 }
@@ -173,8 +173,8 @@ function ensureCategoryPlan(value: unknown): CategoryPlan {
     currentAmount: Math.max(0, Math.round(ensureNumber(value.currentAmount))),
     plannedAmount: Math.max(0, Math.round(ensureNumber(value.plannedAmount))),
     expectedSaving: Math.max(0, Math.round(ensureNumber(value.expectedSaving))),
-    reason: polishCompactSentence(value.reason, "분야별 지출 비중을 기준으로 조정합니다.", 48),
-    action: polishCompactSentence(value.action, "이번 주 줄일 수 있는 결제를 하나 정하세요.", 50),
+    reason: polishCompactSentence(value.reason, "분야 비중 기준", 34),
+    action: polishCompactSentence(value.action, "결제 1건만 점검", 38),
   };
 }
 
@@ -191,7 +191,7 @@ function ensureCoachBasisItem(value: unknown, index: number): CoachBasisItem {
     id: clipText(value.id, `openai-basis-${index}`, 40),
     title: polishCompactSentence(value.title, "분석 기준", 18),
     value: clipText(value.value, "계산됨", 20),
-    detail: polishCompactSentence(value.detail, "현재 거래와 목표를 기준으로 판단했습니다.", 72),
+    detail: polishCompactSentence(value.detail, "현재 거래 기준", 38),
     tone: ensureBasisTone(value.tone),
   };
 }
@@ -208,16 +208,16 @@ function ensureCoachReport(value: unknown): CoachReport {
       : "보통";
 
   return {
-    headline: polishCompactSentence(value.headline, "오늘 소비 흐름을 점검해요", 64),
+    headline: polishCompactSentence(value.headline, "오늘 소비 흐름 점검", 44),
     status,
     dailyBudget: Math.max(0, Math.round(ensureNumber(value.dailyBudget))),
     savingPossibility,
-    todayAction: polishCompactSentence(value.todayAction, "오늘 줄일 수 있는 항목을 하나 정해보세요.", 78),
+    todayAction: polishCompactSentence(value.todayAction, "오늘 할 일 1개 선택", 52),
     insights: ensureStringArray(value.insights).slice(0, 4).map((item) => polishCompactSentence(item, "", 58)).filter(Boolean),
     categoryPlans: (Array.isArray(value.categoryPlans) ? value.categoryPlans : []).slice(0, 4).map(ensureCategoryPlan),
     missions: (Array.isArray(value.missions) ? value.missions : []).slice(0, 4).map(ensureCoachMission),
     subscriptionAdvice: ensureClippedStringArray(value.subscriptionAdvice, 3, 58),
-    basis: clipText(value.basis, "현재 월 거래, 목표 소비액, 목표 저축액을 기준으로 분석했습니다.", 96),
+    basis: clipText(value.basis, "월 거래와 목표 기준", 64),
     basisItems: (Array.isArray(value.basisItems) ? value.basisItems : []).slice(0, 5).map(ensureCoachBasisItem),
   };
 }

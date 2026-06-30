@@ -1057,10 +1057,13 @@ button:disabled {
 
 .mission-meta {
   display: block;
+  overflow: hidden;
   color: var(--muted);
   font-size: 12px;
   font-weight: 720;
   line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .mission-saving {
@@ -1848,9 +1851,9 @@ button:disabled {
 
 .coach-hero h2 {
   margin: 0 0 8px;
-  font-size: 20px;
+  font-size: 24px;
   font-weight: 940;
-  line-height: 1.28;
+  line-height: 1.16;
 }
 
 .coach-hero p {
@@ -1863,9 +1866,9 @@ button:disabled {
 
 .coach-budget-callout {
   display: grid;
-  gap: 4px;
+  gap: 5px;
   margin-top: 12px;
-  padding: 12px;
+  padding: 13px 14px;
   border-radius: var(--radius-lg);
   background: rgba(248, 250, 252, 0.9);
   border: 1px solid rgba(148, 163, 184, 0.18);
@@ -1887,7 +1890,7 @@ button:disabled {
 }
 
 .coach-budget-callout strong {
-  font-size: 26px;
+  font-size: 32px;
   font-variant-numeric: tabular-nums;
   font-weight: 950;
   line-height: 1.08;
@@ -2060,8 +2063,11 @@ button:disabled {
 }
 
 .category-plan-card em {
+  overflow: hidden;
   color: var(--primary);
   font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .category-bar {

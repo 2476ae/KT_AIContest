@@ -20,20 +20,20 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   const remainingFlowLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 여력" : "잔액 흐름";
   const remainingFlowAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.remainingBudget;
   const remainingFlowText = isOverBudget
-    ? "월수입 기준 조정 한도도 넘긴 금액입니다. 이번 주는 필수 지출만 남겨두세요."
+    ? "필수 지출만"
     : summary.isAdjusted
-      ? `초기 목표 ${formatWon(state.goal.spendingLimit)}을 넘겨 ${formatWon(summary.adjustedSpendingLimit)}까지 현실 조정했습니다.`
-      : "목표 소비액 안에서 남은 조정 여력입니다.";
+      ? "현실 목표 반영"
+      : "사용 가능";
   const subscriptionPressure = state.goal.subscriptionLimit > 0 ? summary.subscriptionTotal / state.goal.subscriptionLimit : 0;
   const subscriptionSpendingRatio = state.goal.spendingLimit > 0 ? summary.subscriptionTotal / state.goal.spendingLimit : 0;
   const subscriptionCardText =
     summary.subscriptionTotal === 0
-      ? "정기 결제가 확인되면 이곳에 표시됩니다."
+      ? "미확인"
       : subscriptionPressure >= 1 && subscriptionSpendingRatio >= 0.12
-        ? `상한 ${formatWon(state.goal.subscriptionLimit)}을 넘어 사용 빈도 확인이 필요합니다.`
+        ? "상한 초과"
         : subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12
-          ? `상한 ${formatWon(state.goal.subscriptionLimit)}에 가까워 가볍게 점검해보세요.`
-          : "전체 예산 대비 안정적인 수준입니다.";
+          ? "상한 근접"
+          : "안정";
 
   return (
     <>
@@ -91,7 +91,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
                 <CalendarClock size={17} />
               </span>
               <span>
-                <strong className="coach-title">오늘의 소비 가이드</strong>
+                <strong className="coach-title">오늘 가이드</strong>
                 <span className="coach-text">{coachReport.todayAction}</span>
               </span>
             </div>
