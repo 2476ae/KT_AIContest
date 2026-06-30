@@ -196,7 +196,7 @@ interface CoachReportInput {
 }
 ```
 
-`transactions`는 현재 선택된 월의 거래만 전달된다.
+`transactions`는 현재 선택된 월의 거래를, `previousMonthTransactions`는 바로 이전 달 거래를 전달한다.
 
 ## AI 코치 리포트 출력
 
@@ -212,6 +212,19 @@ interface CoachReport {
   missions: CoachMission[];
   subscriptionAdvice: string[];
   basis: string;
+  basisItems: CoachBasisItem[];
+}
+```
+
+분석 기준 출력:
+
+```ts
+interface CoachBasisItem {
+  id: string;
+  title: string;
+  value: string;
+  detail: string;
+  tone: "primary" | "stable" | "watch" | "over";
 }
 ```
 

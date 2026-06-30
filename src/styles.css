@@ -2145,8 +2145,66 @@ button:disabled {
   font-weight: 850;
 }
 
+.basis-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.basis-card {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.basis-card.is-primary {
+  border-color: rgba(82, 113, 255, 0.2);
+  background: var(--primary-soft);
+}
+
+.basis-card.is-stable {
+  border-color: rgba(0, 168, 120, 0.18);
+  background: var(--saving-soft);
+}
+
+.basis-card.is-watch {
+  border-color: rgba(239, 160, 36, 0.26);
+  background: var(--subscription-soft);
+}
+
+.basis-card.is-over {
+  border-color: rgba(235, 94, 85, 0.22);
+  background: var(--danger-soft);
+}
+
+.basis-card span,
+.basis-card small {
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 820;
+  line-height: 1.35;
+}
+
+.basis-card strong {
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 14px;
+  font-weight: 950;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.basis-card small {
+  font-size: 11px;
+  font-weight: 730;
+}
+
 .basis-copy {
-  margin: 0;
+  margin: 3px 0 0;
   color: var(--muted);
   font-size: 12px;
   font-weight: 720;

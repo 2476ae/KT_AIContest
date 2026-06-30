@@ -1,5 +1,6 @@
 const CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "여가", "구독", "교육", "의료", "생활", "기타"];
 const BUDGET_STATUSES = ["stable", "watch", "over"];
+const BASIS_TONES = ["primary", "stable", "watch", "over"];
 const SAVING_POSSIBILITIES = ["높음", "보통", "낮음"];
 const DEFAULT_ALLOWED_ORIGINS = ["https://2476ae.github.io", "http://localhost:5173", "http://127.0.0.1:5173"];
 const DEFAULT_MAX_OUTPUT_TOKENS = 650;
@@ -228,6 +229,22 @@ export const coachReportSchema = {
       maxItems: 3,
     },
     basis: { type: "string" },
+    basisItems: {
+      type: "array",
+      maxItems: 5,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          id: { type: "string" },
+          title: { type: "string" },
+          value: { type: "string" },
+          detail: { type: "string" },
+          tone: { type: "string", enum: BASIS_TONES },
+        },
+        required: ["id", "title", "value", "detail", "tone"],
+      },
+    },
   },
   required: [
     "headline",
@@ -240,6 +257,7 @@ export const coachReportSchema = {
     "missions",
     "subscriptionAdvice",
     "basis",
+    "basisItems",
   ],
 };
 

@@ -1,5 +1,5 @@
 import { CATEGORIES } from "../constants";
-import type { Category, CategoryPlan, CoachMission, CoachReport } from "../types";
+import type { BudgetStatus, Category, CategoryPlan, CoachBasisItem, CoachMission, CoachReport } from "../types";
 import type { AiProvider, ClassificationInput, ClassificationResult, CoachReportInput } from "./aiAdapter";
 
 export interface OpenAiProxyProviderOptions {
@@ -178,6 +178,24 @@ function ensureCategoryPlan(value: unknown): CategoryPlan {
   };
 }
 
+function ensureBasisTone(value: unknown): BudgetStatus | "primary" {
+  return value === "primary" || value === "stable" || value === "watch" || value === "over" ? value : "primary";
+}
+
+function ensureCoachBasisItem(value: unknown, index: number): CoachBasisItem {
+  if (!isRecord(value)) {
+    throw new Error("OpenAI proxy returned an invalid basis item.");
+  }
+
+  return {
+    id: clipText(value.id, `openai-basis-${index}`, 40),
+    title: polishCompactSentence(value.title, "분석 기준", 18),
+    value: clipText(value.value, "계산됨", 20),
+    detail: polishCompactSentence(value.detail, "현재 거래와 목표를 기준으로 판단했습니다.", 72),
+    tone: ensureBasisTone(value.tone),
+  };
+}
+
 function ensureCoachReport(value: unknown): CoachReport {
   if (!isRecord(value)) {
     throw new Error("OpenAI proxy returned an invalid coach report.");
@@ -200,6 +218,7 @@ function ensureCoachReport(value: unknown): CoachReport {
     missions: (Array.isArray(value.missions) ? value.missions : []).slice(0, 4).map(ensureCoachMission),
     subscriptionAdvice: ensureClippedStringArray(value.subscriptionAdvice, 3, 58),
     basis: clipText(value.basis, "현재 월 거래, 목표 소비액, 목표 저축액을 기준으로 분석했습니다.", 96),
+    basisItems: (Array.isArray(value.basisItems) ? value.basisItems : []).slice(0, 5).map(ensureCoachBasisItem),
   };
 }
 

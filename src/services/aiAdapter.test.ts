@@ -36,6 +36,7 @@ describe("ai adapter", () => {
             missions: [],
             subscriptionAdvice: [],
             basis: "mock",
+            basisItems: [],
           }),
         },
         {
@@ -121,6 +122,7 @@ describe("ai adapter", () => {
             missions: [],
             subscriptionAdvice: [],
             basis: "async",
+            basisItems: [],
           }),
         },
         {

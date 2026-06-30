@@ -36,6 +36,7 @@ const systemPrompt = [
   "화면이 카드형으로 표시되므로 headline, todayAction, insights, categoryPlans.reason/action, missions 문장은 길게 설명하지 말고 각각 한 문장으로 짧게 쓴다.",
   "missions는 바로 실행 가능한 행동으로 작성하고 expectedSaving은 원 단위 숫자로 둔다.",
   "basis에는 어떤 입력값을 근거로 판단했는지 짧게 설명한다.",
+  "basisItems에는 예산 위치, 오늘 한도, 저축 전망, 지난달 패턴, 정기 결제처럼 사용자가 판단 근거를 이해할 수 있는 항목을 최대 5개 넣는다.",
 ].join("\n");
 
 export default async function handler(req, res) {

@@ -119,6 +119,22 @@ describe("analytics service", () => {
     expect(report.subscriptionAdvice[0]).toContain("월");
   });
 
+  it("builds detailed coach basis items for the analysis section", () => {
+    const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id, previousTransactions);
+
+    expect(report.basisItems.map((item) => item.id)).toEqual([
+      "budget-position",
+      "daily-limit",
+      "saving-outlook",
+      "category-pattern",
+      "subscription-pressure",
+    ]);
+    expect(report.basisItems.find((item) => item.id === "budget-position")?.value).toContain("% 사용");
+    expect(report.basisItems.find((item) => item.id === "daily-limit")?.value).toBe("322,210원");
+    expect(report.basisItems.find((item) => item.id === "category-pattern")?.detail).toContain("지난달");
+    expect(report.basisItems.find((item) => item.id === "subscription-pressure")?.detail).toContain("정기 결제 상한");
+  });
+
   it("uses previous month category ratios as category plan context", () => {
     const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id, previousTransactions);
     const patternPlan = report.categoryPlans.find((plan) => typeof plan.previousRatio === "number");

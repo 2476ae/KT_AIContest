@@ -3,6 +3,7 @@ import { formatDate, parseMonthId } from "./date";
 import type {
   BudgetStatus,
   Category,
+  CoachBasisItem,
   CategoryPlan,
   CategorySummary,
   CoachMission,
@@ -242,6 +243,12 @@ function formatRatio(value: number) {
   return `${Math.round(value)}%`;
 }
 
+function formatPointDiff(value: number) {
+  const rounded = Math.round(Math.abs(value));
+
+  return `${value >= 0 ? "+" : "-"}${rounded}%p`;
+}
+
 function getPatternBasis(categories: CategorySummary[], previousCategories: CategorySummary[]) {
   if (previousCategories.length === 0 || categories.length === 0) {
     return "";
@@ -275,6 +282,101 @@ function getCoachBasis(
   }
 
   return `${monthId} 소비 ${transactionCount}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 남은 소비 한도 ${formatWon(summary.remainingBudget)}, 현재 기준 남는 금액 ${formatWon(summary.savingProjection)}${patternText}`;
+}
+
+function getPrimaryPatternShift(categories: CategorySummary[], previousCategories: CategorySummary[]) {
+  const previousByCategory = new Map(previousCategories.map((category) => [category.category, category]));
+
+  return categories
+    .map((category) => {
+      const previous = previousByCategory.get(category.category);
+
+      return previous
+        ? {
+            category: category.category,
+            currentRatio: category.ratio,
+            diff: category.ratio - previous.ratio,
+            previousRatio: previous.ratio,
+          }
+        : undefined;
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))[0];
+}
+
+function getCoachBasisItems(
+  monthId: string,
+  transactionCount: number,
+  goal: Goal,
+  summary: Summary,
+  categories: CategorySummary[],
+  previousCategories: CategorySummary[],
+): CoachBasisItem[] {
+  const monthProgressTone: CoachBasisItem["tone"] =
+    summary.remainingBudget < 0 ? "over" : summary.status === "watch" ? "watch" : "stable";
+  const savingValue = summary.isAdjusted ? summary.adjustedSavingGoal : summary.savingProjection;
+  const savingTone: CoachBasisItem["tone"] = savingValue >= goal.savingGoal ? "stable" : savingValue >= goal.savingGoal * 0.75 ? "watch" : "over";
+  const subscriptionPressure = goal.subscriptionLimit > 0 ? summary.subscriptionTotal / goal.subscriptionLimit : 0;
+  const subscriptionTone: CoachBasisItem["tone"] = subscriptionPressure >= 1 ? "over" : subscriptionPressure >= 0.85 ? "watch" : "stable";
+  const patternShift = getPrimaryPatternShift(categories, previousCategories);
+  const budgetDetail = summary.isAdjusted
+    ? `초기 목표 ${formatWon(goal.spendingLimit)}에서 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}로 계산했습니다.`
+    : `목표 ${formatWon(goal.spendingLimit)} 중 ${formatWon(summary.totalSpent)}을 사용했고 ${formatWon(summary.remainingBudget)}이 남았습니다.`;
+
+  const items: CoachBasisItem[] = [
+    {
+      id: "budget-position",
+      title: "예산 위치",
+      value: summary.remainingBudget < 0 ? `${formatWon(Math.abs(summary.remainingBudget))} 초과` : `${Math.round(summary.progress)}% 사용`,
+      detail: budgetDetail,
+      tone: monthProgressTone,
+    },
+    {
+      id: "daily-limit",
+      title: "오늘 한도",
+      value: formatWon(summary.dailyBudget),
+      detail: `남은 ${summary.daysLeft}일 동안 목표 안에 머물기 위한 하루 기준입니다.`,
+      tone: summary.dailyBudget > 0 ? "primary" : "over",
+    },
+    {
+      id: "saving-outlook",
+      title: summary.isAdjusted ? "조정 후 저축" : "저축 전망",
+      value: formatWon(savingValue),
+      detail: `월수입 ${formatWon(goal.monthlyIncome)}에서 현재 소비를 뺀 금액을 목표 저축 ${formatWon(goal.savingGoal)}와 비교했습니다.`,
+      tone: savingTone,
+    },
+  ];
+
+  if (patternShift) {
+    items.push({
+      id: "category-pattern",
+      title: "지난달 패턴",
+      value: `${patternShift.category} ${formatPointDiff(patternShift.diff)}`,
+      detail: `지난달 ${formatRatio(patternShift.previousRatio)}에서 이번달 ${formatRatio(patternShift.currentRatio)}로 변한 분야를 기준으로 계획을 조정했습니다.`,
+      tone: Math.abs(patternShift.diff) >= 8 ? "watch" : "stable",
+    });
+  } else {
+    items.push({
+      id: "category-pattern",
+      title: "소비 패턴",
+      value: `${transactionCount}건 분석`,
+      detail: `${monthId} 거래를 기준으로 분야별 비중을 계산했습니다.`,
+      tone: "primary",
+    });
+  }
+
+  items.push({
+    id: "subscription-pressure",
+    title: "정기 결제",
+    value: formatWon(summary.subscriptionTotal),
+    detail:
+      goal.subscriptionLimit > 0
+        ? `정기 결제 상한 ${formatWon(goal.subscriptionLimit)}의 ${Math.round(subscriptionPressure * 100)}% 수준입니다.`
+        : "정기 결제 상한이 설정되면 부담 정도를 함께 판단합니다.",
+    tone: subscriptionTone,
+  });
+
+  return items;
 }
 
 function buildMissions(
@@ -514,6 +616,7 @@ export function getCoachReport(
             .map((item) => `${item.merchant}은(는) ${item.paymentDay}일 결제, 월 ${formatWon(item.monthlyAmount)} 수준입니다.`)
         : ["구독 후보가 생기면 결제일과 예상 절약액을 함께 보여줄게요."],
     basis: getCoachBasis(monthId, transactions.length, goal, summary, categories, previousCategories),
+    basisItems: getCoachBasisItems(monthId, transactions.length, goal, summary, categories, previousCategories),
   };
 }
 
@@ -536,6 +639,7 @@ export function alignCoachReportBudgetFields(
     categoryPlans: localReport.categoryPlans,
     missions: localReport.missions,
     basis: localReport.basis,
+    basisItems: localReport.basisItems,
   };
 }
 

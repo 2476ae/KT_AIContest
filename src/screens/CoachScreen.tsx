@@ -185,6 +185,15 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               {coachReport.status === "stable" ? <CheckCircle2 size={19} /> : <AlertTriangle size={19} />}
               <strong>분석 기준</strong>
             </div>
+            <div className="basis-grid">
+              {coachReport.basisItems.map((item) => (
+                <article className={`basis-card is-${item.tone}`} key={item.id}>
+                  <span>{item.title}</span>
+                  <strong>{item.value}</strong>
+                  <small>{item.detail}</small>
+                </article>
+              ))}
+            </div>
             <p className="basis-copy">{coachReport.basis}</p>
           </section>
         </div>

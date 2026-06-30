@@ -85,6 +85,14 @@ export interface CategoryPlan {
   action: string;
 }
 
+export interface CoachBasisItem {
+  id: string;
+  title: string;
+  value: string;
+  detail: string;
+  tone: BudgetStatus | "primary";
+}
+
 export interface CoachReport {
   headline: string;
   status: BudgetStatus;
@@ -96,6 +104,7 @@ export interface CoachReport {
   missions: CoachMission[];
   subscriptionAdvice: string[];
   basis: string;
+  basisItems: CoachBasisItem[];
 }
 
 export interface Summary {
