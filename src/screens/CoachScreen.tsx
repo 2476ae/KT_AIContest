@@ -24,6 +24,8 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
     : summary.isAdjusted
       ? "조정 목표 반영"
       : `남은 ${summary.daysLeft}일 기준`;
+  const formattedGuideAmount = formatWon(guideAmount);
+  const shouldShowBudgetCallout = !(guideAmountLabel === "오늘 한도" && coachReport.headline.includes(formattedGuideAmount));
   const isAiLoading = coachResponse.status === "loading";
   const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
   const aiStatusCopy = {
@@ -65,11 +67,13 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
             <span className="coach-status">{statusCopy(coachReport.status)}</span>
             <h2>{coachReport.headline}</h2>
             <p>{coachReport.todayAction}</p>
-            <div className={`coach-budget-callout${isOverBudget ? " is-over" : ""}`}>
-              <span>{guideAmountLabel}</span>
-              <strong>{formatWon(guideAmount)}</strong>
-              <small>{guideHint}</small>
-            </div>
+            {shouldShowBudgetCallout && (
+              <div className={`coach-budget-callout${isOverBudget ? " is-over" : ""}`}>
+                <span>{guideAmountLabel}</span>
+                <strong>{formattedGuideAmount}</strong>
+                <small>{guideHint}</small>
+              </div>
+            )}
           </section>
 
           <section className={`ai-state-card card is-${coachResponse.status}`}>
