@@ -1,4 +1,4 @@
-import { AlertTriangle, Bot, CheckCircle2, ClipboardList, Loader2, RefreshCw, WalletCards } from "lucide-react";
+import { AlertTriangle, Bot, CheckCircle2, ClipboardList, Loader2, RefreshCw, Target, WalletCards } from "lucide-react";
 import { MissionList } from "../components/MissionList";
 import { formatWon } from "../services/analytics";
 import type { BudgetStatus } from "../types";
@@ -22,7 +22,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const guideHelpText = isOverBudget
     ? "월수입 기준 조정 한도도 부족해요. 오늘은 필수 지출만 남기는 게 좋아요."
     : summary.isAdjusted
-      ? `저축 목표를 ${formatWon(summary.adjustedSavingGoal)}로 낮춰 잡은 현실적 하루 한도`
+      ? `월 소비 목표를 ${formatWon(summary.adjustedSpendingLimit)}으로 현실 조정한 하루 권장 한도`
       : "월 목표를 지키기 위해 오늘 안에서 쓰면 좋은 최대 금액";
   const isAiLoading = coachResponse.status === "loading";
   const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
@@ -39,8 +39,14 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   return (
     <>
       <section className="screen-head">
-        <span className="eyebrow">AI 코치</span>
-        <h1>오늘의 소비 가이드</h1>
+        <div>
+          <span className="eyebrow">AI 코치</span>
+          <h1>오늘의 소비 가이드</h1>
+        </div>
+        <button className="screen-head-action" type="button" onClick={() => actions.setActiveTab("goals")} data-testid="coach-edit-goal">
+          <Target size={16} />
+          목표 수정
+        </button>
       </section>
 
       <section className={`coach-analysis-shell${isAiLoading ? " is-loading" : ""}`} aria-busy={isAiLoading}>
@@ -50,7 +56,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               <Loader2 className="spin-icon" size={21} />
             </span>
             <strong>AI 분석 결과를 불러오는 중입니다...</strong>
-            <small>임시 금액과 미션은 잠시 가려둘게요. 최종 분석이 준비될 때까지 기다려주세요.</small>
+            <small>기본 금액은 로컬 계산으로 먼저 보호하고, OpenAI 문장만 도착하면 교체됩니다. 조금만 기다려주세요.</small>
           </div>
         )}
 

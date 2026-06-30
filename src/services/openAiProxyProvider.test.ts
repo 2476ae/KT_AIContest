@@ -99,6 +99,33 @@ describe("OpenAI proxy provider", () => {
     expect(result.missions[0].title).toBe("카페 1회 줄이기");
   });
 
+  it("polishes incomplete compact coach sentences", async () => {
+    const provider = createOpenAiProxyProvider({
+      fetcher: async () =>
+        jsonResponse({
+          ...validCoachReport,
+          todayAction: "카페/간식 지출 절감 위해",
+          categoryPlans: [
+            {
+              ...validCoachReport.categoryPlans[0],
+              reason: "카페 지출 조정 위해",
+              action: "커피 결제 횟수 줄이기 위해",
+            },
+          ],
+        }),
+    });
+
+    const result = await provider.createCoachReport({
+      transactions: loadSampleTransactions(),
+      goal: DEFAULT_GOAL,
+      monthId: DEMO_MONTH.id,
+    });
+
+    expect(result.todayAction).toContain("정해보세요");
+    expect(result.categoryPlans[0].reason).toContain("정해보세요");
+    expect(result.categoryPlans[0].action).toContain("정해보세요");
+  });
+
   it("blocks repeated client coach calls after the daily limit", async () => {
     const previousWindow = globalThis.window;
     const storage = new Map<string, string>();

@@ -40,7 +40,7 @@ npm run build:github-pages
 
 검증 범위:
 
-- Vitest: 8개 파일, 32개 테스트
+- Vitest: 9개 파일, 39개 테스트
 - TypeScript build
 - Vite production build
 - GitHub Pages base path build
