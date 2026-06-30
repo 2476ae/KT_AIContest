@@ -7,6 +7,7 @@ interface ImportMetaEnv {
   readonly VITE_AI_DAILY_REQUEST_LIMIT?: string;
   readonly VITE_AI_PROVIDER?: "openai-proxy" | string;
   readonly VITE_AI_PROXY_BASE_URL?: string;
+  readonly VITE_AI_PROXY_TIMEOUT_MS?: string;
 }
 
 interface ImportMeta {

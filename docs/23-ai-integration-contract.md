@@ -64,6 +64,7 @@ Vercel 전체 배포처럼 같은 origin에 `/api`가 있는 경우 `VITE_AI_PRO
 VITE_AI_PROVIDER=openai-proxy
 # Vercel 전체 배포에서는 비워둘 수 있음
 VITE_AI_PROXY_BASE_URL=
+VITE_AI_PROXY_TIMEOUT_MS=45000
 ```
 
 서버 프록시 env:

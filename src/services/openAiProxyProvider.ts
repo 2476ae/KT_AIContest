@@ -13,7 +13,7 @@ export interface OpenAiProxyProviderOptions {
   timeoutMs?: number;
 }
 
-const DEFAULT_TIMEOUT_MS = 15000;
+const DEFAULT_TIMEOUT_MS = 45000;
 const DEFAULT_DAILY_REQUEST_LIMIT = 8;
 const DEFAULT_CLASSIFY_DAILY_LIMIT = 8;
 const DEFAULT_COACH_DAILY_LIMIT = 5;

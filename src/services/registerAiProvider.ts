@@ -4,10 +4,16 @@ import { createOpenAiProxyProvider } from "./openAiProxyProvider";
 interface AiRuntimeEnv {
   VITE_AI_PROVIDER?: string;
   VITE_AI_PROXY_BASE_URL?: string;
+  VITE_AI_PROXY_TIMEOUT_MS?: string;
 }
 
 export function shouldEnableOpenAiProxy(env: AiRuntimeEnv) {
   return env.VITE_AI_PROVIDER === "openai-proxy" || Boolean(env.VITE_AI_PROXY_BASE_URL);
+}
+
+export function readAiProxyTimeoutMs(env: AiRuntimeEnv) {
+  const parsed = Number(env.VITE_AI_PROXY_TIMEOUT_MS);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
 }
 
 export function registerConfiguredAiProvider(env: AiRuntimeEnv = import.meta.env) {
@@ -18,6 +24,7 @@ export function registerConfiguredAiProvider(env: AiRuntimeEnv = import.meta.env
   setAiProvider(
     createOpenAiProxyProvider({
       baseUrl: env.VITE_AI_PROXY_BASE_URL,
+      timeoutMs: readAiProxyTimeoutMs(env),
     }),
     {
       id: "openai-proxy",
