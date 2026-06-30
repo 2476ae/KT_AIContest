@@ -147,6 +147,17 @@ describe("analytics service", () => {
     expect(report.basis).toContain("지난달 대비");
   });
 
+  it("keeps category plans diverse when only one category needs extra attention", () => {
+    const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id, previousTransactions);
+    const planCategories = report.categoryPlans.map((plan) => plan.category);
+
+    expect(report.categoryPlans.length).toBeGreaterThanOrEqual(3);
+    expect(report.categoryPlans.length).toBeLessThanOrEqual(4);
+    expect(new Set(planCategories).size).toBe(planCategories.length);
+    expect(planCategories).toContain("쇼핑");
+    expect(planCategories).not.toEqual(["쇼핑"]);
+  });
+
   it("does not push reduction missions when the daily budget has ample room", () => {
     const report = getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id);
 

@@ -214,7 +214,7 @@ function ensureCoachReport(value: unknown): CoachReport {
     savingPossibility,
     todayAction: polishCompactSentence(value.todayAction, "오늘 줄일 수 있는 항목을 하나 정해보세요.", 78),
     insights: ensureStringArray(value.insights).slice(0, 4).map((item) => polishCompactSentence(item, "", 58)).filter(Boolean),
-    categoryPlans: (Array.isArray(value.categoryPlans) ? value.categoryPlans : []).slice(0, 3).map(ensureCategoryPlan),
+    categoryPlans: (Array.isArray(value.categoryPlans) ? value.categoryPlans : []).slice(0, 4).map(ensureCategoryPlan),
     missions: (Array.isArray(value.missions) ? value.missions : []).slice(0, 4).map(ensureCoachMission),
     subscriptionAdvice: ensureClippedStringArray(value.subscriptionAdvice, 3, 58),
     basis: clipText(value.basis, "현재 월 거래, 목표 소비액, 목표 저축액을 기준으로 분석했습니다.", 96),

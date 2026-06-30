@@ -16,6 +16,8 @@ import type {
 } from "../types";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const CATEGORY_PLAN_LIMIT = 4;
+const MIN_CATEGORY_PLAN_COUNT = 3;
 
 export function toDate(date: string) {
   const [year, month, day] = date.split("-").map(Number);
@@ -486,6 +488,27 @@ function getCategoryAction(category: Category, hasAmpleRoom: boolean) {
   return actions[category];
 }
 
+function pickCategoryPlanSummaries(priorityCategories: CategorySummary[], categories: CategorySummary[]) {
+  const selected: CategorySummary[] = [];
+  const selectedCategories = new Set<Category>();
+  const minimumCount = Math.min(MIN_CATEGORY_PLAN_COUNT, CATEGORY_PLAN_LIMIT, categories.length);
+
+  for (const category of [...priorityCategories, ...categories]) {
+    if (selectedCategories.has(category.category)) {
+      continue;
+    }
+
+    selected.push(category);
+    selectedCategories.add(category.category);
+
+    if (selected.length >= CATEGORY_PLAN_LIMIT) {
+      break;
+    }
+  }
+
+  return selected.slice(0, Math.max(minimumCount, Math.min(CATEGORY_PLAN_LIMIT, selected.length)));
+}
+
 function buildCategoryPlans(
   categories: CategorySummary[],
   summary: Summary,
@@ -501,11 +524,11 @@ function buildCategoryPlans(
   const priorityCategories = hasAmpleRoom
     ? patternIncreasedCategories
     : categories.filter((category) => category.status !== "stable" || patternIncreasedCategories.includes(category));
-  const visibleCategories = priorityCategories.length > 0 ? priorityCategories : categories.slice(0, 3);
+  const visibleCategories = pickCategoryPlanSummaries(priorityCategories, categories);
   const totalVisibleAmount = visibleCategories.reduce((sum, category) => sum + category.amount, 0);
   const remainingBudget = Math.max(0, summary.remainingBudget);
 
-  return visibleCategories.slice(0, 3).map((category) => {
+  return visibleCategories.map((category) => {
     const previous = previousByCategory.get(category.category);
     const previousRatio = previous?.ratio;
     const currentRatio = category.ratio;
