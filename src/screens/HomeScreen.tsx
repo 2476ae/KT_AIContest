@@ -13,7 +13,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   const isOverBudget = summary.remainingBudget < 0;
   const guideAmountLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 한도" : "오늘 권장 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.dailyBudget;
-  const savingLabel = summary.isAdjusted ? "조정 후 저축 예상" : "저축 예상";
+  const savingLabel = summary.isAdjusted ? "월수입 기준 저축" : "저축 예상";
   const savingAmount = summary.isAdjusted ? summary.adjustedSavingGoal : summary.savingProjection;
   const goalChipLabel = summary.isAdjusted ? "현실 목표" : "월 목표";
   const goalChipAmount = summary.isAdjusted ? summary.adjustedSpendingLimit : state.goal.spendingLimit;

@@ -219,7 +219,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           <strong>{Math.round(draftSummary.progress)}%</strong>
         </article>
         <article className="preview-card card">
-          <span>{draftSummary.isAdjusted ? "조정 후 저축 예상" : "저축 예상"}</span>
+          <span>{draftSummary.isAdjusted ? "월수입 기준 저축" : "저축 예상"}</span>
           <strong>{formatWon(draftSummary.isAdjusted ? draftSummary.adjustedSavingGoal : draftSummary.savingProjection)}</strong>
         </article>
         <article className="preview-card card">

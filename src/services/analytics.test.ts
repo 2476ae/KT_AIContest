@@ -131,8 +131,18 @@ describe("analytics service", () => {
     ]);
     expect(report.basisItems.find((item) => item.id === "budget-position")?.value).toContain("% 사용");
     expect(report.basisItems.find((item) => item.id === "daily-limit")?.value).toBe("322,210원");
+    expect(report.basisItems.find((item) => item.id === "saving-outlook")?.detail).toContain("원과 비교");
     expect(report.basisItems.find((item) => item.id === "category-pattern")?.detail).toContain("→");
     expect(report.basisItems.find((item) => item.id === "subscription-pressure")?.detail).toContain("상한 대비");
+  });
+
+  it("explains adjusted saving as income-based remaining money", () => {
+    const overGoal = { ...DEFAULT_GOAL, spendingLimit: 300000 };
+    const report = getCoachReport(transactions, overGoal, DEMO_MONTH.id, previousTransactions);
+    const savingBasis = report.basisItems.find((item) => item.id === "saving-outlook");
+
+    expect(savingBasis?.title).toBe("조정 후 저축 예상");
+    expect(savingBasis?.detail).toBe("월수입 기준 남길 수 있는 금액");
   });
 
   it("uses previous month category ratios as category plan context", () => {

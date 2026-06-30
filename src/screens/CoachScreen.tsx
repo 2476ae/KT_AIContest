@@ -27,8 +27,8 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const isAiLoading = coachResponse.status === "loading";
   const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
   const aiStatusCopy = {
-    error: "기본 분석 표시",
-    fallback: "기본 분석 표시",
+    error: "OpenAI 응답 실패로 기본 분석을 표시합니다.",
+    fallback: "OpenAI 응답 실패로 기본 분석을 표시합니다.",
     loading: "분석 중",
     ready:
       coachResponse.provider.mode === "external"

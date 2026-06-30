@@ -2,7 +2,12 @@ const CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "여가", "�
 const BUDGET_STATUSES = ["stable", "watch", "over"];
 const BASIS_TONES = ["primary", "stable", "watch", "over"];
 const SAVING_POSSIBILITIES = ["높음", "보통", "낮음"];
-const DEFAULT_ALLOWED_ORIGINS = ["https://2476ae.github.io", "http://localhost:5173", "http://127.0.0.1:5173"];
+const DEFAULT_ALLOWED_ORIGINS = [
+  "https://kt-ai-contest.vercel.app",
+  "https://2476ae.github.io",
+  "http://localhost:5173",
+  "http://127.0.0.1:5173",
+];
 const DEFAULT_MAX_OUTPUT_TOKENS = 650;
 const DEFAULT_SERVER_DAILY_REQUEST_LIMIT = 60;
 const DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT = 40;
@@ -17,10 +22,13 @@ class HttpError extends Error {
 
 export function handleCors(req, res) {
   const origin = req.headers.origin;
-  const allowedOrigins = (process.env.AI_ALLOWED_ORIGINS || DEFAULT_ALLOWED_ORIGINS.join(","))
+  const vercelOrigin = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "";
+  const defaultOrigins = [...DEFAULT_ALLOWED_ORIGINS, vercelOrigin].filter(Boolean);
+  const configuredOrigins = (process.env.AI_ALLOWED_ORIGINS || "")
     .split(",")
     .map((item) => item.trim())
     .filter(Boolean);
+  const allowedOrigins = Array.from(new Set([...defaultOrigins, ...configuredOrigins]));
   const isAllowed = !origin || allowedOrigins.includes(origin);
 
   if (origin && isAllowed) {

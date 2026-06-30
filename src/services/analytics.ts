@@ -342,9 +342,9 @@ function getCoachBasisItems(
     },
     {
       id: "saving-outlook",
-      title: summary.isAdjusted ? "조정 후 저축" : "저축 전망",
+      title: summary.isAdjusted ? "조정 후 저축 예상" : "저축 전망",
       value: formatWon(savingValue),
-      detail: `목표 저축 ${formatWon(goal.savingGoal)}와 비교`,
+      detail: summary.isAdjusted ? "월수입 기준 남길 수 있는 금액" : `목표 저축 ${formatWon(goal.savingGoal)}과 비교`,
       tone: savingTone,
     },
   ];
