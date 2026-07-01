@@ -4,6 +4,7 @@ import { MissionList } from "../components/MissionList";
 import { TransactionList } from "../components/TransactionList";
 import { formatWon } from "../services/analytics";
 import { formatMonthLabel } from "../services/date";
+import { getTransactionUsageCopy } from "../services/transactionCopy";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
 export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) {
@@ -17,7 +18,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   const savingAmount = summary.isAdjusted ? summary.adjustedSavingGoal : summary.savingProjection;
   const goalChipLabel = summary.isAdjusted ? "현실 목표" : "월 목표";
   const goalChipAmount = summary.isAdjusted ? summary.adjustedSpendingLimit : state.goal.spendingLimit;
-  const remainingFlowLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 여력" : "잔액 흐름";
+  const remainingFlowLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 여력" : "남은 한도";
   const remainingFlowAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.remainingBudget;
   const remainingFlowText = isOverBudget
     ? "필수 지출 위주"
@@ -34,6 +35,10 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
         : subscriptionPressure >= 0.85 && subscriptionSpendingRatio >= 0.12
           ? "가볍게 점검"
           : "안정적";
+  const selectedTransaction = selectedDay?.transactions[0];
+  const selectedDayCopy = selectedTransaction
+    ? getTransactionUsageCopy(selectedTransaction)
+    : "선택한 날짜의 소비 상태를 확인할 수 있어요.";
 
   return (
     <>
@@ -133,7 +138,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
 
       <section className="calendar-card card">
         <div className="calendar-head">
-          <h3 className="calendar-title">월간 흐름</h3>
+          <h3 className="calendar-title">월간 소비달력</h3>
           <div className="legend">
             <span className="legend-item"><span className="legend-dot is-safe" />적정</span>
             <span className="legend-item"><span className="legend-dot is-subscription" />정기 결제</span>
@@ -143,8 +148,8 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
         <CalendarGrid days={computed.calendarDays} selectedDate={state.selectedDate} onSelectDate={actions.setSelectedDate} />
         <div className="selected-day-note">
           <span>
-            <strong>{selectedDay?.amount ? `${selectedDay.day}일 소비 ${formatWon(selectedDay.amount)}` : `${selectedDay?.day ?? ""}일은 무지출 흐름`}</strong>
-            <span>{selectedDay?.transactions[0]?.classificationReason ?? "선택한 날짜의 소비 상태를 확인할 수 있어요."}</span>
+            <strong>{selectedDay?.amount ? `${selectedDay.day}일 소비 ${formatWon(selectedDay.amount)}` : `${selectedDay?.day ?? ""}일은 지출이 없어요`}</strong>
+            <span>{selectedDayCopy}</span>
           </span>
           <strong className="selected-day-amount">{selectedDay?.amount ? `-${formatWon(selectedDay.amount)}` : "0원"}</strong>
         </div>
@@ -175,7 +180,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
           전체 보기
         </button>
       </div>
-      <TransactionList transactions={recentTransactions.slice(0, 3)} emptyText="샘플 데이터를 불러오면 최근 소비가 표시됩니다." />
+      <TransactionList transactions={recentTransactions.slice(0, 3)} showDate emptyText="샘플 데이터를 불러오면 최근 소비가 표시됩니다." />
     </>
   );
 }

@@ -1,5 +1,6 @@
 import { classifyTransaction } from "./aiAdapter";
 import type { Category, PaymentType, Transaction } from "../types";
+import { getManualCategoryCopy } from "./transactionCopy";
 
 export interface CsvValidationResult {
   transactions: Transaction[];
@@ -130,7 +131,7 @@ export function parseTransactionsCsvWithValidation(csvText: string): CsvValidati
       paymentType: asPaymentType(row.paymentType),
       category,
       isSubscription,
-      classificationReason: row.category ? "사용자 지정 카테고리입니다." : classified.reason,
+      classificationReason: row.category ? getManualCategoryCopy(category) : classified.reason,
     };
   });
 

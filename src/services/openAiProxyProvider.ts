@@ -1,6 +1,7 @@
 import { CATEGORIES } from "../constants";
 import type { BudgetStatus, Category, CategoryPlan, CoachBasisItem, CoachMission, CoachReport } from "../types";
 import type { AiProvider, ClassificationInput, ClassificationResult, CoachReportInput } from "./aiAdapter";
+import { getTransactionUsageCopy } from "./transactionCopy";
 
 export interface OpenAiProxyProviderOptions {
   baseUrl?: string;
@@ -224,7 +225,7 @@ function ensureCoachReport(value: unknown): CoachReport {
       : "보통";
 
   return {
-    headline: polishCompactSentence(value.headline, "오늘 소비 흐름 점검", 44),
+    headline: polishCompactSentence(value.headline, "오늘 소비 점검", 44),
     status,
     dailyBudget: Math.max(0, Math.round(ensureNumber(value.dailyBudget))),
     savingPossibility,
@@ -274,9 +275,19 @@ export function createOpenAiProxyProvider(options: OpenAiProxyProviderOptions = 
         throw new Error("OpenAI proxy returned an invalid classification.");
       }
 
+      const category = ensureCategory(response.category);
+
       return {
-        category: ensureCategory(response.category),
-        reason: clipText(response.reason, "OpenAI가 거래 사용처와 메모를 기준으로 분류했습니다.", 72),
+        category,
+        reason: clipText(
+          getTransactionUsageCopy({
+            category,
+            isSubscription: input.isSubscription || category === "구독",
+            merchant: input.merchant,
+          }),
+          "사용처와 메모를 기준으로 소비 항목을 정했어요.",
+          72,
+        ),
       };
     },
     async createCoachReport(input: CoachReportInput): Promise<CoachReport> {

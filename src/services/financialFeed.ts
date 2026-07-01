@@ -1,6 +1,7 @@
 import { CATEGORIES } from "../constants";
 import type { Category, PaymentType, Transaction } from "../types";
 import { classifyTransaction } from "./aiAdapter";
+import { getLinkedCategoryCopy } from "./transactionCopy";
 
 export type FinancialFeedDirection = "credit" | "debit";
 
@@ -173,7 +174,7 @@ export function normalizeFinancialFeedTransactions(
     const category = isCategory(input.category) ? input.category : undefined;
     const hintedSubscription = Boolean(input.isSubscription) || category === CATEGORIES[5];
     const classified = category
-      ? { category, reason: "연결 금융 데이터의 카테고리를 반영했습니다." }
+      ? { category, reason: getLinkedCategoryCopy(category) }
       : classifyTransaction({
           merchant,
           memo,

@@ -85,14 +85,14 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
         <div className="detail-head">
           <span>
             <strong>{selectedDay?.date}</strong>
-            <span>{selectedTop ?? "적정"} 흐름</span>
+            <span>{selectedTop ?? "지출 없음"}</span>
           </span>
           <strong className="detail-amount">{selectedDay?.amount ? `-${formatWon(selectedDay.amount)}` : "0원"}</strong>
         </div>
         <p className="detail-copy">
           {selectedDay?.amount
-            ? `${selectedDay.day}일은 ${selectedTop ?? "선택 소비"} 중심의 지출이 있었어요.`
-            : "지출이 없는 날은 월말 예산에 작은 여유를 남깁니다."}
+            ? `${selectedDay.day}일에는 ${selectedTop ?? "소비"} 지출이 있었어요.`
+            : "지출이 없는 날이에요. 월말 예산에 작은 여유를 남겼습니다."}
         </p>
         <TransactionList
           transactions={selectedDay?.transactions ?? []}

@@ -566,7 +566,7 @@ function buildCategoryPlans(
             : `전체의 ${Math.round(category.ratio)}%, 추가 지출 조정`,
       action:
         typeof previousRatio === "number" && !isPatternIncreased
-          ? "현재 흐름 유지"
+          ? "현재 사용 수준 유지"
           : getCategoryAction(category.category, hasAmpleRoom),
     };
   });

@@ -5,6 +5,7 @@ import { formatWon } from "../services/analytics";
 import { classifyTransactionResponseAsync } from "../services/aiAdapter";
 import { parseTransactionsCsvWithValidation } from "../services/csv";
 import { formatMoneyInput, parseMoneyInput, validateTransactionDraft } from "../services/formValidation";
+import { getManualCategoryCopy } from "../services/transactionCopy";
 import type { Category } from "../types";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
@@ -61,10 +62,10 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
       const response = await classifyTransactionResponseAsync({ merchant, memo, isSubscription });
       const classified = response.data;
       resolvedCategory = classified.category;
-      classificationReason = `자동 분류됨 · ${classified.reason}`;
+      classificationReason = classified.reason;
     } else {
       resolvedCategory = category;
-      classificationReason = "직접 선택됨";
+      classificationReason = getManualCategoryCopy(category);
     }
 
     actions.addTransaction({

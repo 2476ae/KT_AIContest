@@ -55,7 +55,7 @@ describe("OpenAI proxy provider", () => {
 
         return jsonResponse({
           category: "카페/간식",
-          reason: "커피 메모가 있어 카페 소비로 분류했습니다.",
+          reason: "커피와 간식에 돈을 사용했어요.",
         });
       },
     });
