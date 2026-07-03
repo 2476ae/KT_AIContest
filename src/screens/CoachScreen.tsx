@@ -17,7 +17,7 @@ function statusCopy(status: BudgetStatus) {
 export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const { coachReport, coachResponse, subscriptionCandidates, summary } = computed;
   const isOverBudget = summary.remainingBudget < 0;
-  const guideAmountLabel = isOverBudget ? "조정 필요 금액" : summary.isAdjusted ? "현실 한도" : "오늘 한도";
+  const guideAmountLabel = isOverBudget ? "조정 필요 금액" : summary.isAdjusted ? "조정 한도" : "오늘 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : coachReport.dailyBudget;
   const guideHint = isOverBudget
     ? "필수 지출 위주"

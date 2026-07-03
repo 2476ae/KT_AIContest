@@ -48,7 +48,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
     [computed.monthTransactions, draftGoal, state.calendarMonth],
   );
   const isDraftOverBudget = draftSummary.remainingBudget < 0;
-  const draftGuideAmountLabel = isDraftOverBudget ? "조정 한도 초과" : draftSummary.isAdjusted ? "현실 조정 한도" : "오늘 권장 한도";
+  const draftGuideAmountLabel = isDraftOverBudget ? "조정 한도 초과" : draftSummary.isAdjusted ? "조정 한도" : "오늘 권장 한도";
   const draftGuideAmount = isDraftOverBudget ? Math.abs(draftSummary.remainingBudget) : draftSummary.dailyBudget;
   const isDirty = !hasSameGoal(draftGoal, state.goal);
   const visibleErrors = saveAttempted ? validation.errors : [];

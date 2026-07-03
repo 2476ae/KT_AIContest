@@ -27,7 +27,7 @@ describe("analytics service", () => {
     expect(summary.adjustedSpendingLimit).toBe(407790);
     expect(summary.remainingBudget).toBe(10000);
     expect(summary.dailyBudget).toBe(10000);
-    expect(report.headline).toContain("현실 목표");
+    expect(report.headline).toContain("조정 목표");
     expect(report.todayAction).toContain("괜찮아요");
   });
 
@@ -73,7 +73,7 @@ describe("analytics service", () => {
     expect(summary.adjustedSavingGoal).toBe(600000);
     expect(report.basis).toContain("목표 소비액 700,000원");
     expect(report.basis).toContain("현재 기준 남는 금액 902,210원");
-    expect(report.basis).not.toContain("현실 조정 목표");
+    expect(report.basis).not.toContain("조정 목표");
     expect(report.basis).not.toContain("조정 후 예상 저축 200,000원");
   });
 

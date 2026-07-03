@@ -280,7 +280,7 @@ function getCoachBasis(
   const patternText = patternBasis ? `, 지난달 대비 ${patternBasis}` : "";
 
   if (summary.isAdjusted) {
-    return `${monthId} 소비 ${transactionCount}건, 초기 목표 소비액 ${formatWon(goal.spendingLimit)}, 현실 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 조정 후 예상 저축 ${formatWon(summary.adjustedSavingGoal)}${patternText}`;
+    return `${monthId} 소비 ${transactionCount}건, 초기 목표 소비액 ${formatWon(goal.spendingLimit)}, 조정 목표 ${formatWon(summary.adjustedSpendingLimit)}, 조정 후 예상 저축 ${formatWon(summary.adjustedSavingGoal)}${patternText}`;
   }
 
   return `${monthId} 소비 ${transactionCount}건, 목표 소비액 ${formatWon(goal.spendingLimit)}, 남은 소비 한도 ${formatWon(summary.remainingBudget)}, 현재 기준 남는 금액 ${formatWon(summary.savingProjection)}${patternText}`;
@@ -322,7 +322,7 @@ function getCoachBasisItems(
   const subscriptionTone: CoachBasisItem["tone"] = subscriptionPressure >= 1 ? "over" : subscriptionPressure >= 0.85 ? "watch" : "stable";
   const patternShift = getPrimaryPatternShift(categories, previousCategories);
   const budgetDetail = summary.isAdjusted
-    ? `현실 목표 ${formatWon(summary.adjustedSpendingLimit)} 기준`
+    ? `조정 목표 ${formatWon(summary.adjustedSpendingLimit)} 기준`
     : `남은 한도 ${formatWon(summary.remainingBudget)}`;
 
   const items: CoachBasisItem[] = [
@@ -605,7 +605,7 @@ export function getCoachReport(
   return {
     headline:
       summary.isAdjusted
-        ? `현실 목표 ${formatWon(summary.adjustedSpendingLimit)}`
+        ? `조정 목표 ${formatWon(summary.adjustedSpendingLimit)}`
         : summary.remainingBudget >= 0
         ? `오늘 한도 ${formatWon(summary.dailyBudget)}`
         : `조정 필요 ${formatWon(Math.abs(summary.remainingBudget))}`,

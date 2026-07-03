@@ -12,18 +12,18 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   const hasData = state.transactions.length > 0;
   const progress = Math.min(100, Math.round(summary.progress));
   const isOverBudget = summary.remainingBudget < 0;
-  const guideAmountLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 한도" : "오늘 권장 한도";
+  const guideAmountLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "조정 한도" : "오늘 권장 한도";
   const guideAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.dailyBudget;
   const savingLabel = summary.isAdjusted ? "월수입 기준 저축" : "저축 예상";
   const savingAmount = summary.isAdjusted ? summary.adjustedSavingGoal : summary.savingProjection;
-  const goalChipLabel = summary.isAdjusted ? "현실 목표" : "월 목표";
+  const goalChipLabel = summary.isAdjusted ? "조정 목표" : "월 목표";
   const goalChipAmount = summary.isAdjusted ? summary.adjustedSpendingLimit : state.goal.spendingLimit;
-  const remainingFlowLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "현실 조정 여력" : "남은 한도";
+  const remainingFlowLabel = isOverBudget ? "조정 한도 초과" : summary.isAdjusted ? "조정 후 여력" : "남은 한도";
   const remainingFlowAmount = isOverBudget ? Math.abs(summary.remainingBudget) : summary.remainingBudget;
   const remainingFlowText = isOverBudget
     ? "필수 지출 위주"
     : summary.isAdjusted
-      ? "현실 목표 반영"
+      ? "조정 목표 반영"
       : "여유 있음";
   const subscriptionPressure = state.goal.subscriptionLimit > 0 ? summary.subscriptionTotal / state.goal.subscriptionLimit : 0;
   const subscriptionSpendingRatio = state.goal.spendingLimit > 0 ? summary.subscriptionTotal / state.goal.spendingLimit : 0;
