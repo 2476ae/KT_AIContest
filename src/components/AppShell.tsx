@@ -117,6 +117,7 @@ function storeNotificationIds(ids: Set<string>) {
 export function AppShell({ children, state, actions }: AppShellProps) {
   const [openPanel, setOpenPanel] = useState<"alerts" | "trust" | null>(null);
   const [readNotificationIds, setReadNotificationIds] = useState<Set<string>>(() => readStoredNotificationIds());
+  const [justReviewedAlertCount, setJustReviewedAlertCount] = useState(0);
   const notifications = useMemo(() => buildNotifications(state), [state]);
   const unreadNotifications = useMemo(
     () => notifications.filter((notification) => !readNotificationIds.has(notification.id)),
@@ -128,27 +129,26 @@ export function AppShell({ children, state, actions }: AppShellProps) {
 
   useEffect(() => {
     if (openPanel !== "alerts" || notifications.length === 0) {
+      if (openPanel !== "alerts") {
+        setJustReviewedAlertCount(0);
+      }
       return;
     }
 
-    setReadNotificationIds((current) => {
-      const next = new Set(current);
-      let changed = false;
+    const newlyReadNotifications = notifications.filter((notification) => !readNotificationIds.has(notification.id));
+    if (newlyReadNotifications.length === 0) {
+      return;
+    }
 
-      notifications.forEach((notification) => {
-        if (!next.has(notification.id)) {
-          next.add(notification.id);
-          changed = true;
-        }
-      });
-
-      if (changed) {
-        storeNotificationIds(next);
-      }
-
-      return changed ? next : current;
+    const next = new Set(readNotificationIds);
+    newlyReadNotifications.forEach((notification) => {
+      next.add(notification.id);
     });
-  }, [notifications, openPanel]);
+
+    storeNotificationIds(next);
+    setJustReviewedAlertCount(newlyReadNotifications.length);
+    setReadNotificationIds(next);
+  }, [notifications, openPanel, readNotificationIds]);
 
   function togglePanel(panel: "alerts" | "trust") {
     setOpenPanel((current) => (current === panel ? null : panel));
@@ -242,7 +242,13 @@ export function AppShell({ children, state, actions }: AppShellProps) {
                     <CheckCircle2 size={18} />
                   </span>
                   <span>
-                    <strong>{unreadNotifications.length > 0 ? `${unreadNotifications.length}개 새 알림이 있어요` : "모든 알림을 확인했어요"}</strong>
+                    <strong>
+                      {hasUnreadNotifications
+                        ? `${unreadNotifications.length}개 새 알림이 있어요`
+                        : justReviewedAlertCount > 0
+                          ? `${justReviewedAlertCount}개 알림을 방금 확인했어요`
+                          : "확인한 알림이에요"}
+                    </strong>
                     <small>새 소비가 들어오면 목표와 AI 코치 분석에 자동 반영됩니다.</small>
                   </span>
                 </div>

@@ -52,6 +52,23 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
   const draftGuideAmount = isDraftOverBudget ? Math.abs(draftSummary.remainingBudget) : draftSummary.dailyBudget;
   const isDirty = !hasSameGoal(draftGoal, state.goal);
   const visibleErrors = saveAttempted ? validation.errors : [];
+  const currentSummary = computed.summary;
+  const goalSummaryTitle = isDirty
+    ? "저장 전 미리보기"
+    : currentSummary.remainingBudget < 0
+      ? "소비 목표를 다시 맞추는 중이에요"
+      : currentSummary.isAdjusted
+        ? "소비 목표는 조정 중이에요"
+        : coachReport.savingPossibility === "높음"
+          ? "저축 가능성은 좋아요"
+          : "목표를 보며 조정해요";
+  const goalSummaryDescription = isDirty
+    ? "아래 수치는 아직 저장되지 않은 목표 기준입니다."
+    : currentSummary.remainingBudget < 0
+      ? `초과분 ${formatWon(Math.abs(currentSummary.remainingBudget))}을 반영해 한도를 다시 확인해요.`
+      : currentSummary.isAdjusted
+        ? `조정 한도 ${formatWon(currentSummary.dailyBudget)} 안에서 소비를 이어가요.`
+        : coachReport.headline;
 
   function toggleFocus(category: Category) {
     const exists = draftGoal.focusCategories.includes(category);
@@ -102,8 +119,8 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           <Target size={20} />
         </span>
         <span>
-          <strong>{isDirty ? "저장 전 미리보기" : coachReport.savingPossibility === "높음" ? "달성 가능성이 좋아요" : "목표를 보며 조정해요"}</strong>
-          <small>{isDirty ? "아래 수치는 아직 저장되지 않은 목표 기준입니다." : coachReport.headline}</small>
+          <strong>{goalSummaryTitle}</strong>
+          <small>{goalSummaryDescription}</small>
         </span>
       </section>
 

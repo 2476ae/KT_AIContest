@@ -33,6 +33,13 @@ describe("csv service", () => {
     expect(invalidRows.errors).toHaveLength(2);
   });
 
+  it("rejects impossible calendar dates", () => {
+    const result = parseTransactionsCsvWithValidation("date,merchant,amount\n2026-02-31,카페,4300");
+
+    expect(result.transactions).toHaveLength(0);
+    expect(result.errors[0]).toContain("실제 날짜");
+  });
+
   it("accepts quoted comma amounts", () => {
     const result = parseTransactionsCsvWithValidation('date,merchant,amount\n2026-06-01,카페,"4,300"');
 

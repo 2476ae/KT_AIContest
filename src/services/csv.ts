@@ -1,5 +1,6 @@
 import { classifyTransaction } from "./aiAdapter";
 import type { Category, PaymentType, Transaction } from "../types";
+import { isValidIsoDate } from "./formValidation";
 import { getManualCategoryCopy } from "./transactionCopy";
 
 export interface CsvValidationResult {
@@ -99,8 +100,8 @@ export function parseTransactionsCsvWithValidation(csvText: string): CsvValidati
     const rowNumber = index + 2;
     const amount = Number(row.amount.replace(/[,\s]/g, ""));
 
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(row.date)) {
-      errors.push(`${rowNumber}행: 날짜는 YYYY-MM-DD 형식이어야 합니다.`);
+    if (!isValidIsoDate(row.date)) {
+      errors.push(`${rowNumber}행: 날짜는 YYYY-MM-DD 형식의 실제 날짜여야 합니다.`);
       return [];
     }
 

@@ -1,7 +1,15 @@
 import { Download, RotateCcw, ShieldCheck, WalletCards } from "lucide-react";
+import { useState } from "react";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
 export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewModel) {
+  const [settingsMessage, setSettingsMessage] = useState("");
+
+  function loadSample() {
+    actions.loadSample();
+    setSettingsMessage("샘플 데이터를 불러왔어요.");
+  }
+
   function downloadCsv() {
     const blob = new Blob([actions.exportCsv()], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -10,11 +18,13 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
     link.download = "money-routine-transactions.csv";
     link.click();
     URL.revokeObjectURL(url);
+    setSettingsMessage("CSV를 저장했어요.");
   }
 
   function confirmResetAll() {
     if (window.confirm("현재 목표와 소비 내역을 기본 상태로 되돌릴까요?")) {
       actions.resetAll();
+      setSettingsMessage("기본 상태로 되돌렸어요.");
     }
   }
 
@@ -26,7 +36,7 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
       </section>
 
       <section className="settings-actions">
-        <button className="action-row card" type="button" onClick={actions.loadSample} data-testid="settings-load-sample">
+        <button className="action-row card" type="button" onClick={loadSample} data-testid="settings-load-sample">
           <span className="action-icon">
             <WalletCards size={20} />
           </span>
@@ -60,6 +70,7 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
           </span>
         </button>
       </section>
+      {settingsMessage && <div className="success-line">{settingsMessage}</div>}
 
       <section className="trust-panel card">
         <span className="trust-icon">

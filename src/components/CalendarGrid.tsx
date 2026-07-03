@@ -33,7 +33,7 @@ export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all" 
       <div className="calendar-grid">
         {visibleDays.map((day) => {
           const topCategory = getTopCategory(day.transactions);
-          const label = day.amount > 0 ? formatShortWon(day.amount) : "0원";
+          const label = day.amount > 0 ? formatShortWon(day.amount) : "";
 
           return (
             <button
