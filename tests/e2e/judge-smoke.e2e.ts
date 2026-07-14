@@ -356,7 +356,7 @@ test.describe("judge demo smoke flow", () => {
     const viewport = page.viewportSize();
 
     if (viewport && viewport.width <= 430) {
-      for (const width of [320, 390, 430]) {
+      for (const width of [280, 300, 320, 390, 430]) {
         await page.setViewportSize({ width, height: 844 });
         await expectInputsInsideTransactionForm(page);
       }
@@ -364,6 +364,8 @@ test.describe("judge demo smoke flow", () => {
     } else {
       await expectInputsInsideTransactionForm(page);
     }
+
+    await expect(page.getByTestId("transaction-date-input")).toHaveCSS("appearance", "none");
 
     await amountInput.focus();
     if (viewport && viewport.width <= 430) {

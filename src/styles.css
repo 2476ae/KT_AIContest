@@ -1843,6 +1843,11 @@ button:disabled {
   padding: 16px;
 }
 
+.entry-form {
+  contain: inline-size;
+  overflow-x: clip;
+}
+
 .entry-tutorial-fields {
   display: grid;
   gap: 13px;
@@ -1963,6 +1968,21 @@ button:disabled {
   min-width: 0;
   max-width: 100%;
   max-inline-size: 100%;
+}
+
+.form-grid > label {
+  overflow-x: clip;
+}
+
+.entry-form input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  text-align: left;
+}
+
+.entry-form input[type="date"]::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
 }
 
 .switch-row {
