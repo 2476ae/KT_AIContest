@@ -1,3 +1,5 @@
+import { createHmac } from "node:crypto";
+
 const CATEGORIES = ["식비", "카페/간식", "교통", "쇼핑", "여가", "구독", "교육", "의료", "생활", "기타"];
 const BUDGET_STATUSES = ["stable", "watch", "over"];
 const BASIS_TONES = ["primary", "stable", "watch", "over"];
@@ -13,6 +15,22 @@ const DEFAULT_OPENAI_TIMEOUT_MS = 7500;
 const DEFAULT_SERVER_DAILY_REQUEST_LIMIT = 60;
 const DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT = 40;
 const DEFAULT_SERVER_COACH_DAILY_LIMIT = 20;
+const DEFAULT_RATE_LIMIT_STORE_TIMEOUT_MS = 1200;
+const RATE_LIMIT_SCRIPT = [
+  'local total = tonumber(redis.call("GET", KEYS[1]) or "0")',
+  'local kind = tonumber(redis.call("GET", KEYS[2]) or "0")',
+  "local totalLimit = tonumber(ARGV[1])",
+  "local kindLimit = tonumber(ARGV[2])",
+  "local ttl = tonumber(ARGV[3])",
+  "if total >= totalLimit or kind >= kindLimit then",
+  "  return {0, total, kind}",
+  "end",
+  'total = redis.call("INCR", KEYS[1])',
+  'kind = redis.call("INCR", KEYS[2])',
+  'if total == 1 then redis.call("EXPIRE", KEYS[1], ttl) end',
+  'if kind == 1 then redis.call("EXPIRE", KEYS[2], ttl) end',
+  "return {1, total, kind}",
+].join("\n");
 
 class HttpError extends Error {
   constructor(status, message) {
@@ -107,19 +125,84 @@ function getClientKey(req) {
   return forwardedFor || String(req.headers["x-real-ip"] || req.socket?.remoteAddress || "unknown");
 }
 
+function getClientKeyHash(req) {
+  const secret = process.env.AI_RATE_LIMIT_KEY_SECRET || process.env.OPENAI_API_KEY || "money-routine-rate-limit";
+  return createHmac("sha256", secret).update(getClientKey(req)).digest("hex").slice(0, 32);
+}
+
+function getPersistentRateLimitConfig() {
+  const url = String(process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL || "")
+    .trim()
+    .replace(/\/+$/, "");
+  const token = String(process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN || "").trim();
+  return url && token ? { token, url } : null;
+}
+
+function getRateLimitValues(kind) {
+  const dailyLimit = readPositiveNumber(process.env.AI_DAILY_REQUEST_LIMIT, DEFAULT_SERVER_DAILY_REQUEST_LIMIT);
+  const kindLimit =
+    kind === "coach"
+      ? readPositiveNumber(process.env.AI_COACH_DAILY_LIMIT, DEFAULT_SERVER_COACH_DAILY_LIMIT)
+      : readPositiveNumber(process.env.AI_CLASSIFY_DAILY_LIMIT, DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT);
+  return { dailyLimit, kindLimit };
+}
+
+function getSecondsUntilRateLimitExpiry() {
+  const now = new Date();
+  const nextUtcDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+  return Math.max(60, Math.ceil((nextUtcDay - now.getTime()) / 1000) + 3600);
+}
+
+async function assertPersistentAiRateLimit(req, kind, config, limits) {
+  const date = new Date().toISOString().slice(0, 10);
+  const clientHash = getClientKeyHash(req);
+  const keyPrefix = `money-routine:ai:${date}:${clientHash}`;
+  const controller = new AbortController();
+  const timeoutMs = Math.min(
+    readPositiveNumber(process.env.AI_RATE_LIMIT_STORE_TIMEOUT_MS, DEFAULT_RATE_LIMIT_STORE_TIMEOUT_MS),
+    2000,
+  );
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(config.url, {
+      body: JSON.stringify([
+        "EVAL",
+        RATE_LIMIT_SCRIPT,
+        2,
+        `${keyPrefix}:total`,
+        `${keyPrefix}:${kind}`,
+        limits.dailyLimit,
+        limits.kindLimit,
+        getSecondsUntilRateLimitExpiry(),
+      ]),
+      headers: {
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+      },
+      method: "POST",
+      signal: controller.signal,
+    });
+    const payload = await response.json();
+    if (!response.ok || payload?.error || !Array.isArray(payload?.result)) {
+      throw new Error(payload?.error || `Persistent rate limit store returned ${response.status}.`);
+    }
+    if (Number(payload.result[0]) !== 1) {
+      throw new HttpError(429, "AI request limit reached for today.");
+    }
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
 function getUsageStore() {
   globalThis.__moneyRoutineAiUsage ??= new Map();
   return globalThis.__moneyRoutineAiUsage;
 }
 
-export function assertAiRateLimit(req, kind) {
-  const productionDefault = process.env.VERCEL_ENV === "production";
-  if (!readBoolean(process.env.AI_RATE_LIMIT_ENABLED, productionDefault)) {
-    return;
-  }
-
+function assertMemoryAiRateLimit(req, kind, limits) {
   const date = new Date().toISOString().slice(0, 10);
-  const key = `${date}:${getClientKey(req)}`;
+  const key = `${date}:${getClientKeyHash(req)}`;
   const store = getUsageStore();
   if (store.size > 500) {
     for (const storedKey of store.keys()) {
@@ -129,13 +212,8 @@ export function assertAiRateLimit(req, kind) {
     }
   }
   const current = store.get(key) ?? { classify: 0, coach: 0, total: 0 };
-  const dailyLimit = readPositiveNumber(process.env.AI_DAILY_REQUEST_LIMIT, DEFAULT_SERVER_DAILY_REQUEST_LIMIT);
-  const kindLimit =
-    kind === "coach"
-      ? readPositiveNumber(process.env.AI_COACH_DAILY_LIMIT, DEFAULT_SERVER_COACH_DAILY_LIMIT)
-      : readPositiveNumber(process.env.AI_CLASSIFY_DAILY_LIMIT, DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT);
 
-  if (current.total >= dailyLimit || current[kind] >= kindLimit) {
+  if (current.total >= limits.dailyLimit || current[kind] >= limits.kindLimit) {
     throw new HttpError(429, "AI request limit reached for today.");
   }
 
@@ -144,6 +222,33 @@ export function assertAiRateLimit(req, kind) {
     [kind]: current[kind] + 1,
     total: current.total + 1,
   });
+}
+
+export async function assertAiRateLimit(req, kind) {
+  const productionDefault = process.env.VERCEL_ENV === "production";
+  if (!readBoolean(process.env.AI_RATE_LIMIT_ENABLED, productionDefault)) {
+    return;
+  }
+
+  const limits = getRateLimitValues(kind);
+  const persistentConfig = getPersistentRateLimitConfig();
+  if (persistentConfig) {
+    try {
+      await assertPersistentAiRateLimit(req, kind, persistentConfig, limits);
+      return;
+    } catch (error) {
+      if (error instanceof HttpError && error.status === 429) {
+        throw error;
+      }
+      console.warn(JSON.stringify({
+        event: "money_routine_ai_rate_limit",
+        outcome: "persistent_store_unavailable",
+        fallback: "instance_memory",
+      }));
+    }
+  }
+
+  assertMemoryAiRateLimit(req, kind, limits);
 }
 
 export function validateClassificationInput(input) {

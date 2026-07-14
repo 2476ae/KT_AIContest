@@ -26,7 +26,7 @@ export default async function handler(req, res) {
 
   try {
     assertPost(req);
-    assertAiRateLimit(req, "classify");
+    await assertAiRateLimit(req, "classify");
     const payload = validateClassificationInput(await readJson(req));
     const result = await createOpenAiJsonResponse({
       name: "money_routine_classification",

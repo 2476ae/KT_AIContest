@@ -79,11 +79,15 @@ AI_RATE_LIMIT_ENABLED=true
 AI_DAILY_REQUEST_LIMIT=60
 AI_CLASSIFY_DAILY_LIMIT=40
 AI_COACH_DAILY_LIMIT=20
+UPSTASH_REDIS_REST_URL=...
+UPSTASH_REDIS_REST_TOKEN=...
+AI_RATE_LIMIT_STORE_TIMEOUT_MS=1200
+AI_RATE_LIMIT_KEY_SECRET=...
 ```
 
 서버 프록시는 OpenAI Responses API의 structured output을 사용한다. 분류 endpoint는 `ClassificationResult`를 반환하고, 코치 endpoint는 로컬 계산 리포트 중 최대 3개 분야 행동과 2개 미션 문구만 보완한 뒤 전체 `CoachReport`로 합친다. 원시 거래 배열을 코치 프록시로 보내지 않고 Responses API의 `store`도 끄므로 입력량과 보관 범위를 줄인다. 비용 관리의 1차 방어선은 명시 호출, 진행 요청 단일화, 샘플·CSV·금융 피드의 로컬 분류, 성공 캐시, 서버 key 비공개, production 기본 횟수 제한이다. OpenAI 응답이 7.5초를 넘으면 서버가 중단하고, 프론트는 늦어도 8초 안에 기본 분석으로 복귀한다.
 
-메모리 기반 서버 제한은 serverless 인스턴스별 보조 방어선이다. 실제 대규모 공개 운영에서는 영속 rate limit 저장소를 연결해야 한다. 프록시는 거래 원문을 기록하지 않고 요청 종류, 성공·실패, 응답 시간만 구조화 로그로 남긴다.
+Upstash Redis 환경변수가 있으면 `EVAL` 한 번으로 전체·기능별 카운터를 함께 검사하고 증가시켜 serverless 인스턴스가 달라도 같은 일일 제한을 적용한다. 호출자 주소는 서버 전용 secret으로 HMAC 처리하며 Redis key에 원문을 남기지 않는다. Redis가 일시적으로 응답하지 않으면 인스턴스 메모리 제한으로 복귀해 OpenAI 호출이 무제한으로 열리지 않게 한다. 프록시는 거래 원문을 기록하지 않고 요청 종류, 성공·실패, 응답 시간만 구조화 로그로 남긴다.
 
 ## Provider 인터페이스
 

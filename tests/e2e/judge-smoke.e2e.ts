@@ -285,6 +285,41 @@ test.describe("judge demo smoke flow", () => {
     expect(classifyRequestCount).toBe(1);
   });
 
+  test("keeps mobile form actions reachable while an input has keyboard focus", async ({ page }) => {
+    await page.getByTestId("nav-add").click();
+    const amountInput = page.getByTestId("transaction-amount-input");
+    const bottomNav = page.locator(".bottom-nav");
+    const viewport = page.viewportSize();
+
+    await amountInput.focus();
+    if (viewport && viewport.width <= 430) {
+      await page.setViewportSize({ width: viewport.width, height: 500 });
+      await expect(bottomNav).toHaveCSS("opacity", "0");
+      await expect(bottomNav).toHaveCSS("pointer-events", "none");
+
+      await page.getByTestId("transaction-amount-input").fill("5000");
+      await page.getByTestId("transaction-merchant-input").fill("모바일 키보드 테스트");
+      const isoDate = await page.evaluate(() => {
+        const now = new Date();
+        const month = String(now.getMonth() + 1).padStart(2, "0");
+        const day = String(now.getDate()).padStart(2, "0");
+        return `${now.getFullYear()}-${month}-${day}`;
+      });
+      await page.getByTestId("transaction-date-input").fill(isoDate);
+      await page.getByRole("button", { name: "생활" }).click();
+      const saveButton = page.getByTestId("transaction-save-button");
+      await saveButton.scrollIntoViewIfNeeded();
+      const saveBox = await saveButton.boundingBox();
+      expect(saveBox).not.toBeNull();
+      expect((saveBox?.y ?? 0) + (saveBox?.height ?? 0)).toBeLessThanOrEqual(500);
+
+      await page.locator("body").click({ position: { x: 4, y: 4 } });
+      await expect(bottomNav).toHaveCSS("opacity", "1");
+    } else {
+      await expect(bottomNav).toHaveCSS("opacity", "1");
+    }
+  });
+
   test("shows a matching goal warning instead of an optimistic saving status", async ({ page }) => {
     await page.getByTestId("home-load-sample").click();
     await page.getByTestId("top-goal-button").click();

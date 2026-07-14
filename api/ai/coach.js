@@ -47,7 +47,7 @@ export default async function handler(req, res) {
 
   try {
     assertPost(req);
-    assertAiRateLimit(req, "coach");
+    await assertAiRateLimit(req, "coach");
     const payload = validateCoachInput(await readJson(req));
     const promptPayload = {
       currentDate: payload.currentDate,
