@@ -4,7 +4,7 @@ import { CalendarGrid } from "../components/CalendarGrid";
 import { TransactionList } from "../components/TransactionList";
 import { CATEGORIES } from "../constants";
 import { formatWon, getTopCategory } from "../services/analytics";
-import { formatMonthLabel } from "../services/date";
+import { formatFullDate, formatMonthLabel } from "../services/date";
 import type { DayStatus } from "../types";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
@@ -34,7 +34,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
   return (
     <>
       <section className="screen-head">
-        <span className="eyebrow">{formatMonthLabel(state.calendarMonth)}</span>
+        <span className="eyebrow">오늘 · {formatFullDate(computed.today)}</span>
         <h1>소비 캘린더</h1>
       </section>
 
@@ -63,7 +63,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
         </article>
       </section>
 
-      <section className="filter-row" aria-label="캘린더 필터">
+      <section className="filter-row" aria-label="캘린더 필터" data-tutorial="calendar-main">
         {filters.map((item) => (
           <button
             key={item.id}
@@ -78,7 +78,13 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
       </section>
 
       <section className="calendar-card card">
-        <CalendarGrid days={calendarDays} selectedDate={state.selectedDate} onSelectDate={actions.setSelectedDate} filter={filter} />
+        <CalendarGrid
+          days={calendarDays}
+          selectedDate={state.selectedDate}
+          onSelectDate={actions.setSelectedDate}
+          filter={filter}
+          today={computed.today}
+        />
       </section>
 
       <section className="detail-panel card">

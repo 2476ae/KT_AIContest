@@ -29,14 +29,26 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const isAiLoading = coachResponse.status === "loading";
   const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
   const aiStatusCopy = {
-    error: "OpenAI 응답 실패로 기본 분석을 표시합니다.",
-    fallback: "OpenAI 응답 실패로 기본 분석을 표시합니다.",
-    loading: "분석 중",
+    error: "기본 분석으로 전환",
+    fallback: "기본 분석으로 전환",
+    loading: "응답 대기",
     ready:
       coachResponse.provider.mode === "external"
-        ? `${coachResponse.provider.label} 연결됨`
-        : "로컬 미리보기",
+        ? "OpenAI 분석 완료"
+        : "기본 분석 표시",
   }[coachResponse.status];
+  const aiStatusDetail =
+    coachResponse.status === "fallback" || coachResponse.status === "error"
+      ? coachResponse.error
+        ? coachResponse.error.includes("8초")
+          ? "OpenAI 응답을 8초 동안 기다린 뒤 앱의 기본 계산으로 계속 보여드려요."
+          : "OpenAI 응답을 받지 못해 앱의 기본 계산으로 계속 보여드려요."
+        : "기본 계산으로 계속 사용할 수 있어요."
+      : coachResponse.status === "loading"
+        ? "최대 8초 안에 완료하거나 기본 분석으로 돌아옵니다."
+        : coachResponse.provider.mode === "external"
+          ? "OpenAI가 기본 계산을 참고해 분야별 계획과 문장을 보완했어요."
+          : "목표와 소비 내역을 앱 안의 계산 기준으로 분석한 결과예요.";
 
   return (
     <>
@@ -57,13 +69,13 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
             <span className="coach-loading-icon">
               <Loader2 className="spin-icon" size={21} />
             </span>
-            <strong>AI 분석 중</strong>
-            <small>결과가 도착하면 자동 반영됩니다.</small>
+            <strong>AI 분석을 불러오는 중이에요</strong>
+            <small>8초 안에 응답이 없으면 기본 분석으로 돌아갑니다.</small>
           </div>
         )}
 
         <div className="coach-analysis-content">
-          <section className={`coach-hero card is-${coachReport.status}`}>
+          <section className={`coach-hero card is-${coachReport.status}`} data-tutorial="coach-overview">
             <span className="coach-status">{statusCopy(coachReport.status)}</span>
             <h2>{coachReport.headline}</h2>
             <p>{coachReport.todayAction}</p>
@@ -81,8 +93,9 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               <Bot size={19} />
             </span>
             <span className="ai-state-copy">
-              <strong>AI 상태</strong>
+              <strong>{isAiLoading ? "AI 요청" : "AI 상태"}</strong>
               <small>{aiStatusCopy}</small>
+              <small className="ai-state-detail" data-testid="coach-ai-detail">{aiStatusDetail}</small>
             </span>
             <button
               className="ai-refresh-button"
@@ -90,9 +103,10 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               onClick={actions.requestCoachReport}
               disabled={isAiLoading}
               data-testid="coach-request-ai-button"
+              data-tutorial="coach-ai-update"
             >
               {isAiLoading ? <Loader2 className="spin-icon" size={16} /> : <RefreshCw size={16} />}
-              {isAiLoading ? "분석 중" : "AI 분석 업데이트"}
+              {isAiLoading ? "업데이트 중" : "AI 분석 업데이트"}
             </button>
           </section>
 

@@ -1,4 +1,4 @@
-import { FileUp, Loader2, Save, Wand2 } from "lucide-react";
+import { CheckCircle2, FileUp, Home, Loader2, Plus, Save, Wand2 } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { CATEGORIES } from "../constants";
 import { formatWon } from "../services/analytics";
@@ -27,6 +27,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
   const [importMode, setImportMode] = useState<"replace" | "merge">("replace");
   const [formMessage, setFormMessage] = useState("");
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [formWarnings, setFormWarnings] = useState<string[]>([]);
   const [csvMessage, setCsvMessage] = useState("");
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +45,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
   async function submitTransaction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormMessage("");
+    setFormWarnings([]);
 
     const validationErrors = validateTransactionDraft({ amount, date, merchant, memo });
     if (validationErrors.length > 0) {
@@ -63,6 +65,11 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
       const classified = response.data;
       resolvedCategory = classified.category;
       classificationReason = classified.reason;
+      if (response.status === "fallback" || response.status === "error") {
+        setFormWarnings([
+          "외부 AI 분류 응답이 지연되어 로컬 규칙으로 저장했어요. 거래 저장과 캘린더 반영은 정상 처리됐습니다.",
+        ]);
+      }
     } else {
       resolvedCategory = category;
       classificationReason = getManualCategoryCopy(category);
@@ -84,8 +91,15 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
     setMemo("");
     setCategory("auto");
     setIsSubscription(false);
-    setFormMessage(`${formatWon(parsedAmount)} 거래를 저장했어요. 홈과 캘린더가 바로 갱신됩니다.`);
+    setFormMessage(`${formatWon(parsedAmount)} 내역이 홈과 캘린더에 반영됐어요.`);
     setIsSaving(false);
+  }
+
+  function prepareAnotherEntry() {
+    setFormMessage("");
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLInputElement>('[data-testid="transaction-amount-input"]')?.focus();
+    });
   }
 
   async function handleCsvFileChange(event: ChangeEvent<HTMLInputElement>) {
@@ -154,13 +168,15 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
       </section>
 
       <form className="entry-form card" onSubmit={submitTransaction} data-testid="transaction-form">
-        <label className="amount-field">
+        <label className="amount-field" data-tutorial="add-entry">
           <span>금액</span>
           <input
             value={amount}
             onChange={(event) => {
               setAmount(formatMoneyInput(event.target.value));
               setFormErrors([]);
+              setFormWarnings([]);
+              setFormMessage("");
             }}
             inputMode="numeric"
             placeholder="0"
@@ -177,6 +193,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
               onChange={(event) => {
                 setMerchant(event.target.value);
                 setFormErrors([]);
+                setFormWarnings([]);
               }}
               placeholder="예: 스타벅스"
               required
@@ -190,10 +207,12 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
               onInput={(event) => {
                 setDate(event.currentTarget.value);
                 setFormErrors([]);
+                setFormWarnings([]);
               }}
               onChange={(event) => {
                 setDate(event.target.value);
                 setFormErrors([]);
+                setFormWarnings([]);
               }}
               type="date"
               required
@@ -209,6 +228,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             onChange={(event) => {
               setMemo(event.target.value);
               setFormErrors([]);
+              setFormWarnings([]);
             }}
             placeholder="예: 등교 전 커피"
             data-testid="transaction-memo-input"
@@ -219,7 +239,10 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
           <button
             className={`category-pill${category === "auto" ? " is-active" : ""}`}
             type="button"
-            onClick={() => setCategory("auto")}
+            onClick={() => {
+              setCategory("auto");
+              setFormWarnings([]);
+            }}
           >
             <Wand2 size={14} />
             자동 분류
@@ -227,10 +250,13 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
           {CATEGORIES.map((item) => (
             <button
               key={item}
-              className={`category-pill${category === item ? " is-active" : ""}`}
-              type="button"
-              onClick={() => setCategory(item)}
-            >
+            className={`category-pill${category === item ? " is-active" : ""}`}
+            type="button"
+            onClick={() => {
+              setCategory(item);
+              setFormWarnings([]);
+            }}
+          >
               {item}
             </button>
           ))}
@@ -260,8 +286,32 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             ))}
           </div>
         )}
-        {formMessage && formErrors.length === 0 && <div className="success-line">{formMessage}</div>}
+        {formWarnings.length > 0 && formErrors.length === 0 && (
+          <div className="warning-line" data-testid="transaction-ai-warning">
+            {formWarnings.map((warning) => (
+              <span key={warning}>{warning}</span>
+            ))}
+          </div>
+        )}
       </form>
+
+      {formMessage && formErrors.length === 0 && (
+        <section className="entry-success card" role="status" aria-live="polite" data-testid="entry-save-success">
+          <span className="entry-success-icon"><CheckCircle2 size={21} /></span>
+          <span className="entry-success-copy">
+            <strong>저장했어요</strong>
+            <small>{formMessage}</small>
+          </span>
+          <div className="entry-success-actions">
+            <button className="secondary-button" type="button" onClick={prepareAnotherEntry} data-testid="entry-add-another">
+              <Plus size={16} /> 하나 더 입력
+            </button>
+            <button className="primary-button" type="button" onClick={() => actions.setActiveTab("home")} data-testid="entry-go-home">
+              <Home size={16} /> 홈에서 확인
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="upload-card card">
         <div className="upload-head">
@@ -280,6 +330,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
           </span>
         </div>
         <input type="file" accept=".csv,text/csv" onChange={handleCsvFileChange} data-testid="csv-file-input" />
+        <div className="input-help">필수 열은 date, merchant, amount이며 금액 콤마와 선택 열 category, memo, isSubscription을 지원합니다.</div>
         {csvFileName && <div className="file-name-line">{csvFileName}</div>}
         <div className="segmented-control" aria-label="CSV 반영 방식">
           <button

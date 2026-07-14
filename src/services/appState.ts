@@ -1,17 +1,23 @@
-import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
+import { DEFAULT_GOAL } from "../constants";
 import type { AppState, Goal, TabId, Transaction } from "../types";
 import { parseTransactionsCsvWithValidation } from "./csv";
-import { addMonths, firstDateOfMonth, getMonthId } from "./date";
+import { addMonths, firstDateOfMonth, formatDate, getMonthId } from "./date";
 import { normalizeFinancialFeedTransactions, type FinancialFeedTransactionInput } from "./financialFeed";
 
-export const INITIAL_APP_STATE: AppState = {
-  transactions: [],
-  goal: DEFAULT_GOAL,
-  calendarMonth: DEMO_MONTH.id,
-  selectedDate: "2026-06-29",
-  activeTab: "home",
-  hasLoadedSample: false,
-};
+export function createInitialAppState(referenceDate = new Date()): AppState {
+  const selectedDate = formatDate(referenceDate);
+
+  return {
+    transactions: [],
+    goal: DEFAULT_GOAL,
+    calendarMonth: getMonthId(selectedDate),
+    selectedDate,
+    activeTab: "home",
+    hasLoadedSample: false,
+  };
+}
+
+export const INITIAL_APP_STATE: AppState = createInitialAppState();
 
 const MAX_STORED_TRANSACTIONS = 1200;
 
@@ -29,26 +35,32 @@ function keepLatestTransactions(transactions: Transaction[]) {
   return sorted.slice(sorted.length - MAX_STORED_TRANSACTIONS);
 }
 
-export function mergeStoredState(stored: unknown): AppState {
+export function mergeStoredState(stored: unknown, referenceDate = new Date()): AppState {
+  const initialState = createInitialAppState(referenceDate);
+
   if (!stored || typeof stored !== "object") {
-    return INITIAL_APP_STATE;
+    return initialState;
   }
 
   const { activeTab: _storedActiveTab, ...storedState } = stored as Partial<AppState>;
 
   return {
-    ...INITIAL_APP_STATE,
+    ...initialState,
     ...storedState,
+    calendarMonth: initialState.calendarMonth,
+    selectedDate: initialState.selectedDate,
     activeTab: "home",
   };
 }
 
-export function loadSampleState(current: AppState, transactions: Transaction[]): AppState {
+export function loadSampleState(current: AppState, transactions: Transaction[], referenceDate = new Date()): AppState {
+  const selectedDate = formatDate(referenceDate);
+
   return {
     ...current,
     transactions,
-    calendarMonth: DEMO_MONTH.id,
-    selectedDate: "2026-06-29",
+    calendarMonth: getMonthId(selectedDate),
+    selectedDate,
     hasLoadedSample: true,
   };
 }
@@ -88,6 +100,18 @@ export function moveCalendarMonthState(current: AppState, amount: number): AppSt
     ...current,
     calendarMonth,
     selectedDate: firstDateOfMonth(calendarMonth),
+  };
+}
+
+export function rollCurrentDateState(current: AppState, previousDate: string, currentDate: string): AppState {
+  if (current.calendarMonth !== getMonthId(previousDate)) {
+    return current;
+  }
+
+  return {
+    ...current,
+    calendarMonth: getMonthId(currentDate),
+    selectedDate: currentDate,
   };
 }
 

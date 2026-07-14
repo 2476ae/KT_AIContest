@@ -14,7 +14,7 @@ export interface OpenAiProxyProviderOptions {
   timeoutMs?: number;
 }
 
-const DEFAULT_TIMEOUT_MS = 45000;
+export const DEFAULT_AI_PROXY_TIMEOUT_MS = 8000;
 const DEFAULT_DAILY_REQUEST_LIMIT = 8;
 const DEFAULT_CLASSIFY_DAILY_LIMIT = 8;
 const DEFAULT_COACH_DAILY_LIMIT = 5;
@@ -244,7 +244,7 @@ async function postJson<T>(path: string, payload: unknown, options: OpenAiProxyP
 
   const fetcher = options.fetcher ?? fetch;
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+  const timeoutId = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_AI_PROXY_TIMEOUT_MS);
 
   try {
     const response = await fetcher(buildEndpoint(options.baseUrl, path), {
@@ -261,6 +261,11 @@ async function postJson<T>(path: string, payload: unknown, options: OpenAiProxyP
     }
 
     return (await response.json()) as T;
+  } catch (error) {
+    if ((error as { name?: unknown })?.name === "AbortError") {
+      throw new Error("AI 응답 시간이 8초를 넘어 기본 분석으로 전환했습니다.");
+    }
+    throw error;
   } finally {
     clearTimeout(timeoutId);
   }

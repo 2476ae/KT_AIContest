@@ -1,5 +1,5 @@
 import { setAiProvider } from "./aiAdapter";
-import { createOpenAiProxyProvider } from "./openAiProxyProvider";
+import { createOpenAiProxyProvider, DEFAULT_AI_PROXY_TIMEOUT_MS } from "./openAiProxyProvider";
 
 interface AiRuntimeEnv {
   VITE_AI_PROVIDER?: string;
@@ -13,7 +13,7 @@ export function shouldEnableOpenAiProxy(env: AiRuntimeEnv) {
 
 export function readAiProxyTimeoutMs(env: AiRuntimeEnv) {
   const parsed = Number(env.VITE_AI_PROXY_TIMEOUT_MS);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : undefined;
+  return Number.isFinite(parsed) && parsed > 0 ? Math.min(parsed, DEFAULT_AI_PROXY_TIMEOUT_MS) : undefined;
 }
 
 export function registerConfiguredAiProvider(env: AiRuntimeEnv = import.meta.env) {

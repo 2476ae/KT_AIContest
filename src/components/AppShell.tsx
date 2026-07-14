@@ -3,7 +3,7 @@ import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { formatWon } from "../services/analytics";
-import { formatMonthLabel } from "../services/date";
+import { formatMonthLabel, formatMonthShortLabel } from "../services/date";
 import type { AppState, TabId } from "../types";
 
 interface AppShellProps {
@@ -160,7 +160,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
   }
 
   return (
-    <main className="app-shell">
+    <main className={`app-shell is-${state.activeTab}`}>
       <div className="app-page">
         <header className="topbar">
           <button className="brand-lockup" type="button" onClick={() => actions.setActiveTab("home")} data-testid="brand-home-button">
@@ -172,9 +172,15 @@ export function AppShell({ children, state, actions }: AppShellProps) {
           </button>
 
           <div className="top-actions">
-            <button className="chip-button" type="button" onClick={() => actions.setActiveTab("goals")} data-testid="top-goal-button">
+            <button
+              className="chip-button"
+              type="button"
+              onClick={() => actions.setActiveTab("goals")}
+              data-testid="top-goal-button"
+              data-tutorial="goal-button"
+            >
               <Target size={15} />
-              <span>{formatMonthLabel(state.calendarMonth).replace("2026년 ", "")}</span>
+              <span>{formatMonthShortLabel(state.calendarMonth)}</span>
             </button>
             <button
               className="icon-button"
@@ -195,6 +201,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
               aria-controls="notification-panel"
               aria-expanded={openPanel === "alerts"}
               data-testid="top-notification-button"
+              data-tutorial="notifications"
             >
               <Bell size={17} />
               {hasUnreadNotifications && <span className="notification-badge">{notificationCountLabel}</span>}
@@ -207,8 +214,8 @@ export function AppShell({ children, state, actions }: AppShellProps) {
                 <ShieldCheck size={19} />
               </span>
               <span className="top-popover-copy">
-                <strong>금융 인증정보 미수집</strong>
-                <small>샘플 데이터, 직접 입력, CSV 파일만 사용하며 계좌나 카드 인증을 요청하지 않습니다.</small>
+                <strong>실제 금융 인증 없이 체험</strong>
+                <small>제출 버전은 샘플, 직접 입력, CSV만 사용하며 계좌·카드 로그인 정보를 수집하지 않습니다.</small>
               </span>
               <button className="top-popover-action" type="button" onClick={() => moveFromPanel("settings")}>
                 설정

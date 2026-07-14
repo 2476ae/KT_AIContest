@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { CATEGORIES, DEFAULT_GOAL, DEMO_MONTH } from "../constants";
-import { loadSampleTransactions } from "../data";
+import { CATEGORIES, DEFAULT_GOAL } from "../constants";
+import { loadCurrentSampleTransactions } from "../data";
 import type { Transaction } from "../types";
 import { getSummary } from "./analytics";
 import {
   addTransactionState,
   applyImportedTransactionsState,
+  createInitialAppState,
   deleteTransactionState,
   importCsvState,
   INITIAL_APP_STATE,
@@ -14,6 +15,7 @@ import {
   moveCalendarMonthState,
   parseImportCsv,
   resetGoalState,
+  rollCurrentDateState,
   setActiveTabState,
   setSelectedDateState,
   syncFinancialFeedState,
@@ -36,34 +38,42 @@ function transaction(overrides: Partial<Transaction> = {}): Transaction {
 }
 
 describe("app state service", () => {
-  it("creates and restores the initial demo state", () => {
-    expect(INITIAL_APP_STATE).toMatchObject({
+  const referenceDate = new Date(2026, 6, 14);
+
+  it("creates and restores the initial state on the actual date", () => {
+    const initialState = createInitialAppState(referenceDate);
+
+    expect(initialState).toMatchObject({
       activeTab: "home",
-      calendarMonth: DEMO_MONTH.id,
+      calendarMonth: "2026-07",
       hasLoadedSample: false,
-      selectedDate: "2026-06-29",
+      selectedDate: "2026-07-14",
       transactions: [],
     });
 
-    expect(mergeStoredState({ activeTab: "coach", hasLoadedSample: true })).toMatchObject({
+    expect(mergeStoredState({ activeTab: "coach", hasLoadedSample: true }, referenceDate)).toMatchObject({
       activeTab: "home",
+      calendarMonth: "2026-07",
       hasLoadedSample: true,
+      selectedDate: "2026-07-14",
     });
-    expect(mergeStoredState(null)).toBe(INITIAL_APP_STATE);
+    expect(mergeStoredState(null, referenceDate)).toEqual(initialState);
   });
 
-  it("loads sample transactions into the June demo calendar", () => {
-    const state = loadSampleState(INITIAL_APP_STATE, loadSampleTransactions());
-    const monthTransactions = state.transactions.filter((transaction) => transaction.date.startsWith("2026-06"));
+  it("moves sample transactions to the current and previous month without future spending", () => {
+    const initialState = createInitialAppState(referenceDate);
+    const state = loadSampleState(initialState, loadCurrentSampleTransactions(referenceDate), referenceDate);
+    const monthTransactions = state.transactions.filter((transaction) => transaction.date.startsWith("2026-07"));
     const summary = getSummary(monthTransactions, state.goal, state.calendarMonth);
 
-    expect(state.transactions).toHaveLength(66);
-    expect(monthTransactions).toHaveLength(35);
-    expect(state.calendarMonth).toBe(DEMO_MONTH.id);
-    expect(state.selectedDate).toBe("2026-06-29");
+    expect(state.transactions).toHaveLength(50);
+    expect(monthTransactions).toHaveLength(19);
+    expect(monthTransactions.every((transaction) => transaction.date <= "2026-07-14")).toBe(true);
+    expect(state.calendarMonth).toBe("2026-07");
+    expect(state.selectedDate).toBe("2026-07-14");
     expect(state.hasLoadedSample).toBe(true);
-    expect(summary.totalSpent).toBe(397790);
-    expect(summary.subscriptionTotal).toBe(63690);
+    expect(summary.totalSpent).toBe(243490);
+    expect(summary.subscriptionTotal).toBe(47190);
   });
 
   it("moves between tabs, selected dates, and months", () => {
@@ -77,6 +87,17 @@ describe("app state service", () => {
     const previousMonth = moveCalendarMonthState(selected, -1);
     expect(previousMonth.calendarMonth).toBe("2026-06");
     expect(previousMonth.selectedDate).toBe("2026-06-01");
+  });
+
+  it("rolls an open current-month view into the new day and month", () => {
+    const juneState = createInitialAppState(new Date(2026, 5, 30));
+    const julyState = rollCurrentDateState(juneState, "2026-06-30", "2026-07-01");
+
+    expect(julyState.calendarMonth).toBe("2026-07");
+    expect(julyState.selectedDate).toBe("2026-07-01");
+
+    const browsingMay = { ...juneState, calendarMonth: "2026-05", selectedDate: "2026-05-12" };
+    expect(rollCurrentDateState(browsingMay, "2026-06-30", "2026-07-01")).toBe(browsingMay);
   });
 
   it("adds, updates, and deletes a manual transaction", () => {

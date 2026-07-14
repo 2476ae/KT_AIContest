@@ -1,8 +1,12 @@
-import { Download, RotateCcw, ShieldCheck, WalletCards } from "lucide-react";
+import { CircleHelp, Download, RotateCcw, ShieldCheck, WalletCards } from "lucide-react";
 import { useState } from "react";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
-export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewModel) {
+type SettingsScreenProps = MoneyRoutineViewModel & {
+  onStartTutorial: () => void;
+};
+
+export function SettingsScreen({ actions, computed, onStartTutorial, state }: SettingsScreenProps) {
   const [settingsMessage, setSettingsMessage] = useState("");
 
   function loadSample() {
@@ -35,7 +39,16 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
         <h1>설정</h1>
       </section>
 
-      <section className="settings-actions">
+      <section className="settings-actions" data-tutorial="settings-tools">
+        <button className="action-row card" type="button" onClick={onStartTutorial} data-testid="settings-start-tutorial">
+          <span className="action-icon">
+            <CircleHelp size={20} />
+          </span>
+          <span>
+            <strong>사용 가이드 다시 보기</strong>
+            <small>주요 기능을 처음부터 안내</small>
+          </span>
+        </button>
         <button className="action-row card" type="button" onClick={loadSample} data-testid="settings-load-sample">
           <span className="action-icon">
             <WalletCards size={20} />
@@ -77,8 +90,8 @@ export function SettingsScreen({ actions, computed, state }: MoneyRoutineViewMod
           <ShieldCheck size={22} />
         </span>
         <span>
-          <strong>금융 인증정보 미수집</strong>
-          <small>현재 데모는 샘플 데이터, 직접 입력, CSV 파일만 사용합니다.</small>
+          <strong>샘플·직접 입력·CSV 전용 데모</strong>
+          <small>현재 제출 버전은 은행·카드 로그인을 요청하지 않고 금융 인증정보를 저장하지 않습니다.</small>
         </span>
       </section>
 

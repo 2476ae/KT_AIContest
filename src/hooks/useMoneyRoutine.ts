@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DEMO_MONTH } from "../constants";
-import { loadSampleTransactions } from "../data";
-import { alignCoachReportBudgetFields, getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates } from "../services/analytics";
+import { isSampleTransactionId, loadCurrentSampleTransactions } from "../data";
+import { alignCoachReportBudgetFields, getCalendarDays, getCategorySummaries, getSummary, getSubscriptionCandidates, toDate } from "../services/analytics";
 import {
   applyFinancialFeedTransactionsState,
   applyImportedTransactionsState,
   addTransactionState,
+  createInitialAppState,
   deleteTransactionState,
   INITIAL_APP_STATE,
   loadSampleState,
@@ -13,6 +14,7 @@ import {
   moveCalendarMonthState,
   parseImportCsv,
   resetGoalState,
+  rollCurrentDateState,
   setActiveTabState,
   setSelectedDateState,
   updateGoalState,
@@ -28,7 +30,8 @@ import {
 } from "../services/aiAdapter";
 import { COACH_AI_DEBOUNCE_MS, createCoachReportCacheKey, shouldRequestCoachReportAi } from "../services/aiRequestPolicy";
 import { transactionsToCsv } from "../services/csv";
-import { addMonths, getMonthId } from "../services/date";
+import { addMonths, formatDate, getMonthId } from "../services/date";
+import { createAutomaticGoalAdjustment } from "../services/budgetAdjustment";
 import { normalizeFinancialFeedTransactions, type FinancialFeedTransactionInput } from "../services/financialFeed";
 import type { AppState, CoachReport, Goal, TabId, Transaction } from "../types";
 
@@ -38,16 +41,32 @@ interface FinancialFeedEventDetail {
   transactions?: FinancialFeedTransactionInput[];
 }
 
+function alignStoredSampleTransactions(state: AppState, referenceDate: Date) {
+  if (!state.transactions.some((transaction) => isSampleTransactionId(transaction.id))) {
+    return state;
+  }
+
+  const userTransactions = state.transactions.filter((transaction) => !isSampleTransactionId(transaction.id));
+  const sampleTransactions = loadCurrentSampleTransactions(referenceDate);
+
+  return {
+    ...state,
+    transactions: [...userTransactions, ...sampleTransactions].sort((a, b) => a.date.localeCompare(b.date)),
+  };
+}
+
 function readStoredState(): AppState {
+  const referenceDate = new Date();
+
   try {
     const stored = window.localStorage.getItem(DEMO_MONTH.storageKey);
     if (!stored) {
-      return INITIAL_APP_STATE;
+      return createInitialAppState(referenceDate);
     }
 
-    return mergeStoredState(JSON.parse(stored));
+    return alignStoredSampleTransactions(mergeStoredState(JSON.parse(stored), referenceDate), referenceDate);
   } catch {
-    return INITIAL_APP_STATE;
+    return createInitialAppState(referenceDate);
   }
 }
 
@@ -61,7 +80,10 @@ function persistState(state: AppState) {
 
 export function useMoneyRoutine() {
   const [state, setState] = useState<AppState>(() => readStoredState());
+  const [today, setToday] = useState(() => formatDate(new Date()));
+  const previousToday = useRef(today);
   const coachResponseCache = useRef(new Map<string, AiResponse<CoachReport>>());
+  const coachRequestsInFlight = useRef(new Map<string, Promise<AiResponse<CoachReport>>>());
   const [coachResponse, setCoachResponse] = useState(() =>
     createCoachReportPreviewResponse({
       transactions: [],
@@ -80,8 +102,9 @@ export function useMoneyRoutine() {
   }, []);
 
   const loadSample = useCallback(() => {
-    updateState((current) => loadSampleState(current, loadSampleTransactions()));
-  }, [updateState]);
+    const referenceDate = toDate(today);
+    updateState((current) => loadSampleState(current, loadCurrentSampleTransactions(referenceDate), referenceDate));
+  }, [today, updateState]);
 
   const resetAll = useCallback(() => {
     try {
@@ -90,8 +113,42 @@ export function useMoneyRoutine() {
       console.warn("머니루틴 저장 상태를 삭제하지 못했습니다.", error);
     }
 
-    setState(INITIAL_APP_STATE);
+    setState(createInitialAppState(toDate(today)));
+  }, [today]);
+
+  useEffect(() => {
+    function refreshToday() {
+      setToday((current) => {
+        const next = formatDate(new Date());
+        return current === next ? current : next;
+      });
+    }
+
+    const intervalId = window.setInterval(refreshToday, 60_000);
+    document.addEventListener("visibilitychange", refreshToday);
+
+    return () => {
+      window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", refreshToday);
+    };
   }, []);
+
+  useEffect(() => {
+    const previousDate = previousToday.current;
+    if (previousDate === today) {
+      return;
+    }
+
+    const referenceDate = toDate(today);
+    setState((current) => {
+      const aligned = alignStoredSampleTransactions(current, referenceDate);
+      const next = rollCurrentDateState(aligned, previousDate, today);
+
+      persistState(next);
+      return next;
+    });
+    previousToday.current = today;
+  }, [today]);
 
   const setActiveTab = useCallback(
     (activeTab: TabId) => {
@@ -117,6 +174,14 @@ export function useMoneyRoutine() {
   const resetGoal = useCallback(() => {
     updateState(resetGoalState);
   }, [updateState]);
+
+  const applyAutomaticGoalAdjustment = useCallback(() => {
+    updateState((current) => {
+      const monthTransactions = current.transactions.filter((transaction) => getMonthId(transaction.date) === current.calendarMonth);
+      const summary = getSummary(monthTransactions, current.goal, current.calendarMonth, toDate(today));
+      return updateGoalState(current, createAutomaticGoalAdjustment(current.goal, summary));
+    });
+  }, [today, updateState]);
 
   const moveCalendarMonth = useCallback(
     (amount: number) => {
@@ -193,12 +258,13 @@ export function useMoneyRoutine() {
     const monthTransactions = state.transactions.filter((transaction) => getMonthId(transaction.date) === state.calendarMonth);
     const previousMonthId = addMonths(state.calendarMonth, -1);
     const previousMonthTransactions = state.transactions.filter((transaction) => getMonthId(transaction.date) === previousMonthId);
-    const summary = getSummary(monthTransactions, state.goal, state.calendarMonth);
+    const summary = getSummary(monthTransactions, state.goal, state.calendarMonth, toDate(today));
     const calendarDays = getCalendarDays(monthTransactions, state.goal, state.calendarMonth);
     const categorySummaries = getCategorySummaries(monthTransactions);
     const subscriptionCandidates = getSubscriptionCandidates(monthTransactions, state.goal);
     const selectedDay = calendarDays.find((day) => day.date === state.selectedDate) ?? calendarDays.find((day) => day.isCurrentMonth);
     const recentTransactions = [...monthTransactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
+    const automaticAdjustedGoal = createAutomaticGoalAdjustment(state.goal, summary);
 
     return {
       summary,
@@ -209,8 +275,10 @@ export function useMoneyRoutine() {
       categorySummaries,
       subscriptionCandidates,
       recentTransactions,
+      today,
+      automaticAdjustedGoal,
     };
-  }, [state.calendarMonth, state.goal, state.selectedDate, state.transactions]);
+  }, [state.calendarMonth, state.goal, state.selectedDate, state.transactions, today]);
 
   const coachInput: CoachReportInput = useMemo(
     () => ({
@@ -218,8 +286,9 @@ export function useMoneyRoutine() {
       previousMonthTransactions: baseComputed.previousMonthTransactions,
       goal: state.goal,
       monthId: state.calendarMonth,
+      currentDate: today,
     }),
-    [baseComputed.monthTransactions, baseComputed.previousMonthTransactions, state.calendarMonth, state.goal],
+    [baseComputed.monthTransactions, baseComputed.previousMonthTransactions, state.calendarMonth, state.goal, today],
   );
 
   const coachCacheKey = useMemo(
@@ -249,7 +318,15 @@ export function useMoneyRoutine() {
     const timeoutId = window.setTimeout(() => {
       setCoachResponse((previous) => createCoachReportLoadingResponse(coachInput, previous.data));
 
-      void createCoachReportResponseAsync(coachInput).then((response) => {
+      let request = coachRequestsInFlight.current.get(coachCacheKey);
+      if (!request) {
+        request = createCoachReportResponseAsync(coachInput).finally(() => {
+          coachRequestsInFlight.current.delete(coachCacheKey);
+        });
+        coachRequestsInFlight.current.set(coachCacheKey, request);
+      }
+
+      void request.then((response) => {
         if (!isCurrent) {
           return;
         }
@@ -275,9 +352,10 @@ export function useMoneyRoutine() {
         state.goal,
         state.calendarMonth,
         baseComputed.previousMonthTransactions,
+        toDate(today),
       ),
     }),
-    [baseComputed, coachResponse, state.calendarMonth, state.goal],
+    [baseComputed, coachResponse, state.calendarMonth, state.goal, today],
   );
 
   return {
@@ -285,6 +363,7 @@ export function useMoneyRoutine() {
     computed,
     actions: {
       addTransaction,
+      applyAutomaticGoalAdjustment,
       deleteTransaction,
       exportCsv,
       importCsv,

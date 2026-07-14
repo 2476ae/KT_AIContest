@@ -11,6 +11,7 @@ export function createCoachReportCacheKey(input: CoachReportInput, providerId: s
   return JSON.stringify({
     providerId,
     monthId: input.monthId,
+    currentDate: input.currentDate,
     goal: input.goal,
     transactions: input.transactions.map((transaction) => ({
       id: transaction.id,

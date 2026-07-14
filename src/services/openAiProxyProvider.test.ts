@@ -291,4 +291,26 @@ describe("OpenAI proxy provider", () => {
       }),
     ).rejects.toThrow("OpenAI proxy request failed");
   });
+
+  it("returns a clear fallback error when the proxy exceeds its timeout", async () => {
+    const provider = createOpenAiProxyProvider({
+      timeoutMs: 5,
+      fetcher: (_url, init) =>
+        new Promise<Response>((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            const error = new Error("aborted");
+            error.name = "AbortError";
+            reject(error);
+          });
+        }),
+    });
+
+    await expect(
+      provider.createCoachReport({
+        transactions: [],
+        goal: DEFAULT_GOAL,
+        monthId: DEMO_MONTH.id,
+      }),
+    ).rejects.toThrow("8초를 넘어 기본 분석으로 전환");
+  });
 });

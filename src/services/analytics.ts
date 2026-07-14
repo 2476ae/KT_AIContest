@@ -1,5 +1,5 @@
 import { CATEGORIES, DEMO_MONTH } from "../constants";
-import { formatDate, parseMonthId } from "./date";
+import { formatDate, getMonthId, parseMonthId } from "./date";
 import type {
   BudgetStatus,
   Category,
@@ -29,7 +29,11 @@ function endOfMonth(monthId: string) {
   return new Date(year, month + 1, 0);
 }
 
-function getReferenceDate(transactions: Transaction[], monthId: string) {
+function getReferenceDate(transactions: Transaction[], monthId: string, currentDate: Date) {
+  if (getMonthId(currentDate) === monthId) {
+    return toDate(formatDate(currentDate));
+  }
+
   if (transactions.length === 0) {
     return endOfMonth(monthId);
   }
@@ -39,8 +43,8 @@ function getReferenceDate(transactions: Transaction[], monthId: string) {
     .sort((a, b) => b.getTime() - a.getTime())[0];
 }
 
-export function getDaysLeft(transactions: Transaction[], monthId = DEMO_MONTH.id) {
-  const reference = getReferenceDate(transactions, monthId);
+export function getDaysLeft(transactions: Transaction[], monthId = DEMO_MONTH.id, currentDate = new Date()) {
+  const reference = getReferenceDate(transactions, monthId, currentDate);
   const end = endOfMonth(monthId);
   const diff = Math.ceil((end.getTime() - reference.getTime()) / DAY_MS);
   return Math.max(diff, 1);
@@ -79,13 +83,13 @@ function getAdjustedBudgetTarget(totalSpent: number, goal: Goal, daysLeft: numbe
   };
 }
 
-export function getSummary(transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id): Summary {
+export function getSummary(transactions: Transaction[], goal: Goal, monthId = DEMO_MONTH.id, currentDate = new Date()): Summary {
   const totalSpent = transactions.reduce((sum, transaction) => sum + transaction.amount, 0);
   const subscriptionTotal = transactions
     .filter((transaction) => transaction.isSubscription || transaction.category === "구독")
     .reduce((sum, transaction) => sum + transaction.amount, 0);
   const progress = goal.spendingLimit > 0 ? (totalSpent / goal.spendingLimit) * 100 : 0;
-  const daysLeft = getDaysLeft(transactions, monthId);
+  const daysLeft = getDaysLeft(transactions, monthId, currentDate);
   const originalRemainingBudget = goal.spendingLimit - totalSpent;
   const originalDailyBudget = Math.max(0, Math.floor(originalRemainingBudget / daysLeft));
   const adjustedTarget = getAdjustedBudgetTarget(totalSpent, goal, daysLeft);
@@ -577,8 +581,9 @@ export function getCoachReport(
   goal: Goal,
   monthId = DEMO_MONTH.id,
   previousMonthTransactions: Transaction[] = [],
+  currentDate = new Date(),
 ): CoachReport {
-  const summary = getSummary(transactions, goal, monthId);
+  const summary = getSummary(transactions, goal, monthId, currentDate);
   const categories = getCategorySummaries(transactions);
   const previousCategories = getCategorySummaries(previousMonthTransactions);
   const subscriptions = getSubscriptionCandidates(transactions, goal);
@@ -649,8 +654,9 @@ export function alignCoachReportBudgetFields(
   goal: Goal,
   monthId = DEMO_MONTH.id,
   previousMonthTransactions: Transaction[] = [],
+  currentDate = new Date(),
 ): CoachReport {
-  const localReport = getCoachReport(transactions, goal, monthId, previousMonthTransactions);
+  const localReport = getCoachReport(transactions, goal, monthId, previousMonthTransactions, currentDate);
 
   return {
     ...report,

@@ -6,11 +6,12 @@ interface CalendarGridProps {
   selectedDate: string;
   onSelectDate: (date: string) => void;
   filter?: "all" | "over" | "subscription" | "safe";
+  today?: string;
 }
 
 const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
 
-export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all" }: CalendarGridProps) {
+export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all", today }: CalendarGridProps) {
   const visibleDays = days.map((day) => ({
     ...day,
     isDimmed:
@@ -42,6 +43,7 @@ export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all" 
                 "calendar-day",
                 `is-${day.status}`,
                 !day.isCurrentMonth ? "is-muted" : "",
+                day.date === today ? "is-today" : "",
                 day.date === selectedDate ? "is-selected" : "",
                 day.isDimmed ? "is-dimmed" : "",
               ]
@@ -50,7 +52,7 @@ export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all" 
               type="button"
               onClick={() => onSelectDate(day.date)}
               aria-pressed={day.date === selectedDate}
-              aria-label={`${day.date} ${formatWon(day.amount)} ${topCategory ?? ""}`}
+              aria-label={`${day.date === today ? "오늘 " : ""}${day.date} ${formatWon(day.amount)} ${topCategory ?? ""}`}
               data-testid={`calendar-day-${day.date}`}
             >
               <span className="calendar-day-number">{day.day}</span>

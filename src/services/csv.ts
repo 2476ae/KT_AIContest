@@ -116,12 +116,15 @@ export function parseTransactionsCsvWithValidation(csvText: string): CsvValidati
     }
 
     const isSubscription = (row.isSubscription ?? "").toLowerCase() === "true";
-    const classified = classifyTransaction({
-      merchant: row.merchant,
-      memo: row.memo,
-      isSubscription,
-    });
-    const category = asCategory(row.category) ?? classified.category;
+    const explicitCategory = asCategory(row.category);
+    const classified = explicitCategory
+      ? { category: explicitCategory, reason: getManualCategoryCopy(explicitCategory) }
+      : classifyTransaction({
+          merchant: row.merchant,
+          memo: row.memo,
+          isSubscription,
+        });
+    const category = classified.category;
 
     return {
       id: row.id || `tx-${Date.now()}-${index}`,
@@ -132,7 +135,7 @@ export function parseTransactionsCsvWithValidation(csvText: string): CsvValidati
       paymentType: asPaymentType(row.paymentType),
       category,
       isSubscription,
-      classificationReason: row.category ? getManualCategoryCopy(category) : classified.reason,
+      classificationReason: classified.reason,
     };
   });
 

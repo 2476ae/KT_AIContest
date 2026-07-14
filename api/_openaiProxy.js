@@ -9,6 +9,7 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "http://127.0.0.1:5173",
 ];
 const DEFAULT_MAX_OUTPUT_TOKENS = 650;
+const DEFAULT_OPENAI_TIMEOUT_MS = 6500;
 const DEFAULT_SERVER_DAILY_REQUEST_LIMIT = 60;
 const DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT = 40;
 const DEFAULT_SERVER_COACH_DAILY_LIMIT = 20;
@@ -167,6 +168,7 @@ export function validateCoachInput(input) {
   return {
     goal: input.goal,
     monthId: String(input.monthId || "").slice(0, 20),
+    currentDate: String(input.currentDate || "").slice(0, 10),
     transactions: normalizeTransactions(input.transactions),
     previousMonthTransactions: normalizeTransactions(input.previousMonthTransactions),
   };
@@ -292,35 +294,51 @@ export async function createOpenAiJsonResponse({ name, schema, system, payload }
     throw new HttpError(500, "OPENAI_API_KEY is not configured.");
   }
 
-  const openAiResponse = await fetch("https://api.openai.com/v1/responses", {
-    body: JSON.stringify({
-      input: [
-        {
-          role: "system",
-          content: system,
+  const controller = new AbortController();
+  const configuredTimeout = readPositiveNumber(process.env.OPENAI_TIMEOUT_MS, DEFAULT_OPENAI_TIMEOUT_MS);
+  const timeoutMs = Math.min(configuredTimeout, 8000);
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  let openAiResponse;
+
+  try {
+    openAiResponse = await fetch("https://api.openai.com/v1/responses", {
+      body: JSON.stringify({
+        input: [
+          {
+            role: "system",
+            content: system,
+          },
+          {
+            role: "user",
+            content: JSON.stringify(payload),
+          },
+        ],
+        model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
+        max_output_tokens: Number(process.env.OPENAI_MAX_OUTPUT_TOKENS) || DEFAULT_MAX_OUTPUT_TOKENS,
+        text: {
+          format: {
+            type: "json_schema",
+            name,
+            schema,
+            strict: true,
+          },
         },
-        {
-          role: "user",
-          content: JSON.stringify(payload),
-        },
-      ],
-      model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-      max_output_tokens: Number(process.env.OPENAI_MAX_OUTPUT_TOKENS) || DEFAULT_MAX_OUTPUT_TOKENS,
-      text: {
-        format: {
-          type: "json_schema",
-          name,
-          schema,
-          strict: true,
-        },
+      }),
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
       },
-    }),
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    method: "POST",
-  });
+      method: "POST",
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new HttpError(504, "OpenAI request timed out. Showing the default analysis.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   if (!openAiResponse.ok) {
     throw new HttpError(502, `OpenAI request failed with ${openAiResponse.status}.`);

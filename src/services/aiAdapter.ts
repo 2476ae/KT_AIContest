@@ -1,4 +1,5 @@
 import { getCoachReport } from "./analytics";
+import { parseDate } from "./date";
 import { classifyTransaction as classifyWithRules } from "./classifier";
 import type { Category, CoachReport, Goal, Transaction } from "../types";
 
@@ -18,6 +19,7 @@ export interface CoachReportInput {
   previousMonthTransactions?: Transaction[];
   goal: Goal;
   monthId: string;
+  currentDate?: string;
 }
 
 export type MaybePromise<T> = T | Promise<T>;
@@ -56,7 +58,13 @@ function classifyTransactionLocal(input: ClassificationInput): ClassificationRes
 }
 
 function createCoachReportLocal(input: CoachReportInput): CoachReport {
-  return getCoachReport(input.transactions, input.goal, input.monthId, input.previousMonthTransactions ?? []);
+  return getCoachReport(
+    input.transactions,
+    input.goal,
+    input.monthId,
+    input.previousMonthTransactions ?? [],
+    input.currentDate ? parseDate(input.currentDate) : new Date(),
+  );
 }
 
 export const localAiProvider: AiProvider = {
@@ -185,7 +193,9 @@ export function createCoachReportPreviewResponse(input: CoachReportInput): AiRes
 }
 
 export function classifyTransaction(input: ClassificationInput) {
-  return classifyTransactionResponse(input).data;
+  // CSV and linked financial feeds can contain many rows. Keep their synchronous
+  // classification local so importing data never starts one external request per row.
+  return classifyTransactionLocal(input);
 }
 
 export function createCoachReport(input: CoachReportInput) {

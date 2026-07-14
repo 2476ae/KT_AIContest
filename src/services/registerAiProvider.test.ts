@@ -11,8 +11,9 @@ describe("AI provider registration", () => {
     expect(shouldEnableOpenAiProxy({ VITE_AI_PROXY_BASE_URL: "https://ai.example.com" })).toBe(true);
   });
 
-  it("uses a positive custom OpenAI proxy timeout when provided", () => {
-    expect(readAiProxyTimeoutMs({ VITE_AI_PROXY_TIMEOUT_MS: "60000" })).toBe(60000);
+  it("caps custom OpenAI proxy timeouts at eight seconds", () => {
+    expect(readAiProxyTimeoutMs({ VITE_AI_PROXY_TIMEOUT_MS: "4000" })).toBe(4000);
+    expect(readAiProxyTimeoutMs({ VITE_AI_PROXY_TIMEOUT_MS: "60000" })).toBe(8000);
     expect(readAiProxyTimeoutMs({ VITE_AI_PROXY_TIMEOUT_MS: "0" })).toBeUndefined();
     expect(readAiProxyTimeoutMs({ VITE_AI_PROXY_TIMEOUT_MS: "slow" })).toBeUndefined();
   });

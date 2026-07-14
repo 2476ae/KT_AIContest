@@ -41,9 +41,10 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
     : "선택한 날짜의 소비 상태를 확인할 수 있어요.";
 
   return (
-    <>
+    <div className="home-desktop-grid">
+      <div className="home-primary-column">
       <section className="hero-card card">
-        <div className="hero-head">
+        <div className="hero-head" data-tutorial="home-summary">
           <div>
             <div className="eyebrow">
               {formatMonthLabel(state.calendarMonth)} · 남은 {summary.daysLeft}일
@@ -154,7 +155,9 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
           <strong className="selected-day-amount">{selectedDay?.amount ? `-${formatWon(selectedDay.amount)}` : "0원"}</strong>
         </div>
       </section>
+      </div>
 
+      <aside className="home-secondary-column" aria-label="홈 보조 정보">
       <div className="section-title">
         <h2>이번 주 조정 미션</h2>
         <span>{summary.isAdjusted ? "조정 후 예상 저축" : "목표 저축"} {formatWon(summary.isAdjusted ? summary.adjustedSavingGoal : state.goal.savingGoal)}</span>
@@ -181,6 +184,7 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
         </button>
       </div>
       <TransactionList transactions={recentTransactions.slice(0, 3)} showDate emptyText="샘플 데이터를 불러오면 최근 소비가 표시됩니다." />
-    </>
+      </aside>
+    </div>
   );
 }

@@ -4,6 +4,7 @@ import { loadSampleTransactions } from "../data";
 import {
   classifyTransactionResponse,
   classifyTransactionResponseAsync,
+  classifyTransaction,
   createCoachReport,
   createCoachReportResponse,
   createCoachReportResponseAsync,
@@ -149,6 +150,35 @@ describe("ai adapter", () => {
       expect(classification.data.reason).toBe("async classification");
       expect(report.status).toBe("ready");
       expect(report.data.headline).toBe("비동기 AI 결과");
+    } finally {
+      setAiProvider(previous);
+    }
+  });
+
+  it("keeps synchronous bulk classification local when an external provider is active", () => {
+    const previous = getAiProvider();
+    let externalCalls = 0;
+
+    try {
+      setAiProvider(
+        {
+          classifyTransaction: async () => {
+            externalCalls += 1;
+            return { category: "기타", reason: "external" };
+          },
+          createCoachReport: localAiProvider.createCoachReport,
+        },
+        { id: "external-test", label: "외부 테스트", mode: "external" },
+      );
+
+      const result = classifyTransaction({
+        merchant: "스타벅스",
+        memo: "아메리카노",
+        isSubscription: false,
+      });
+
+      expect(result.category).toBe("카페/간식");
+      expect(externalCalls).toBe(0);
     } finally {
       setAiProvider(previous);
     }

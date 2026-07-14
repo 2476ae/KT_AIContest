@@ -12,8 +12,10 @@
     "build:github-pages": "tsc -b && vite build --base=/KT_AIContest/",
     "preview": "vite preview --host 127.0.0.1",
     "test": "vitest",
+    "test:e2e": "node scripts/run-e2e.mjs",
     "test:run": "vitest run",
-    "verify": "npm run test:run && npm run build"
+    "verify": "npm run test:run && npm run build",
+    "verify:full": "npm run verify && npm run test:e2e"
   },
   "dependencies": {
     "@vitejs/plugin-react": "^6.0.3",
@@ -23,6 +25,7 @@
     "vite": "^8.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
     "typescript": "^5.6.3",

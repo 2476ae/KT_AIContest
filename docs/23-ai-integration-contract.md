@@ -8,7 +8,7 @@
 - 직접 입력 화면은 자동 분류를 선택한 저장에서만 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
 - AI 코치 리포트는 AI 코치 화면의 `AI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
 - 관리자 테스트 편의를 위해 브라우저와 서버 프록시의 일일 횟수 제한은 기본 비활성화 상태다. 필요할 때만 `VITE_AI_CLIENT_RATE_LIMIT_ENABLED=true`, `AI_RATE_LIMIT_ENABLED=true`로 다시 켠다.
-- 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 로컬 미리보기 결과를 사용해 초기 렌더 외부 호출을 막는다.
+- 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 기본 분석 결과를 사용해 초기 렌더 외부 호출을 막는다.
 - AI 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
 - 월 목표 소비액을 초과해도 하루 권장 한도를 즉시 0원으로 고정하지 않는다. `getSummary`가 월수입, 목표 저축액, 남은 일수를 기준으로 `현실 조정 목표`와 `조정 후 예상 저축`을 계산하고, 이 로컬 계산값이 OpenAI 문구보다 우선한다.
 - AI 코치 리포트는 `categoryPlans`로 분야별 소비 계획 카드를 최대 4개 제공한다. 현재 달 거래와 `previousMonthTransactions`의 지난달 분야별 비중을 비교해 늘어난 분야를 우선하되, 후보가 적으면 실제 지출 상위 분야를 함께 채워 한 분야만 반복되지 않도록 한다. 긴 문장은 provider 검증 단계에서 잘라 카드 UI를 보호한다.
@@ -64,7 +64,7 @@ Vercel 전체 배포처럼 같은 origin에 `/api`가 있는 경우 `VITE_AI_PRO
 VITE_AI_PROVIDER=openai-proxy
 # Vercel 전체 배포에서는 비워둘 수 있음
 VITE_AI_PROXY_BASE_URL=
-VITE_AI_PROXY_TIMEOUT_MS=45000
+VITE_AI_PROXY_TIMEOUT_MS=8000
 ```
 
 서버 프록시 env:
@@ -73,6 +73,7 @@ VITE_AI_PROXY_TIMEOUT_MS=45000
 OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4.1-mini
 OPENAI_MAX_OUTPUT_TOKENS=900
+OPENAI_TIMEOUT_MS=6500
 AI_ALLOWED_ORIGINS=https://kt-ai-contest.vercel.app,http://localhost:5173
 AI_RATE_LIMIT_ENABLED=false
 AI_DAILY_REQUEST_LIMIT=60
@@ -80,7 +81,7 @@ AI_CLASSIFY_DAILY_LIMIT=40
 AI_COACH_DAILY_LIMIT=20
 ```
 
-서버 프록시는 OpenAI Responses API의 structured output을 사용해 `ClassificationResult`와 `CoachReport` JSON을 반환한다. 비용 관리의 1차 방어선은 명시 호출, 캐시, 서버 key 비공개이며, 횟수 제한은 테스트가 끝난 뒤 env로 다시 켤 수 있다.
+서버 프록시는 OpenAI Responses API의 structured output을 사용해 `ClassificationResult`와 `CoachReport` JSON을 반환한다. 비용 관리의 1차 방어선은 명시 호출, 진행 요청 단일화, 샘플·CSV·금융 피드의 로컬 분류, 캐시, 서버 key 비공개이며, 횟수 제한은 테스트가 끝난 뒤 env로 다시 켤 수 있다. OpenAI 응답이 6.5초를 넘으면 서버가 중단하고, 프론트는 늦어도 8초 안에 기본 분석으로 복귀한다.
 
 ## Provider 인터페이스
 
@@ -133,7 +134,7 @@ window.dispatchEvent(new CustomEvent("money-routine:financial-transactions", {
 - 단일 거래는 `detail.transaction`, 여러 거래는 `detail.transactions`로 받을 수 있다.
 - 한 이벤트는 최대 200건까지 처리하고, 잘못된 날짜/금액/사용처와 과도한 단일 금액은 건너뛴다.
 - 브라우저 저장소 과부하를 막기 위해 병합 후 최근 1,200건 중심으로 유지한다.
-- 반영 후 홈, 캘린더, 알림, AI 코치 로컬 미리보기 계산이 즉시 갱신된다.
+- 반영 후 홈, 캘린더, 알림, AI 코치 기본 분석 계산이 즉시 갱신된다.
 - 실시간 거래 반영만으로는 OpenAI API를 자동 호출하지 않는다. AI 코치 외부 분석은 여전히 사용자의 `AI 분석 업데이트` 클릭에서만 실행된다.
 
 ## 호출 정책

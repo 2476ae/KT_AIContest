@@ -43,6 +43,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
   }, [state.goal]);
 
   const validation = useMemo(() => validateGoal(draftGoal), [draftGoal]);
+  const currentGoalValidation = useMemo(() => validateGoal(state.goal), [state.goal]);
   const draftSummary = useMemo(
     () => getSummary(computed.monthTransactions, draftGoal, state.calendarMonth),
     [computed.monthTransactions, draftGoal, state.calendarMonth],
@@ -52,9 +53,15 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
   const draftGuideAmount = isDraftOverBudget ? Math.abs(draftSummary.remainingBudget) : draftSummary.dailyBudget;
   const isDirty = !hasSameGoal(draftGoal, state.goal);
   const visibleErrors = saveAttempted ? validation.errors : [];
+  const activeGoalWarning = (isDirty ? validation : currentGoalValidation).warnings[0];
   const currentSummary = computed.summary;
+  const isCurrentGoalExceeded = currentSummary.totalSpent > state.goal.spendingLimit;
   const goalSummaryTitle = isDirty
-    ? "저장 전 미리보기"
+    ? activeGoalWarning
+      ? "목표 조정이 필요해요"
+      : "저장 전 미리보기"
+    : activeGoalWarning
+      ? "목표 조정이 필요해요"
     : currentSummary.remainingBudget < 0
       ? "소비 목표를 다시 맞추는 중이에요"
       : currentSummary.isAdjusted
@@ -63,7 +70,11 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           ? "저축 가능성은 좋아요"
           : "목표를 보며 조정해요";
   const goalSummaryDescription = isDirty
-    ? "아래 수치는 아직 저장되지 않은 목표 기준입니다."
+    ? activeGoalWarning
+      ? "월 수입과 소비·저축 목표의 균형을 다시 확인해주세요."
+      : "아래 수치는 아직 저장되지 않은 목표 기준입니다."
+    : activeGoalWarning
+      ? "월 수입과 소비·저축 목표의 균형을 다시 확인해주세요."
     : currentSummary.remainingBudget < 0
       ? `초과분 ${formatWon(Math.abs(currentSummary.remainingBudget))}을 반영해 한도를 다시 확인해요.`
       : currentSummary.isAdjusted
@@ -119,7 +130,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           <Target size={20} />
         </span>
         <span>
-          <strong>{goalSummaryTitle}</strong>
+          <strong data-testid="goal-summary-title">{goalSummaryTitle}</strong>
           <small>{goalSummaryDescription}</small>
         </span>
       </section>
@@ -146,8 +157,15 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
               setGoalMessage("");
             }}
             inputMode="numeric"
+            autoFocus={isCurrentGoalExceeded}
+            aria-describedby={isCurrentGoalExceeded ? "goal-overrun-input-guide" : undefined}
             data-testid="goal-spending-limit-input"
           />
+          {isCurrentGoalExceeded && (
+            <small className="goal-overrun-input-guide" id="goal-overrun-input-guide" data-testid="goal-overrun-input-guide">
+              현재 {formatWon(currentSummary.totalSpent)} 사용 · 앞으로 쓸 금액까지 포함해 입력하세요.
+            </small>
+          )}
         </label>
         <label>
           <span>목표 저축액</span>
@@ -181,7 +199,7 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           </div>
         )}
         {validation.warnings.length > 0 && visibleErrors.length === 0 && (
-          <div className="goal-feedback is-watch">{validation.warnings[0]}</div>
+          <div className="goal-feedback is-watch" data-testid="goal-warning">{validation.warnings[0]}</div>
         )}
         {validation.warnings.length === 0 && visibleErrors.length === 0 && (
           <div className="goal-feedback">저장 후 홈과 AI 코치에 바로 반영돼요.</div>

@@ -88,11 +88,11 @@ export function validateGoal(goal: Goal): GoalValidationResult {
   }
 
   if (goal.monthlyIncome > 0 && goal.spendingLimit > goal.monthlyIncome) {
-    warnings.push("목표 소비액이 월 수입보다 큽니다. 제출 데모에서는 저장할 수 있지만 현실성이 낮아집니다.");
+    warnings.push("목표 소비액이 월 수입보다 커요. 소비 목표나 월 수입을 다시 확인해주세요.");
   }
 
   if (goal.monthlyIncome - goal.spendingLimit < goal.savingGoal) {
-    warnings.push("목표 저축액이 수입과 소비 목표 대비 빡빡합니다.");
+    warnings.push("목표 소비액과 목표 저축액의 합이 월 수입을 넘어요. 목표를 조금 조정해주세요.");
   }
 
   return {

@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
-import { alignCoachReportBudgetFields, getCalendarDays, getCoachReport, getSummary, getSubscriptionCandidates } from "./analytics";
+import { alignCoachReportBudgetFields, getCalendarDays, getCoachReport, getDaysLeft, getSummary, getSubscriptionCandidates } from "./analytics";
 
 describe("analytics service", () => {
   const allTransactions = loadSampleTransactions();
   const transactions = allTransactions.filter((transaction) => transaction.date.startsWith("2026-06"));
   const previousTransactions = allTransactions.filter((transaction) => transaction.date.startsWith("2026-05"));
+
+  it("uses the actual day for the current month's remaining days", () => {
+    expect(getDaysLeft([], "2026-07", new Date(2026, 6, 14))).toBe(17);
+  });
 
   it("calculates sample spending summary", () => {
     const summary = getSummary(transactions, DEFAULT_GOAL, DEMO_MONTH.id);

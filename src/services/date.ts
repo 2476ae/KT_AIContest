@@ -28,6 +28,23 @@ export function formatMonthLabel(monthId: string) {
   return `${year}년 ${month + 1}월`;
 }
 
+export function formatMonthShortLabel(monthId: string) {
+  const { month } = parseMonthId(monthId);
+  return `${month + 1}월`;
+}
+
+export function formatFullDate(date: string | Date) {
+  const value = typeof date === "string" ? parseDate(date) : date;
+  const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+
+  return `${value.getFullYear()}년 ${value.getMonth() + 1}월 ${value.getDate()}일 ${weekdays[value.getDay()]}요일`;
+}
+
+export function parseDate(date: string) {
+  const [year, month, day] = date.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
 export function addMonths(monthId: string, amount: number) {
   const { year, month } = parseMonthId(monthId);
   const date = new Date(year, month + amount, 1);
