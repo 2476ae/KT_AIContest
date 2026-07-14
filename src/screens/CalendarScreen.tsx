@@ -91,7 +91,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
         </section>
       )}
 
-      <section className="filter-row" aria-label="캘린더 필터" data-tutorial="calendar-main">
+      <section className="filter-row" aria-label="캘린더 필터">
         {filters.map((item) => (
           <button
             key={item.id}
@@ -105,7 +105,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
         ))}
       </section>
 
-      <section className="calendar-card card">
+      <section className="calendar-card card" data-tutorial="calendar-main">
         <CalendarGrid
           days={calendarDays}
           selectedDate={state.selectedDate}

@@ -172,57 +172,59 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
       </section>
 
       <form className="entry-form card" onSubmit={submitTransaction} data-testid="transaction-form" data-add-target="entry">
-        <label className="amount-field" data-tutorial="add-entry">
-          <span>금액</span>
-          <input
-            value={amount}
-            onChange={(event) => {
-              setAmount(formatMoneyInput(event.target.value));
-              setFormErrors([]);
-              setFormWarnings([]);
-              setFormMessage("");
-            }}
-            inputMode="numeric"
-            placeholder="0"
-            required
-            data-testid="transaction-amount-input"
-          />
-        </label>
+        <div className="entry-tutorial-fields" data-tutorial="add-entry">
+          <label className="amount-field">
+            <span>금액</span>
+            <input
+              value={amount}
+              onChange={(event) => {
+                setAmount(formatMoneyInput(event.target.value));
+                setFormErrors([]);
+                setFormWarnings([]);
+                setFormMessage("");
+              }}
+              inputMode="numeric"
+              placeholder="0"
+              required
+              data-testid="transaction-amount-input"
+            />
+          </label>
 
-        <div className="form-grid">
-          <label>
-            <span>사용처</span>
-            <input
-              value={merchant}
-              onChange={(event) => {
-                setMerchant(event.target.value);
-                setFormErrors([]);
-                setFormWarnings([]);
-              }}
-              placeholder="예: 스타벅스"
-              required
-              data-testid="transaction-merchant-input"
-            />
-          </label>
-          <label>
-            <span>날짜</span>
-            <input
-              value={date}
-              onInput={(event) => {
-                setDate(event.currentTarget.value);
-                setFormErrors([]);
-                setFormWarnings([]);
-              }}
-              onChange={(event) => {
-                setDate(event.target.value);
-                setFormErrors([]);
-                setFormWarnings([]);
-              }}
-              type="date"
-              required
-              data-testid="transaction-date-input"
-            />
-          </label>
+          <div className="form-grid">
+            <label>
+              <span>사용처</span>
+              <input
+                value={merchant}
+                onChange={(event) => {
+                  setMerchant(event.target.value);
+                  setFormErrors([]);
+                  setFormWarnings([]);
+                }}
+                placeholder="예: 스타벅스"
+                required
+                data-testid="transaction-merchant-input"
+              />
+            </label>
+            <label>
+              <span>날짜</span>
+              <input
+                value={date}
+                onInput={(event) => {
+                  setDate(event.currentTarget.value);
+                  setFormErrors([]);
+                  setFormWarnings([]);
+                }}
+                onChange={(event) => {
+                  setDate(event.target.value);
+                  setFormErrors([]);
+                  setFormWarnings([]);
+                }}
+                type="date"
+                required
+                data-testid="transaction-date-input"
+              />
+            </label>
+          </div>
         </div>
 
         <label>
@@ -317,7 +319,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
         </section>
       )}
 
-      <section className="upload-card card" data-add-target="csv">
+      <section className="upload-card card" data-add-target="csv" data-tutorial="csv-import">
         <div className="upload-head">
           <span className="upload-icon">
             <FileUp size={20} />

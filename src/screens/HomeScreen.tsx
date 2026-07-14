@@ -43,8 +43,8 @@ export function HomeScreen({ actions, computed, state }: MoneyRoutineViewModel) 
   return (
     <div className="home-desktop-grid">
       <div className="home-primary-column">
-      <section className="hero-card card">
-        <div className="hero-head" data-tutorial="home-summary">
+      <section className="hero-card card" data-tutorial="home-summary">
+        <div className="hero-head">
           <div>
             <div className="eyebrow">
               {formatMonthLabel(state.calendarMonth)} · 남은 {summary.daysLeft}일

@@ -291,6 +291,7 @@ button:disabled {
 .tutorial-layer {
   overflow: hidden;
   pointer-events: auto;
+  touch-action: none;
 }
 
 .tutorial-spotlight {
@@ -310,6 +311,7 @@ button:disabled {
   max-height: calc(100dvh - 28px);
   gap: 0;
   overflow-y: auto;
+  overscroll-behavior: contain;
   padding: 16px;
   border: 1px solid rgba(36, 120, 255, 0.2);
   border-radius: var(--radius);
@@ -386,10 +388,14 @@ button:disabled {
 }
 
 .tutorial-tooltip-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
   display: flex;
   justify-content: space-between;
   gap: 8px;
   margin-top: 15px;
+  background: var(--surface);
 }
 
 .tutorial-tooltip-actions .primary-button {
@@ -1810,6 +1816,12 @@ button:disabled {
   display: grid;
   gap: 13px;
   padding: 16px;
+}
+
+.entry-tutorial-fields {
+  display: grid;
+  gap: 13px;
+  min-width: 0;
 }
 
 .entry-success {

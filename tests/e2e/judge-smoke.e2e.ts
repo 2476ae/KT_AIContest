@@ -1,4 +1,45 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
+
+async function expectTutorialTargetAligned(page: Page, targetName: string) {
+  await expect.poll(async () => {
+    return page.evaluate((expectedTarget) => {
+      const target = document.querySelector<HTMLElement>(`[data-tutorial="${expectedTarget}"]`);
+      const spotlight = document.querySelector<HTMLElement>(".tutorial-spotlight");
+      const tooltip = document.querySelector<HTMLElement>(".tutorial-tooltip");
+      if (!target || !spotlight || !tooltip || spotlight.dataset.target !== expectedTarget) {
+        return false;
+      }
+
+      const targetRect = target.getBoundingClientRect();
+      const spotlightRect = spotlight.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      const viewportWidth = document.documentElement.clientWidth;
+      const viewportHeight = window.innerHeight;
+      const visibleTarget = {
+        left: Math.max(0, targetRect.left),
+        right: Math.min(viewportWidth, targetRect.right),
+        top: Math.max(0, targetRect.top),
+        bottom: Math.min(viewportHeight, targetRect.bottom),
+      };
+      const visibleArea = Math.max(0, visibleTarget.right - visibleTarget.left) * Math.max(0, visibleTarget.bottom - visibleTarget.top);
+      const coveredWidth = Math.max(0, Math.min(spotlightRect.right, visibleTarget.right) - Math.max(spotlightRect.left, visibleTarget.left));
+      const coveredHeight = Math.max(0, Math.min(spotlightRect.bottom, visibleTarget.bottom) - Math.max(spotlightRect.top, visibleTarget.top));
+      const spotlightArea = spotlightRect.width * spotlightRect.height;
+      const comparableArea = Math.min(visibleArea, spotlightArea);
+      const coverage = comparableArea > 0 ? (coveredWidth * coveredHeight) / comparableArea : 0;
+      const overlapsTooltip = !(
+        tooltipRect.right <= spotlightRect.left ||
+        tooltipRect.left >= spotlightRect.right ||
+        tooltipRect.bottom <= spotlightRect.top ||
+        tooltipRect.top >= spotlightRect.bottom
+      );
+
+      return coverage >= 0.9 && !overlapsTooltip &&
+        spotlightRect.left >= 0 && spotlightRect.top >= 0 &&
+        spotlightRect.right <= viewportWidth && spotlightRect.bottom <= viewportHeight;
+    }, targetName);
+  }, { timeout: 3_000 }).toBe(true);
+}
 
 test.describe("judge demo smoke flow", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,10 +54,10 @@ test.describe("judge demo smoke flow", () => {
     await page.reload();
   });
 
-  test("guides a first-time user without calling the AI API and can be replayed", async ({ page }) => {
+  test("guides a first-time user through one complete tutorial without calling the AI API", async ({ page }) => {
     let aiRequestCount = 0;
     page.on("request", (request) => {
-      if (request.url().includes("/api/ai/coach")) {
+      if (request.url().includes("/api/ai/")) {
         aiRequestCount += 1;
       }
     });
@@ -26,32 +67,36 @@ test.describe("judge demo smoke flow", () => {
 
     const welcome = page.getByTestId("tutorial-welcome");
     await expect(welcome).toBeVisible();
-    await expect(welcome).toContainText("현재 베타 버전은 실제 은행·카드 앱과 연결하지 않아요");
+    await expect(welcome).toContainText("베타 버전은 실제 은행·카드 앱과 연결하지 않아요");
     await expect(welcome).toContainText("체험용 임시 데이터");
+    await expect(page.getByTestId("tutorial-start")).toBeVisible();
+    await expect(page.getByTestId("tutorial-start-sample")).toHaveCount(0);
+    await expect(page.getByTestId("tutorial-start-features")).toHaveCount(0);
 
-    await page.getByTestId("tutorial-start-sample").click();
-    const stepIds = ["sample-home", "sample-calendar", "sample-coach", "sample-notifications"];
-    await expect(page.locator(".tutorial-tooltip-head")).toContainText("샘플 체험");
+    await page.getByTestId("tutorial-start").click();
+    const steps = [
+      ["home", "home-summary"],
+      ["goal", "goal-button"],
+      ["add", "add-entry"],
+      ["csv", "csv-import"],
+      ["calendar", "calendar-main"],
+      ["coach", "coach-overview"],
+      ["ai", "coach-ai-update"],
+      ["trust", "trust"],
+      ["notifications", "notifications"],
+      ["settings", "settings-tools"],
+    ] as const;
+    await expect(page.locator(".tutorial-tooltip-head")).toContainText("사용 가이드");
     await expect(page.locator(".hero-amount")).not.toHaveText("0원");
-    for (const [index, stepId] of stepIds.entries()) {
+    for (const [index, [stepId, targetName]] of steps.entries()) {
       await expect(page.getByTestId(`tutorial-step-${stepId}`)).toBeVisible();
-      await expect(page.getByTestId(`tutorial-step-${stepId}`)).toContainText(`${index + 1} / ${stepIds.length}`);
-      await expect.poll(async () => {
-        return page.evaluate(() => {
-          const spotlight = document.querySelector<HTMLElement>(".tutorial-spotlight")?.getBoundingClientRect();
-          const tooltip = document.querySelector<HTMLElement>(".tutorial-tooltip")?.getBoundingClientRect();
-          if (!spotlight || !tooltip) {
-            return true;
-          }
-          return !(
-            tooltip.right <= spotlight.left ||
-            tooltip.left >= spotlight.right ||
-            tooltip.bottom <= spotlight.top ||
-            tooltip.top >= spotlight.bottom
-          );
-        });
-      }).toBe(false);
+      await expect(page.getByTestId(`tutorial-step-${stepId}`)).toContainText(`${index + 1} / ${steps.length}`);
+      await expectTutorialTargetAligned(page, targetName);
       await page.getByTestId("tutorial-next").click();
+      if (index < steps.length - 1) {
+        await expect(page.getByTestId(`tutorial-step-${stepId}`)).toHaveCount(0);
+        await expect(page.getByTestId(`tutorial-step-${steps[index + 1][0]}`)).toBeVisible();
+      }
     }
 
     await expect(page.getByTestId("tutorial-tour")).toHaveCount(0);
@@ -64,16 +109,9 @@ test.describe("judge demo smoke flow", () => {
     await page.reload();
     await page.waitForTimeout(1600);
     await expect(page.getByTestId("tutorial-welcome")).toHaveCount(0);
-
-    await page.getByTestId("nav-settings").click();
-    await page.getByTestId("settings-start-tutorial").click();
-    await expect(page.getByTestId("tutorial-welcome")).toBeVisible();
-    await page.getByTestId("tutorial-skip-welcome").click();
-    await expect(page.getByTestId("nav-home")).toHaveAttribute("aria-current", "page");
-    expect(aiRequestCount).toBe(0);
   });
 
-  test("keeps the full feature guide separate and does not load sample data", async ({ page }) => {
+  test("skips without loading sample data and preserves user data when the tutorial is replayed", async ({ page }) => {
     let aiRequestCount = 0;
     page.on("request", (request) => {
       if (request.url().includes("/api/ai/")) {
@@ -83,23 +121,44 @@ test.describe("judge demo smoke flow", () => {
 
     await page.evaluate(() => window.localStorage.removeItem("money-routine-tutorial:v1"));
     await page.reload();
-    await page.getByTestId("tutorial-start-features").click();
-
-    const stepIds = ["home", "goal", "add", "calendar", "coach", "ai", "notifications", "settings"];
-    await expect(page.locator(".tutorial-tooltip-head")).toContainText("기능 안내");
-    for (const [index, stepId] of stepIds.entries()) {
-      await expect(page.getByTestId(`tutorial-step-${stepId}`)).toBeVisible();
-      await expect(page.getByTestId(`tutorial-step-${stepId}`)).toContainText(`${index + 1} / ${stepIds.length}`);
-      await page.getByTestId("tutorial-next").click();
-    }
-
-    await expect(page.getByTestId("tutorial-tour")).toHaveCount(0);
+    await expect(page.getByTestId("tutorial-welcome")).toBeVisible();
+    await page.getByTestId("tutorial-skip-welcome").click();
     await expect(page.locator(".hero-amount")).toHaveText("0원");
     const storedTransactionCount = await page.evaluate(() => {
       const stored = JSON.parse(window.localStorage.getItem("money-routine-calendar:v2") ?? "null");
       return stored?.state?.transactions?.length ?? 0;
     });
     expect(storedTransactionCount).toBe(0);
+
+    const isoDate = await page.evaluate(() => {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const day = String(now.getDate()).padStart(2, "0");
+      return `${now.getFullYear()}-${month}-${day}`;
+    });
+    await page.getByTestId("nav-add").click();
+    await page.getByTestId("transaction-amount-input").fill("1000");
+    await page.getByTestId("transaction-merchant-input").fill("튜토리얼 보존 테스트");
+    await page.getByTestId("transaction-date-input").fill(isoDate);
+    await page.getByRole("button", { name: "생활" }).click();
+    await page.getByTestId("transaction-save-button").click();
+    await expect(page.getByTestId("entry-save-success")).toBeVisible();
+
+    await page.getByTestId("nav-settings").click();
+    await page.getByTestId("settings-start-tutorial").click();
+    await expect(page.getByTestId("tutorial-welcome")).toBeVisible();
+    await expect(page.getByTestId("tutorial-welcome")).toContainText("현재 저장된 내역을 유지");
+    await page.getByTestId("tutorial-start").click();
+    await expect(page.getByTestId("tutorial-step-home")).toBeVisible();
+    await expect(page.locator(".hero-amount")).toHaveText("1,000원");
+    await expectTutorialTargetAligned(page, "home-summary");
+    const replayedTransactionCount = await page.evaluate(() => {
+      const stored = JSON.parse(window.localStorage.getItem("money-routine-calendar:v2") ?? "null");
+      return stored?.state?.transactions?.length ?? 0;
+    });
+    expect(replayedTransactionCount).toBe(1);
+    await page.getByTestId("tutorial-skip-tour").click();
+    await expect(page.getByTestId("nav-home")).toHaveAttribute("aria-current", "page");
     expect(aiRequestCount).toBe(0);
   });
 

@@ -190,6 +190,7 @@ export function AppShell({ children, state, actions }: AppShellProps) {
               aria-controls="top-trust-panel"
               aria-expanded={openPanel === "trust"}
               data-testid="top-trust-button"
+              data-tutorial="trust"
             >
               <ShieldCheck size={17} />
             </button>
