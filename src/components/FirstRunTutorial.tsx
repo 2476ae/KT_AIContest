@@ -116,7 +116,7 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
   const [phase, setPhase] = useState<"welcome" | "tour">("welcome");
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
-  const [tooltipStyle, setTooltipStyle] = useState<Record<string, number>>({});
+  const [tooltipStyle, setTooltipStyle] = useState<Record<string, number>>(() => getFallbackTooltipStyle());
   const layerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const step = steps[stepIndex];
@@ -167,10 +167,10 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
       return;
     }
 
-    setTargetRect(null);
-    setTooltipStyle(getFallbackTooltipStyle());
-    setActiveTab(step.tab);
-  }, [enabled, phase, setActiveTab, step.id, step.tab]);
+    if (state.activeTab !== step.tab) {
+      setActiveTab(step.tab);
+    }
+  }, [enabled, phase, setActiveTab, state.activeTab, step.tab]);
 
   useLayoutEffect(() => {
     if (!enabled || phase !== "tour") {
@@ -192,10 +192,14 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
       const padding = 6;
       const viewportWidth = document.documentElement.clientWidth;
       const viewportHeight = window.innerHeight;
+      const margin = 14;
+      const gap = 14;
+      const tooltipWidth = Math.min(360, viewportWidth - margin * 2);
+      const tooltipHeight = Math.min(tooltipRef.current?.offsetHeight ?? 230, viewportHeight - margin * 2);
       const spotlightLeft = clamp(rect.left - padding, 6, Math.max(6, viewportWidth - 7));
       const spotlightTop = clamp(rect.top - padding, 6, Math.max(6, viewportHeight - 7));
       const spotlightRight = clamp(rect.right + padding, spotlightLeft + 1, viewportWidth - 6);
-      const mobileSpotlightHeight = Math.min(220, viewportHeight * 0.3);
+      const mobileSpotlightHeight = Math.max(160, viewportHeight - tooltipHeight - margin * 2 - gap);
       const spotlightBottom = clamp(
         rect.bottom + padding,
         spotlightTop + 1,
@@ -209,10 +213,6 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
       };
       setTargetRect(nextRect);
 
-      const margin = 14;
-      const gap = 14;
-      const tooltipWidth = Math.min(360, viewportWidth - margin * 2);
-      const tooltipHeight = Math.min(tooltipRef.current?.offsetHeight ?? 230, viewportHeight - margin * 2);
       const targetBottom = nextRect.top + nextRect.height;
       const spaceAbove = nextRect.top - margin;
       const spaceBelow = viewportHeight - targetBottom - margin;
@@ -253,8 +253,14 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
       measureFrame = window.requestAnimationFrame(updatePosition);
     }
 
-    function makeRoomForTooltip() {
-      if (!target || window.innerWidth > 640 || !tooltipRef.current) {
+    function scrollTargetIntoView() {
+      if (!target) {
+        return;
+      }
+
+      const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+      if (window.innerWidth > 640 || !tooltipRef.current) {
+        target.scrollIntoView({ block: "center", inline: "nearest", behavior });
         return;
       }
 
@@ -262,17 +268,12 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
       const gap = 14;
       const targetRect = target.getBoundingClientRect();
       const tooltipHeight = Math.min(tooltipRef.current.offsetHeight, window.innerHeight - margin * 2);
-      const highlightedHeight = Math.min(targetRect.height + 12, 220, window.innerHeight * 0.3);
-      if (tooltipHeight + highlightedHeight + gap > window.innerHeight - margin * 2) {
-        return;
-      }
-
       const desiredTargetTop = margin + tooltipHeight + gap + 6;
       const scrollRoot = document.scrollingElement ?? document.documentElement;
       const maxScrollTop = Math.max(0, scrollRoot.scrollHeight - window.innerHeight);
       const nextScrollTop = clamp(window.scrollY + targetRect.top - desiredTargetTop, 0, maxScrollTop);
       if (Math.abs(nextScrollTop - window.scrollY) > 1) {
-        window.scrollTo({ top: nextScrollTop, behavior: "auto" });
+        window.scrollTo({ top: nextScrollTop, behavior });
       }
     }
 
@@ -286,17 +287,14 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
         return;
       }
 
-      target.scrollIntoView({ block: "center", inline: "nearest", behavior: "auto" });
+      scrollTargetIntoView();
       measureFrame = window.requestAnimationFrame(() => {
-        makeRoomForTooltip();
-        measureFrame = window.requestAnimationFrame(() => {
-          updatePosition();
-          resizeObserver = new ResizeObserver(schedulePosition);
-          resizeObserver.observe(target!);
-          if (tooltipRef.current) {
-            resizeObserver.observe(tooltipRef.current);
-          }
-        });
+        updatePosition();
+        resizeObserver = new ResizeObserver(schedulePosition);
+        resizeObserver.observe(target!);
+        if (tooltipRef.current) {
+          resizeObserver.observe(tooltipRef.current);
+        }
       });
     }
 
@@ -366,7 +364,7 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
   }
 
   return (
-    <div className="tutorial-layer" ref={layerRef} data-testid="tutorial-tour">
+    <div className={`tutorial-layer${targetRect ? " is-ready" : ""}`} ref={layerRef} data-testid="tutorial-tour">
       {targetRect && (
         <div
           className="tutorial-spotlight"
@@ -381,7 +379,6 @@ export function FirstRunTutorial({ actions, enabled, onFinish, state }: FirstRun
         />
       )}
       <section
-        key={step.id}
         className="tutorial-tooltip"
         ref={tooltipRef}
         style={tooltipStyle}

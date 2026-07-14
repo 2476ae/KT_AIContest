@@ -295,8 +295,14 @@ button:disabled {
 
 .tutorial-layer {
   overflow: hidden;
+  background: rgba(15, 23, 42, 0.56);
   pointer-events: auto;
   touch-action: none;
+  transition: background-color 0.22s ease;
+}
+
+.tutorial-layer.is-ready {
+  background: transparent;
 }
 
 .tutorial-spotlight {
@@ -306,7 +312,11 @@ button:disabled {
   border-radius: var(--radius);
   box-shadow: 0 0 0 9999px rgba(15, 23, 42, 0.56), 0 0 0 4px rgba(36, 120, 255, 0.42);
   pointer-events: none;
-  transition: top 0.2s ease, left 0.2s ease, width 0.2s ease, height 0.2s ease;
+  transition:
+    top 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    left 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+    height 0.3s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .tutorial-tooltip {
@@ -322,6 +332,10 @@ button:disabled {
   border-radius: var(--radius);
   background: var(--surface);
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.28);
+  transition:
+    top 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    left 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .tutorial-tooltip-head {
@@ -442,7 +456,9 @@ button:disabled {
 @media (prefers-reduced-motion: reduce) {
   .app-intro,
   .app-intro.is-leaving,
+  .tutorial-layer,
   .tutorial-spotlight,
+  .tutorial-tooltip,
   .tutorial-progress span,
   .bottom-nav {
     animation-duration: 0.01ms;
@@ -1823,6 +1839,7 @@ button:disabled {
 .settings-form {
   display: grid;
   gap: 13px;
+  min-width: 0;
   padding: 16px;
 }
 
@@ -1907,8 +1924,12 @@ button:disabled {
 
 .entry-form input,
 .settings-form input {
+  display: block;
+  inline-size: 100%;
   width: 100%;
   min-width: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
   min-height: 42px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -1932,8 +1953,16 @@ button:disabled {
 
 .form-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
   gap: 9px;
+  min-width: 0;
+}
+
+.form-grid > label,
+.entry-form input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
+  max-inline-size: 100%;
 }
 
 .switch-row {

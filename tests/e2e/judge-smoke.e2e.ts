@@ -24,9 +24,7 @@ async function expectTutorialTargetAligned(page: Page, targetName: string) {
       const visibleArea = Math.max(0, visibleTarget.right - visibleTarget.left) * Math.max(0, visibleTarget.bottom - visibleTarget.top);
       const coveredWidth = Math.max(0, Math.min(spotlightRect.right, visibleTarget.right) - Math.max(spotlightRect.left, visibleTarget.left));
       const coveredHeight = Math.max(0, Math.min(spotlightRect.bottom, visibleTarget.bottom) - Math.max(spotlightRect.top, visibleTarget.top));
-      const spotlightArea = spotlightRect.width * spotlightRect.height;
-      const comparableArea = Math.min(visibleArea, spotlightArea);
-      const coverage = comparableArea > 0 ? (coveredWidth * coveredHeight) / comparableArea : 0;
+      const coverage = visibleArea > 0 ? (coveredWidth * coveredHeight) / visibleArea : 0;
       const overlapsTooltip = !(
         tooltipRect.right <= spotlightRect.left ||
         tooltipRect.left >= spotlightRect.right ||
@@ -34,11 +32,43 @@ async function expectTutorialTargetAligned(page: Page, targetName: string) {
         tooltipRect.top >= spotlightRect.bottom
       );
 
-      return coverage >= 0.9 && !overlapsTooltip &&
+      return coverage >= 0.98 && !overlapsTooltip &&
         spotlightRect.left >= 0 && spotlightRect.top >= 0 &&
         spotlightRect.right <= viewportWidth && spotlightRect.bottom <= viewportHeight;
     }, targetName);
   }, { timeout: 3_000 }).toBe(true);
+}
+
+async function expectTutorialFieldsInsideSpotlight(page: Page, testIds: string[]) {
+  await expect.poll(async () => page.evaluate((ids) => {
+    const spotlight = document.querySelector<HTMLElement>(".tutorial-spotlight")?.getBoundingClientRect();
+    if (!spotlight) {
+      return false;
+    }
+
+    return ids.every((testId) => {
+      const field = document.querySelector<HTMLElement>(`[data-testid="${testId}"]`)?.getBoundingClientRect();
+      return Boolean(field) &&
+        field!.left >= spotlight.left - 2 && field!.right <= spotlight.right + 2 &&
+        field!.top >= spotlight.top - 2 && field!.bottom <= spotlight.bottom + 2;
+    });
+  }, testIds), { timeout: 3_000 }).toBe(true);
+}
+
+async function expectInputsInsideTransactionForm(page: Page) {
+  await expect.poll(async () => page.evaluate(() => {
+    const form = document.querySelector<HTMLElement>("[data-testid='transaction-form']")?.getBoundingClientRect();
+    const merchant = document.querySelector<HTMLInputElement>("[data-testid='transaction-merchant-input']")?.getBoundingClientRect();
+    const date = document.querySelector<HTMLInputElement>("[data-testid='transaction-date-input']")?.getBoundingClientRect();
+    if (!form || !merchant || !date) {
+      return false;
+    }
+
+    const isInside = (field: DOMRect) => field.left >= form.left && field.right <= form.right;
+    const isStackedOnMobile = window.innerWidth >= 900 || merchant.bottom <= date.top;
+    return isInside(merchant) && isInside(date) && isStackedOnMobile &&
+      document.documentElement.scrollWidth <= document.documentElement.clientWidth;
+  })).toBe(true);
 }
 
 test.describe("judge demo smoke flow", () => {
@@ -88,10 +118,33 @@ test.describe("judge demo smoke flow", () => {
     ] as const;
     await expect(page.locator(".tutorial-tooltip-head")).toContainText("사용 가이드");
     await expect(page.locator(".hero-amount")).not.toHaveText("0원");
+    await expect(page.locator(".tutorial-spotlight")).toBeVisible();
+    await page.evaluate(() => {
+      const spotlight = document.querySelector<HTMLElement>(".tutorial-spotlight");
+      const tooltip = document.querySelector<HTMLElement>(".tutorial-tooltip");
+      const layer = document.querySelector<HTMLElement>(".tutorial-layer");
+      const audit = { spotlightRemoved: false, tooltipRemoved: false };
+      const observer = new MutationObserver(() => {
+        audit.spotlightRemoved ||= Boolean(spotlight && !spotlight.isConnected);
+        audit.tooltipRemoved ||= Boolean(tooltip && !tooltip.isConnected);
+      });
+      if (layer) {
+        observer.observe(layer, { childList: true, subtree: true });
+      }
+      (window as typeof window & { __tutorialTransitionAudit?: { audit: typeof audit; observer: MutationObserver } })
+        .__tutorialTransitionAudit = { audit, observer };
+    });
     for (const [index, [stepId, targetName]] of steps.entries()) {
       await expect(page.getByTestId(`tutorial-step-${stepId}`)).toBeVisible();
       await expect(page.getByTestId(`tutorial-step-${stepId}`)).toContainText(`${index + 1} / ${steps.length}`);
       await expectTutorialTargetAligned(page, targetName);
+      if (stepId === "add") {
+        await expectTutorialFieldsInsideSpotlight(page, [
+          "transaction-amount-input",
+          "transaction-merchant-input",
+          "transaction-date-input",
+        ]);
+      }
       await page.getByTestId("tutorial-next").click();
       if (index < steps.length - 1) {
         await expect(page.getByTestId(`tutorial-step-${stepId}`)).toHaveCount(0);
@@ -99,6 +152,17 @@ test.describe("judge demo smoke flow", () => {
       }
     }
 
+    const transitionAudit = await page.evaluate(() => {
+      const state = (window as typeof window & {
+        __tutorialTransitionAudit?: {
+          audit: { spotlightRemoved: boolean; tooltipRemoved: boolean };
+          observer: MutationObserver;
+        };
+      }).__tutorialTransitionAudit;
+      state?.observer.disconnect();
+      return state?.audit;
+    });
+    expect(transitionAudit).toEqual({ spotlightRemoved: false, tooltipRemoved: false });
     await expect(page.getByTestId("tutorial-tour")).toHaveCount(0);
     await expect(page.getByTestId("nav-home")).toHaveAttribute("aria-current", "page");
     expect(aiRequestCount).toBe(0);
@@ -290,6 +354,16 @@ test.describe("judge demo smoke flow", () => {
     const amountInput = page.getByTestId("transaction-amount-input");
     const bottomNav = page.locator(".bottom-nav");
     const viewport = page.viewportSize();
+
+    if (viewport && viewport.width <= 430) {
+      for (const width of [320, 390, 430]) {
+        await page.setViewportSize({ width, height: 844 });
+        await expectInputsInsideTransactionForm(page);
+      }
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+    } else {
+      await expectInputsInsideTransactionForm(page);
+    }
 
     await amountInput.focus();
     if (viewport && viewport.width <= 430) {
