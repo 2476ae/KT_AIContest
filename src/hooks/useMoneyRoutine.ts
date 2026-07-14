@@ -10,11 +10,12 @@ import {
   deleteTransactionState,
   INITIAL_APP_STATE,
   loadSampleState,
-  mergeStoredState,
+  restoreStoredState,
   moveCalendarMonthState,
   parseImportCsv,
   resetGoalState,
   rollCurrentDateState,
+  serializeAppState,
   setActiveTabState,
   setSelectedDateState,
   updateGoalState,
@@ -59,12 +60,13 @@ function readStoredState(): AppState {
   const referenceDate = new Date();
 
   try {
-    const stored = window.localStorage.getItem(DEMO_MONTH.storageKey);
+    const stored = window.localStorage.getItem(DEMO_MONTH.storageKey)
+      ?? DEMO_MONTH.legacyStorageKeys.map((key) => window.localStorage.getItem(key)).find(Boolean);
     if (!stored) {
       return createInitialAppState(referenceDate);
     }
 
-    return alignStoredSampleTransactions(mergeStoredState(JSON.parse(stored), referenceDate), referenceDate);
+    return alignStoredSampleTransactions(restoreStoredState(JSON.parse(stored), referenceDate), referenceDate);
   } catch {
     return createInitialAppState(referenceDate);
   }
@@ -72,7 +74,8 @@ function readStoredState(): AppState {
 
 function persistState(state: AppState) {
   try {
-    window.localStorage.setItem(DEMO_MONTH.storageKey, JSON.stringify(state));
+    window.localStorage.setItem(DEMO_MONTH.storageKey, serializeAppState(state));
+    DEMO_MONTH.legacyStorageKeys.forEach((key) => window.localStorage.removeItem(key));
   } catch (error) {
     console.warn("머니루틴 상태를 브라우저 저장소에 저장하지 못했습니다.", error);
   }
@@ -92,6 +95,7 @@ export function useMoneyRoutine() {
     }),
   );
   const [coachRequestKey, setCoachRequestKey] = useState<string | null>(null);
+  const [coachRequestAttempt, setCoachRequestAttempt] = useState(0);
 
   const updateState = useCallback((updater: (current: AppState) => AppState) => {
     setState((current) => {
@@ -109,6 +113,7 @@ export function useMoneyRoutine() {
   const resetAll = useCallback(() => {
     try {
       window.localStorage.removeItem(DEMO_MONTH.storageKey);
+      DEMO_MONTH.legacyStorageKeys.forEach((key) => window.localStorage.removeItem(key));
     } catch (error) {
       console.warn("머니루틴 저장 상태를 삭제하지 못했습니다.", error);
     }
@@ -280,16 +285,20 @@ export function useMoneyRoutine() {
     };
   }, [state.calendarMonth, state.goal, state.selectedDate, state.transactions, today]);
 
-  const coachInput: CoachReportInput = useMemo(
-    () => ({
+  const coachInput: CoachReportInput = useMemo(() => {
+    const baseInput: CoachReportInput = {
       transactions: baseComputed.monthTransactions,
       previousMonthTransactions: baseComputed.previousMonthTransactions,
       goal: state.goal,
       monthId: state.calendarMonth,
       currentDate: today,
-    }),
-    [baseComputed.monthTransactions, baseComputed.previousMonthTransactions, state.calendarMonth, state.goal, today],
-  );
+    };
+
+    return {
+      ...baseInput,
+      baseReport: createCoachReportPreviewResponse(baseInput).data,
+    };
+  }, [baseComputed.monthTransactions, baseComputed.previousMonthTransactions, state.calendarMonth, state.goal, today]);
 
   const coachCacheKey = useMemo(
     () => createCoachReportCacheKey(coachInput, getAiProviderMetadata().id),
@@ -297,7 +306,12 @@ export function useMoneyRoutine() {
   );
 
   const requestCoachReport = useCallback(() => {
+    const cachedResponse = coachResponseCache.current.get(coachCacheKey);
+    if (cachedResponse?.status === "fallback" || cachedResponse?.status === "error") {
+      coachResponseCache.current.delete(coachCacheKey);
+    }
     setCoachRequestKey(coachCacheKey);
+    setCoachRequestAttempt((current) => current + 1);
   }, [coachCacheKey]);
 
   useEffect(() => {
@@ -340,7 +354,7 @@ export function useMoneyRoutine() {
       isCurrent = false;
       window.clearTimeout(timeoutId);
     };
-  }, [coachCacheKey, coachInput, coachRequestKey, state.activeTab]);
+  }, [coachCacheKey, coachInput, coachRequestAttempt, coachRequestKey, state.activeTab]);
 
   const computed = useMemo(
     () => ({

@@ -5,7 +5,7 @@ interface CalendarGridProps {
   days: DaySummary[];
   selectedDate: string;
   onSelectDate: (date: string) => void;
-  filter?: "all" | "over" | "subscription" | "safe";
+  filter?: "all" | "empty" | "over" | "subscription" | "safe";
   today?: string;
 }
 
@@ -19,7 +19,8 @@ export function CalendarGrid({ days, selectedDate, onSelectDate, filter = "all",
       !(
         (filter === "over" && day.status === "over") ||
         (filter === "subscription" && day.status === "subscription") ||
-        (filter === "safe" && day.status === "safe")
+        (filter === "safe" && day.status === "safe") ||
+        (filter === "empty" && day.status === "empty" && day.isCurrentMonth)
       ),
   }));
 

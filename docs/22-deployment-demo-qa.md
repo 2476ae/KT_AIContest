@@ -41,7 +41,7 @@ npm run test:e2e
 
 검증 범위:
 
-- Vitest: 9개 파일, 49개 테스트
+- Vitest: 12개 파일, 63개 테스트
 - TypeScript build
 - Vite production build
 - GitHub Pages base path build

@@ -167,7 +167,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
         <h1>소비 추가</h1>
       </section>
 
-      <form className="entry-form card" onSubmit={submitTransaction} data-testid="transaction-form">
+      <form className="entry-form card" onSubmit={submitTransaction} data-testid="transaction-form" data-add-target="entry">
         <label className="amount-field" data-tutorial="add-entry">
           <span>금액</span>
           <input
@@ -313,7 +313,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
         </section>
       )}
 
-      <section className="upload-card card">
+      <section className="upload-card card" data-add-target="csv">
         <div className="upload-head">
           <span className="upload-icon">
             <FileUp size={20} />
@@ -325,7 +325,9 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
                 ? "파일을 읽는 중입니다."
                 : preview.length > 0
                   ? `${preview.length}건 · 구독 후보 ${subscriptionCount}건`
-                  : displayedCsvErrors[0] ?? "거래 파일을 선택하세요."}
+                  : displayedCsvErrors.length > 0
+                    ? "파일 내용을 확인해주세요."
+                    : "거래 파일을 선택하세요."}
             </small>
           </span>
         </div>
@@ -351,7 +353,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
           </button>
         </div>
         {displayedCsvErrors.length > 0 && (
-          <div className="field-error">
+          <div className="field-error" data-testid="csv-validation-errors">
             {displayedCsvErrors.slice(0, 3).map((error) => (
               <span key={error}>{error}</span>
             ))}

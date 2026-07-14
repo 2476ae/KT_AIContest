@@ -20,6 +20,7 @@ export interface CoachReportInput {
   goal: Goal;
   monthId: string;
   currentDate?: string;
+  baseReport?: CoachReport;
 }
 
 export type MaybePromise<T> = T | Promise<T>;

@@ -40,15 +40,15 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const aiStatusDetail =
     coachResponse.status === "fallback" || coachResponse.status === "error"
       ? coachResponse.error
-        ? coachResponse.error.includes("8초")
-          ? "OpenAI 응답을 8초 동안 기다린 뒤 앱의 기본 계산으로 계속 보여드려요."
-          : "OpenAI 응답을 받지 못해 앱의 기본 계산으로 계속 보여드려요."
-        : "기본 계산으로 계속 사용할 수 있어요."
+        ? coachResponse.error.includes("8초") || coachResponse.error.includes("timed out") || coachResponse.error.includes("504")
+          ? "응답이 늦어 기본 분석을 표시했어요. 잠시 후 다시 눌러 재시도할 수 있어요."
+          : "연결에 실패해 기본 분석을 표시했어요. 잠시 후 다시 눌러 재시도할 수 있어요."
+        : "기본 분석은 앱이 목표와 소비 내역으로 직접 계산한 결과예요."
       : coachResponse.status === "loading"
         ? "최대 8초 안에 완료하거나 기본 분석으로 돌아옵니다."
         : coachResponse.provider.mode === "external"
           ? "OpenAI가 기본 계산을 참고해 분야별 계획과 문장을 보완했어요."
-          : "목표와 소비 내역을 앱 안의 계산 기준으로 분석한 결과예요.";
+          : "기본 분석은 목표와 소비 내역을 앱 안에서 계산하며, OpenAI는 문장만 보완해요.";
 
   return (
     <>

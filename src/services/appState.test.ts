@@ -15,7 +15,9 @@ import {
   moveCalendarMonthState,
   parseImportCsv,
   resetGoalState,
+  restoreStoredState,
   rollCurrentDateState,
+  serializeAppState,
   setActiveTabState,
   setSelectedDateState,
   syncFinancialFeedState,
@@ -58,6 +60,26 @@ describe("app state service", () => {
       selectedDate: "2026-07-14",
     });
     expect(mergeStoredState(null, referenceDate)).toEqual(initialState);
+  });
+
+  it("migrates legacy state and rejects malformed stored transactions", () => {
+    const legacyState = {
+      ...createInitialAppState(referenceDate),
+      activeTab: "coach",
+      goal: { ...DEFAULT_GOAL, spendingLimit: 640000 },
+      transactions: [
+        transaction({ date: "2026-07-12" }),
+        transaction({ id: "bad-date", date: "2026-02-31" }),
+        transaction({ id: "bad-amount", amount: -1 }),
+      ],
+    };
+    const restoredLegacy = restoreStoredState(legacyState, referenceDate);
+    const restoredVersioned = restoreStoredState(JSON.parse(serializeAppState(restoredLegacy)), referenceDate);
+
+    expect(restoredLegacy.activeTab).toBe("home");
+    expect(restoredLegacy.transactions).toHaveLength(1);
+    expect(restoredLegacy.goal.spendingLimit).toBe(640000);
+    expect(restoredVersioned).toEqual(restoredLegacy);
   });
 
   it("moves sample transactions to the current and previous month without future spending", () => {

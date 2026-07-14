@@ -4,7 +4,7 @@
 
 - `npm install`로 의존성을 설치한다.
 - `npm run verify`가 통과하는지 확인한다.
-- 2026-07-10 기준 `npm run verify`는 Vitest 9개 파일, 49개 테스트와 production build를 포함한다.
+- 2026-07-15 기준 `npm run verify`는 Vitest 12개 파일, 63개 테스트와 production build를 포함한다.
 - 브라우저 smoke flow는 `npm run test:e2e`로 샘플 로드, 목표 수정, 직접 입력, 캘린더 반영, AI 코치 진입, 금융 인증정보 미수집 안내를 확인한다.
 - Vercel 제출 번들은 `npm run build`로 확인한다. GitHub Pages 백업 번들은 `npm run build:github-pages`로 확인한다.
 - 시크릿 창 기준으로 샘플 데이터 체험 흐름을 확인한다.

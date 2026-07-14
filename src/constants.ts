@@ -26,5 +26,6 @@ export const DEMO_MONTH = {
   month: 5,
   label: "2026년 6월",
   id: "2026-06",
-  storageKey: "money-routine-calendar:v1",
+  storageKey: "money-routine-calendar:v2",
+  legacyStorageKeys: ["money-routine-calendar:v1"],
 };

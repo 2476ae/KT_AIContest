@@ -90,7 +90,6 @@ button:disabled {
 }
 
 .app-intro.is-leaving {
-  pointer-events: none;
   animation: introLeave 0.42s ease-in both;
 }
 
@@ -1411,8 +1410,39 @@ button:disabled {
 }
 
 .status-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 12px;
+}
+
+.calendar-empty {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+  padding: 16px;
+}
+
+.calendar-empty > strong {
+  font-size: 16px;
+  font-weight: 930;
+}
+
+.calendar-empty p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.4;
+}
+
+.calendar-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.calendar-empty-actions button {
+  flex: 1 1 150px;
 }
 
 .mini-card,
@@ -2788,6 +2818,10 @@ button:disabled {
   .category-plan-grid {
     grid-template-columns: 1fr;
   }
+
+  .status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 360px) {
@@ -2822,7 +2856,7 @@ button:disabled {
   }
 
   .status-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 

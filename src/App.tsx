@@ -45,7 +45,7 @@ export default function App() {
     moneyRoutine.actions.setActiveTab("home");
   }
 
-  const isTutorialOpen = introPhase === "done" && tutorialStatus === "pending";
+  const isTutorialOpen = introPhase !== "visible" && tutorialStatus === "pending";
 
   return (
     <>

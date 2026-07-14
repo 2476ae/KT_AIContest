@@ -131,6 +131,25 @@ test.describe("judge demo smoke flow", () => {
     await expect(page.getByText("샘플·직접 입력·CSV 전용 데모")).toBeVisible();
   });
 
+  test("shows empty-month actions and reports an invalid CSV date only once", async ({ page }) => {
+    await page.getByTestId("nav-calendar").click();
+    await expect(page.getByTestId("calendar-empty-state")).toContainText("이 달에는 기록이 없어요");
+    await expect(page.getByTestId("calendar-filter-empty")).toBeVisible();
+    await expect(page.locator(".status-card").filter({ hasText: "기록 없음" })).toBeVisible();
+
+    await page.getByRole("button", { name: "CSV 연결" }).click();
+    await page.getByTestId("csv-file-input").setInputFiles({
+      name: "invalid-date.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("date,merchant,amount\n2026-02-31,테스트 카페,4300", "utf8"),
+    });
+
+    const dateError = "2행: 날짜는 YYYY-MM-DD 형식의 실제 날짜여야 합니다.";
+    await expect(page.getByTestId("csv-validation-errors")).toContainText(dateError);
+    await expect(page.getByText(dateError, { exact: true })).toHaveCount(1);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
+  });
+
   test("keeps sample classification local and calls external classification once for an explicit auto save", async ({ page }) => {
     let classifyRequestCount = 0;
     await page.route("**/api/ai/classify", async (route) => {
@@ -179,8 +198,12 @@ test.describe("judge demo smoke flow", () => {
     let coachRequestCount = 0;
     await page.route("**/api/ai/coach", async (route) => {
       coachRequestCount += 1;
-      await new Promise((resolve) => setTimeout(resolve, 9000));
-      await route.fulfill({ json: {} }).catch(() => undefined);
+      if (coachRequestCount === 1) {
+        await new Promise((resolve) => setTimeout(resolve, 9000));
+        await route.fulfill({ json: {} }).catch(() => undefined);
+        return;
+      }
+      await route.fulfill({ json: {} });
     });
 
     await page.getByTestId("home-load-sample").click();
@@ -196,6 +219,10 @@ test.describe("judge demo smoke flow", () => {
 
     await expect(page.getByText("AI 상태")).toBeVisible();
     await expect(page.getByText("분석 중", { exact: true })).toHaveCount(0);
+
+    await page.getByTestId("coach-request-ai-button").click();
+    await expect(page.getByText("OpenAI 분석 완료", { exact: true })).toBeVisible();
+    expect(coachRequestCount).toBe(2);
   });
 
   test("shows an over-goal choice on launch and on the next screen transition", async ({ page }) => {

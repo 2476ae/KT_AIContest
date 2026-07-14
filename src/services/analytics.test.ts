@@ -89,8 +89,9 @@ describe("analytics service", () => {
     expect(days).toHaveLength(35);
     expect(june10?.amount).toBe(52000);
     expect(june10?.status).toBe("over");
-    expect(currentMonthDays.every((day) => ["over", "subscription", "safe"].includes(day.status))).toBe(true);
-    expect(currentMonthDays.some((day) => day.status === "empty")).toBe(false);
+    expect(currentMonthDays.every((day) => ["empty", "over", "subscription", "safe"].includes(day.status))).toBe(true);
+    expect(currentMonthDays.filter((day) => day.status === "empty").length).toBeGreaterThan(0);
+    expect(currentMonthDays.find((day) => day.date === "2026-06-30")?.status).toBe("empty");
   });
 
   it("detects subscription candidates", () => {
@@ -184,6 +185,28 @@ describe("analytics service", () => {
     expect(report.categoryPlans.every((plan) => plan.expectedSaving === 0)).toBe(true);
   });
 
+  it("separates a rising category share from an actual monthly guide overrun", () => {
+    const goal = { ...DEFAULT_GOAL, spendingLimit: 1000000 };
+    const current = [
+      { ...transactions[0], id: "food-current", date: "2026-06-15", category: "식비" as const, amount: 300000 },
+      { ...transactions[0], id: "shopping-current", date: "2026-06-15", category: "쇼핑" as const, amount: 100000 },
+    ];
+    const previous = [
+      { ...transactions[0], id: "food-previous", date: "2026-05-15", category: "식비" as const, amount: 400000 },
+      { ...transactions[0], id: "shopping-previous", date: "2026-05-15", category: "쇼핑" as const, amount: 100000 },
+    ];
+    const report = getCoachReport(current, goal, "2026-06", previous, new Date(2026, 5, 15));
+    const foodPlan = report.categoryPlans.find((plan) => plan.category === "식비");
+    const shoppingPlan = report.categoryPlans.find((plan) => plan.category === "쇼핑");
+
+    expect(foodPlan?.status).toBe("stable");
+    expect(foodPlan?.action).toBe("현재 사용 수준 유지");
+    expect(shoppingPlan?.plannedAmount).toBeGreaterThan(shoppingPlan?.currentAmount ?? 0);
+    expect(shoppingPlan?.status).toBe("watch");
+    expect(report.missions.some((mission) => mission.title === "식비 한 번 줄이기")).toBe(false);
+    expect(report.missions.some((mission) => mission.title === "쇼핑 비중 확인하기")).toBe(true);
+  });
+
   it("keeps budget-critical coach copy aligned with local spending math", () => {
     const unsafeAiReport = {
       ...getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id),
@@ -191,6 +214,16 @@ describe("analytics service", () => {
       status: "over" as const,
       dailyBudget: 0,
       todayAction: "추가 소비를 모두 중단하세요.",
+      insights: ["목표를 초과했으니 소비를 즉시 중단하세요."],
+      categoryPlans: getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id).categoryPlans.map((plan) => ({
+        ...plan,
+        action: `${plan.category} 지출을 줄이세요.`,
+      })),
+      missions: getCoachReport(transactions, DEFAULT_GOAL, DEMO_MONTH.id).missions.map((mission) => ({
+        ...mission,
+        title: "식비 줄이기",
+        action: "오늘 소비를 줄이세요.",
+      })),
     };
     const aligned = alignCoachReportBudgetFields(unsafeAiReport, transactions, DEFAULT_GOAL, DEMO_MONTH.id);
 
@@ -199,5 +232,8 @@ describe("analytics service", () => {
     expect(aligned.dailyBudget).toBe(322210);
     expect(aligned.headline).not.toContain("초과");
     expect(aligned.todayAction).not.toContain("중단");
+    expect(aligned.insights.some((insight) => insight.includes("즉시 중단"))).toBe(false);
+    expect(aligned.categoryPlans.filter((plan) => plan.status === "stable").some((plan) => plan.action.includes("줄이"))).toBe(false);
+    expect(aligned.missions.filter((mission) => mission.expectedSaving === 0).some((mission) => mission.title.includes("줄이"))).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileUp, Plus } from "lucide-react";
 import { CalendarGrid } from "../components/CalendarGrid";
 import { TransactionList } from "../components/TransactionList";
 import { CATEGORIES } from "../constants";
@@ -8,13 +8,14 @@ import { formatFullDate, formatMonthLabel } from "../services/date";
 import type { DayStatus } from "../types";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
-type CalendarFilter = "all" | "over" | "subscription" | "safe";
+type CalendarFilter = "all" | "empty" | "over" | "subscription" | "safe";
 
 const filters: Array<{ id: CalendarFilter; label: string }> = [
   { id: "all", label: "전체" },
   { id: "over", label: "초과" },
   { id: "subscription", label: "정기 결제" },
   { id: "safe", label: "적정" },
+  { id: "empty", label: "기록 없음" },
 ];
 
 export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewModel) {
@@ -30,6 +31,14 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
     { empty: 0, over: 0, safe: 0, subscription: 0 },
   );
   const selectedTop = selectedDay ? getTopCategory(selectedDay.transactions) : undefined;
+  const hasMonthTransactions = calendarDays.some((day) => day.isCurrentMonth && day.transactions.length > 0);
+
+  function openAddTarget(target: "entry" | "csv") {
+    actions.setActiveTab("add");
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>(`[data-add-target="${target}"]`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
+  }
 
   return (
     <>
@@ -50,7 +59,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
 
       <section className="status-grid">
         <article className="status-card">
-          <span>안정일</span>
+          <span>적정 소비일</span>
           <strong>{counts.safe}일</strong>
         </article>
         <article className="status-card">
@@ -61,7 +70,26 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
           <span>정기 결제일</span>
           <strong>{counts.subscription}일</strong>
         </article>
+        <article className="status-card">
+          <span>기록 없음</span>
+          <strong>{counts.empty}일</strong>
+        </article>
       </section>
+
+      {!hasMonthTransactions && (
+        <section className="calendar-empty card" data-testid="calendar-empty-state">
+          <strong>이 달에는 기록이 없어요</strong>
+          <p>직접 입력하거나 CSV를 연결하면 날짜별 소비가 표시됩니다.</p>
+          <div className="calendar-empty-actions">
+            <button className="primary-button" type="button" onClick={() => openAddTarget("entry")}>
+              <Plus size={16} /> 내역 추가
+            </button>
+            <button className="secondary-button" type="button" onClick={() => openAddTarget("csv")}>
+              <FileUp size={16} /> CSV 연결
+            </button>
+          </div>
+        </section>
+      )}
 
       <section className="filter-row" aria-label="캘린더 필터" data-tutorial="calendar-main">
         {filters.map((item) => (
@@ -98,7 +126,7 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
         <p className="detail-copy">
           {selectedDay?.amount
             ? `${selectedDay.day}일에는 ${selectedTop ?? "소비"} 지출이 있었어요.`
-            : "지출이 없는 날이에요. 월말 예산에 작은 여유를 남겼습니다."}
+            : "이 날짜에는 기록된 지출이 없어요."}
         </p>
         <TransactionList
           transactions={selectedDay?.transactions ?? []}

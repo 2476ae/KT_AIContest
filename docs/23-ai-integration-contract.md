@@ -7,7 +7,7 @@
 - 프론트는 `VITE_AI_PROVIDER=openai-proxy` 또는 `VITE_AI_PROXY_BASE_URL`이 있을 때 `openAiProxyProvider`를 등록한다.
 - 직접 입력 화면은 자동 분류를 선택한 저장에서만 `classifyTransactionResponseAsync`를 기다린 뒤 저장한다.
 - AI 코치 리포트는 AI 코치 화면의 `AI 분석 업데이트` 버튼을 눌렀을 때만 `createCoachReportResponseAsync`로 호출한다.
-- 관리자 테스트 편의를 위해 브라우저와 서버 프록시의 일일 횟수 제한은 기본 비활성화 상태다. 필요할 때만 `VITE_AI_CLIENT_RATE_LIMIT_ENABLED=true`, `AI_RATE_LIMIT_ENABLED=true`로 다시 켠다.
+- 브라우저 제한은 관리자 테스트 편의를 위해 선택 사항으로 유지하고, 서버 프록시는 Vercel production에서 기본적으로 일일 횟수 제한을 적용한다. `AI_RATE_LIMIT_ENABLED=false`를 명시한 경우에만 해제된다.
 - 홈/목표/설정 화면은 `createCoachReportPreviewResponse`의 기본 분석 결과를 사용해 초기 렌더 외부 호출을 막는다.
 - AI 코치 화면은 `useMoneyRoutine`에서 debounce와 cache를 적용하고 `loading` 상태를 먼저 표시한 뒤 `ready` 또는 `fallback` 결과로 갱신한다.
 - 월 목표 소비액을 초과해도 하루 권장 한도를 즉시 0원으로 고정하지 않는다. `getSummary`가 월수입, 목표 저축액, 남은 일수를 기준으로 `현실 조정 목표`와 `조정 후 예상 저축`을 계산하고, 이 로컬 계산값이 OpenAI 문구보다 우선한다.
@@ -72,16 +72,18 @@ VITE_AI_PROXY_TIMEOUT_MS=8000
 ```env
 OPENAI_API_KEY=...
 OPENAI_MODEL=gpt-4.1-mini
-OPENAI_MAX_OUTPUT_TOKENS=900
-OPENAI_TIMEOUT_MS=6500
+OPENAI_MAX_OUTPUT_TOKENS=420
+OPENAI_TIMEOUT_MS=7500
 AI_ALLOWED_ORIGINS=https://kt-ai-contest.vercel.app,http://localhost:5173
-AI_RATE_LIMIT_ENABLED=false
+AI_RATE_LIMIT_ENABLED=true
 AI_DAILY_REQUEST_LIMIT=60
 AI_CLASSIFY_DAILY_LIMIT=40
 AI_COACH_DAILY_LIMIT=20
 ```
 
-서버 프록시는 OpenAI Responses API의 structured output을 사용해 `ClassificationResult`와 `CoachReport` JSON을 반환한다. 비용 관리의 1차 방어선은 명시 호출, 진행 요청 단일화, 샘플·CSV·금융 피드의 로컬 분류, 캐시, 서버 key 비공개이며, 횟수 제한은 테스트가 끝난 뒤 env로 다시 켤 수 있다. OpenAI 응답이 6.5초를 넘으면 서버가 중단하고, 프론트는 늦어도 8초 안에 기본 분석으로 복귀한다.
+서버 프록시는 OpenAI Responses API의 structured output을 사용한다. 분류 endpoint는 `ClassificationResult`를 반환하고, 코치 endpoint는 로컬 계산 리포트의 인사이트·분야 행동·미션 문구만 보완한 뒤 전체 `CoachReport`로 합친다. 원시 거래 배열을 코치 프록시로 보내지 않아 입력량과 계산 충돌을 줄인다. 비용 관리의 1차 방어선은 명시 호출, 진행 요청 단일화, 샘플·CSV·금융 피드의 로컬 분류, 성공 캐시, 서버 key 비공개, production 기본 횟수 제한이다. OpenAI 응답이 7.5초를 넘으면 서버가 중단하고, 프론트는 늦어도 8초 안에 기본 분석으로 복귀한다.
+
+메모리 기반 서버 제한은 serverless 인스턴스별 보조 방어선이다. 실제 대규모 공개 운영에서는 영속 rate limit 저장소를 연결해야 한다. 프록시는 거래 원문을 기록하지 않고 요청 종류, 성공·실패, 응답 시간만 구조화 로그로 남긴다.
 
 ## Provider 인터페이스
 

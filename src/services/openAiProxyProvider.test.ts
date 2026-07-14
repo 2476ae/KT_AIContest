@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_GOAL, DEMO_MONTH } from "../constants";
 import { loadSampleTransactions } from "../data";
+import type { CoachReport } from "../types";
 import { createOpenAiProxyProvider } from "./openAiProxyProvider";
 
 function jsonResponse(body: unknown, status = 200) {
@@ -11,7 +12,7 @@ function jsonResponse(body: unknown, status = 200) {
 }
 
 describe("OpenAI proxy provider", () => {
-  const validCoachReport = {
+  const validCoachReport: CoachReport = {
     headline: "정기 결제와 카페 지출을 점검해요",
     status: "watch" as const,
     dailyBudget: 12345.6,
@@ -41,6 +42,7 @@ describe("OpenAI proxy provider", () => {
     ],
     subscriptionAdvice: ["정기 결제 후보 1건을 점검하세요."],
     basis: "월 목표와 현재 거래를 기준으로 분석했습니다.",
+    basisItems: [],
   };
 
   it("posts classification requests to the configured proxy", async () => {
@@ -81,7 +83,10 @@ describe("OpenAI proxy provider", () => {
     const provider = createOpenAiProxyProvider({
       fetcher: async (url, init) => {
         expect(String(url)).toBe("/api/ai/coach");
-        expect(JSON.parse(String(init?.body)).monthId).toBe(DEMO_MONTH.id);
+        const body = JSON.parse(String(init?.body));
+        expect(body.monthId).toBe(DEMO_MONTH.id);
+        expect(body.baseReport.status).toBe("watch");
+        expect(body.transactions).toBeUndefined();
 
         return jsonResponse(validCoachReport);
       },
@@ -91,6 +96,7 @@ describe("OpenAI proxy provider", () => {
       transactions: loadSampleTransactions(),
       goal: DEFAULT_GOAL,
       monthId: DEMO_MONTH.id,
+      baseReport: validCoachReport,
     });
 
     expect(result.status).toBe("watch");

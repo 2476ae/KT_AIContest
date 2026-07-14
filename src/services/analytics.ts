@@ -137,11 +137,13 @@ export function getCalendarDays(transactions: Transaction[], goal: Goal, monthId
     );
     const isCurrentMonth = cursor.getMonth() === month;
 
-    let status: DaySummary["status"] = isCurrentMonth ? "safe" : "empty";
+    let status: DaySummary["status"] = "empty";
     if (isCurrentMonth && amount > dailyBaseline && amount > 0) {
       status = "over";
     } else if (isCurrentMonth && hasSubscription) {
       status = "subscription";
+    } else if (isCurrentMonth && amount > 0) {
+      status = "safe";
     }
 
     days.push({
@@ -388,33 +390,44 @@ function getCoachBasisItems(
 function buildMissions(
   goal: Goal,
   summary: Summary,
-  categories: CategorySummary[],
+  categoryPlans: CategoryPlan[],
   subscriptions: SubscriptionCandidate[],
 ): CoachMission[] {
-  const focus = getPrimaryFocus(goal, categories);
   const hasAmpleRoom = hasAmpleBudgetRoom(goal, summary);
+  const focusPlan = categoryPlans.find((plan) => plan.status === "over") ?? categoryPlans.find((plan) => plan.status === "watch");
   const missions: CoachMission[] = [];
 
-  if (hasAmpleRoom) {
+  if (hasAmpleRoom || !focusPlan) {
     missions.push({
       id: "mission-record",
       title: "계획한 소비 기록하기",
-      reason: "한도 여유 있음",
+      reason: hasAmpleRoom ? "한도 여유 있음" : "계획 범위 안",
       expectedSaving: 0,
       impactLabel: "실행",
       impactText: "기록",
       action: "결제 후 바로 기록",
       completed: false,
     });
-  } else if (focus) {
-    const saving = Math.max(6000, Math.round(focus.amount * 0.12 / 1000) * 1000);
+  } else if (focusPlan.status === "over") {
     missions.push({
       id: "mission-focus",
-      title: `${focus.category} 한 번 줄이기`,
-      reason: "눈에 띄는 지출",
-      expectedSaving: saving,
-      impactLabel: "예상 절감",
-      action: `${focus.category} 결제 1회만 바꾸기`,
+      title: `${focusPlan.category} 계획 다시 보기`,
+      reason: "월 계획 금액 초과",
+      expectedSaving: focusPlan.expectedSaving,
+      impactLabel: "조정 여지",
+      action: focusPlan.action,
+      completed: false,
+    });
+  } else {
+    const ratioDiff = (focusPlan.currentRatio ?? 0) - (focusPlan.previousRatio ?? 0);
+    missions.push({
+      id: "mission-focus",
+      title: `${focusPlan.category} 비중 확인하기`,
+      reason: "지난달보다 비중 상승",
+      expectedSaving: 0,
+      impactLabel: "비중 변화",
+      impactText: formatPointDiff(ratioDiff),
+      action: focusPlan.action,
       completed: false,
     });
   }
@@ -545,13 +558,19 @@ function buildCategoryPlans(
         : currentRatio;
     const weight = totalVisibleAmount > 0 ? category.amount / totalVisibleAmount : 1 / Math.max(visibleCategories.length, 1);
     const futureRoom = remainingBudget * weight;
-    const roomRate = hasAmpleRoom ? 1 : category.status === "over" ? 0.42 : category.status === "watch" ? 0.62 : 0.78;
+    const roomRate = hasAmpleRoom ? 1 : isPatternIncreased ? 0.72 : 0.82;
     const patternGuideAmount = Math.round((summary.adjustedSpendingLimit * guideRatio) / 100 / 1000) * 1000;
     const flowGuideAmount = Math.round((category.amount + futureRoom * roomRate) / 1000) * 1000;
     const plannedAmount = Math.max(category.amount, patternGuideAmount, flowGuideAmount);
-    const expectedSaving = hasAmpleRoom || plannedAmount <= category.amount ? 0 : Math.max(0, Math.round((futureRoom - futureRoom * roomRate) / 1000) * 1000);
-    const planStatus: BudgetStatus =
-      summary.remainingBudget < 0 ? "over" : !hasAmpleRoom && category.status !== "stable" ? category.status : "stable";
+    const amountOverGuide = category.amount - patternGuideAmount;
+    const isAmountOverGuide = amountOverGuide >= Math.max(10000, patternGuideAmount * 0.08);
+    const planStatus: BudgetStatus = isAmountOverGuide ? "over" : !hasAmpleRoom && isPatternIncreased ? "watch" : "stable";
+    const expectedSaving =
+      planStatus === "over"
+        ? Math.max(0, Math.round(amountOverGuide / 1000) * 1000)
+        : planStatus === "watch"
+          ? Math.max(0, Math.round((futureRoom - futureRoom * roomRate) / 1000) * 1000)
+          : 0;
 
     return {
       category: category.category,
@@ -569,8 +588,10 @@ function buildCategoryPlans(
             ? `전체의 ${Math.round(category.ratio)}%, 여유 있음`
             : `전체의 ${Math.round(category.ratio)}%, 추가 지출 조정`,
       action:
-        typeof previousRatio === "number" && !isPatternIncreased
+        planStatus === "stable"
           ? "현재 사용 수준 유지"
+          : planStatus === "watch"
+            ? `${category.category} 비중만 다음 결제 전에 확인하기`
           : getCategoryAction(category.category, hasAmpleRoom),
     };
   });
@@ -592,12 +613,13 @@ export function getCoachReport(
   const savingPossibility: CoachReport["savingPossibility"] =
     summary.savingProjection >= targetSavingGoal ? "높음" : summary.savingProjection >= targetSavingGoal * 0.75 ? "보통" : "낮음";
   const status = summary.status;
-  const missions = buildMissions(goal, summary, categories, subscriptions);
   const categoryPlans = buildCategoryPlans(categories, summary, goal, previousCategories);
+  const missions = buildMissions(goal, summary, categoryPlans, subscriptions);
   const subscriptionPressure = goal.subscriptionLimit > 0 ? summary.subscriptionTotal / goal.subscriptionLimit : 0;
   const subscriptionSpendingRatio = goal.spendingLimit > 0 ? summary.subscriptionTotal / goal.spendingLimit : 0;
   const focusText = focus ? `${focus.category} 지출` : "선택 소비";
   const hasAmpleRoom = hasAmpleBudgetRoom(goal, summary);
+  const focusPlan = categoryPlans.find((plan) => plan.status === "over") ?? categoryPlans.find((plan) => plan.status === "watch");
   const todayAction =
     summary.remainingBudget < 0
       ? "오늘은 필수 지출 위주로 가요."
@@ -605,7 +627,11 @@ export function getCoachReport(
         ? `오늘 ${formatWon(summary.dailyBudget)}까지 괜찮아요.`
       : hasAmpleRoom
         ? "계획한 소비를 기록해요."
-      : `${focusText} 1회만 가볍게 조정해요.`;
+      : focusPlan?.status === "over"
+        ? `${focusPlan.category}는 다음 결제 전 계획을 확인해요.`
+        : focusPlan?.status === "watch"
+          ? `${focusPlan.category} 비중만 가볍게 확인해요.`
+          : "오늘 한도 안에서 계획한 소비를 기록해요.";
 
   return {
     headline:
@@ -657,6 +683,11 @@ export function alignCoachReportBudgetFields(
   currentDate = new Date(),
 ): CoachReport {
   const localReport = getCoachReport(transactions, goal, monthId, previousMonthTransactions, currentDate);
+  const externalPlans = new Map(report.categoryPlans.map((plan) => [plan.category, plan]));
+  const externalMissions = new Map(report.missions.map((mission) => [mission.id, mission]));
+  const reductionPattern = /(초과|과도|줄이|절감 필요|소비 중단|즉시 멈)/;
+  const hardStopPattern = /(목표.{0,8}초과|소비.{0,8}(중단|멈)|즉시.{0,8}(중단|멈))/;
+  const safeInsights = report.insights.filter((insight) => !(localReport.status === "stable" && hardStopPattern.test(insight)));
 
   return {
     ...report,
@@ -665,8 +696,32 @@ export function alignCoachReportBudgetFields(
     dailyBudget: localReport.dailyBudget,
     savingPossibility: localReport.savingPossibility,
     todayAction: localReport.todayAction,
-    categoryPlans: localReport.categoryPlans,
-    missions: localReport.missions,
+    insights: safeInsights.length > 0 ? safeInsights : localReport.insights,
+    categoryPlans: localReport.categoryPlans.map((localPlan) => {
+      const externalPlan = externalPlans.get(localPlan.category);
+      const canUseExternalCopy = localPlan.status !== "stable"
+        || !reductionPattern.test(`${externalPlan?.reason ?? ""} ${externalPlan?.action ?? ""}`);
+      return externalPlan
+        ? {
+            ...localPlan,
+            reason: canUseExternalCopy ? externalPlan.reason || localPlan.reason : localPlan.reason,
+            action: canUseExternalCopy ? externalPlan.action || localPlan.action : localPlan.action,
+          }
+        : localPlan;
+    }),
+    missions: localReport.missions.map((localMission) => {
+      const externalMission = externalMissions.get(localMission.id);
+      const canUseExternalCopy = localMission.expectedSaving > 0
+        || !reductionPattern.test(`${externalMission?.title ?? ""} ${externalMission?.reason ?? ""} ${externalMission?.action ?? ""}`);
+      return externalMission
+        ? {
+            ...localMission,
+            title: canUseExternalCopy ? externalMission.title || localMission.title : localMission.title,
+            reason: canUseExternalCopy ? externalMission.reason || localMission.reason : localMission.reason,
+            action: canUseExternalCopy ? externalMission.action || localMission.action : localMission.action,
+          }
+        : localMission;
+    }),
     basis: localReport.basis,
     basisItems: localReport.basisItems,
   };

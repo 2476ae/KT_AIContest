@@ -257,7 +257,15 @@ async function postJson<T>(path: string, payload: unknown, options: OpenAiProxyP
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI proxy request failed with ${response.status}.`);
+      let detail = "";
+      try {
+        const errorBody = await response.json() as { error?: unknown };
+        detail = typeof errorBody.error === "string" ? errorBody.error : "";
+      } catch {
+        // Keep the status-based message when the proxy did not return JSON.
+      }
+      const statusMessage = `OpenAI proxy request failed with ${response.status}.`;
+      throw new Error(detail ? `${statusMessage} ${detail}` : statusMessage);
     }
 
     return (await response.json()) as T;
@@ -296,7 +304,14 @@ export function createOpenAiProxyProvider(options: OpenAiProxyProviderOptions = 
       };
     },
     async createCoachReport(input: CoachReportInput): Promise<CoachReport> {
-      return ensureCoachReport(await postJson<unknown>(COACH_PATH, input, options));
+      const payload = input.baseReport
+        ? {
+            baseReport: input.baseReport,
+            currentDate: input.currentDate,
+            monthId: input.monthId,
+          }
+        : input;
+      return ensureCoachReport(await postJson<unknown>(COACH_PATH, payload, options));
     },
   };
 }

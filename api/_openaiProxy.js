@@ -8,8 +8,8 @@ const DEFAULT_ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
 ];
-const DEFAULT_MAX_OUTPUT_TOKENS = 650;
-const DEFAULT_OPENAI_TIMEOUT_MS = 6500;
+const DEFAULT_MAX_OUTPUT_TOKENS = 320;
+const DEFAULT_OPENAI_TIMEOUT_MS = 7500;
 const DEFAULT_SERVER_DAILY_REQUEST_LIMIT = 60;
 const DEFAULT_SERVER_CLASSIFY_DAILY_LIMIT = 40;
 const DEFAULT_SERVER_COACH_DAILY_LIMIT = 20;
@@ -56,6 +56,7 @@ export function handleCors(req, res) {
 
 export function sendJson(res, status, payload) {
   res.statusCode = status;
+  res.setHeader("Cache-Control", "no-store");
   res.setHeader("Content-Type", "application/json; charset=utf-8");
   res.end(JSON.stringify(payload));
 }
@@ -112,13 +113,21 @@ function getUsageStore() {
 }
 
 export function assertAiRateLimit(req, kind) {
-  if (!readBoolean(process.env.AI_RATE_LIMIT_ENABLED, false)) {
+  const productionDefault = process.env.VERCEL_ENV === "production";
+  if (!readBoolean(process.env.AI_RATE_LIMIT_ENABLED, productionDefault)) {
     return;
   }
 
   const date = new Date().toISOString().slice(0, 10);
   const key = `${date}:${getClientKey(req)}`;
   const store = getUsageStore();
+  if (store.size > 500) {
+    for (const storedKey of store.keys()) {
+      if (!storedKey.startsWith(`${date}:`)) {
+        store.delete(storedKey);
+      }
+    }
+  }
   const current = store.get(key) ?? { classify: 0, coach: 0, total: 0 };
   const dailyLimit = readPositiveNumber(process.env.AI_DAILY_REQUEST_LIMIT, DEFAULT_SERVER_DAILY_REQUEST_LIMIT);
   const kindLimit =
@@ -154,23 +163,68 @@ export function validateCoachInput(input) {
     throw new HttpError(400, "Invalid coach input.");
   }
 
-  const normalizeTransactions = (transactions) =>
-    Array.isArray(transactions)
-      ? transactions.slice(0, 80).map((transaction) => ({
-          date: String(transaction.date || "").slice(0, 10),
-          merchant: String(transaction.merchant || "").slice(0, 60),
-          amount: Number(transaction.amount) || 0,
-          category: CATEGORIES.includes(transaction.category) ? transaction.category : "기타",
-          isSubscription: Boolean(transaction.isSubscription),
-        }))
-      : [];
+  if (!input.baseReport || typeof input.baseReport !== "object") {
+    throw new HttpError(400, "A locally calculated base report is required.");
+  }
+
+  const clip = (value, maxLength) => String(value || "").replace(/\s+/g, " ").trim().slice(0, maxLength);
+  const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+  const status = (value) => (BUDGET_STATUSES.includes(value) ? value : "stable");
+  const base = input.baseReport;
+  const categoryPlans = Array.isArray(base.categoryPlans)
+    ? base.categoryPlans.slice(0, 4).map((plan) => ({
+        category: CATEGORIES.includes(plan.category) ? plan.category : "기타",
+        status: status(plan.status),
+        currentAmount: number(plan.currentAmount),
+        plannedAmount: number(plan.plannedAmount),
+        expectedSaving: number(plan.expectedSaving),
+        previousRatio: Number.isFinite(Number(plan.previousRatio)) ? Number(plan.previousRatio) : undefined,
+        currentRatio: Number.isFinite(Number(plan.currentRatio)) ? Number(plan.currentRatio) : undefined,
+        guideRatio: Number.isFinite(Number(plan.guideRatio)) ? Number(plan.guideRatio) : undefined,
+        reason: clip(plan.reason, 80),
+        action: clip(plan.action, 80),
+      }))
+    : [];
+  const missions = Array.isArray(base.missions)
+    ? base.missions.slice(0, 3).map((mission, index) => ({
+        id: clip(mission.id, 40) || `mission-${index}`,
+        title: clip(mission.title, 60),
+        reason: clip(mission.reason, 80),
+        expectedSaving: number(mission.expectedSaving),
+        impactLabel: clip(mission.impactLabel, 30),
+        impactText: clip(mission.impactText, 30),
+        action: clip(mission.action, 80),
+        completed: Boolean(mission.completed),
+      }))
+    : [];
+  const basisItems = Array.isArray(base.basisItems)
+    ? base.basisItems.slice(0, 5).map((item, index) => ({
+        id: clip(item.id, 40) || `basis-${index}`,
+        title: clip(item.title, 30),
+        value: clip(item.value, 30),
+        detail: clip(item.detail, 80),
+        tone: BASIS_TONES.includes(item.tone) ? item.tone : "primary",
+      }))
+    : [];
 
   return {
-    goal: input.goal,
     monthId: String(input.monthId || "").slice(0, 20),
     currentDate: String(input.currentDate || "").slice(0, 10),
-    transactions: normalizeTransactions(input.transactions),
-    previousMonthTransactions: normalizeTransactions(input.previousMonthTransactions),
+    baseReport: {
+      headline: clip(base.headline, 80),
+      status: status(base.status),
+      dailyBudget: number(base.dailyBudget),
+      savingPossibility: SAVING_POSSIBILITIES.includes(base.savingPossibility) ? base.savingPossibility : "보통",
+      todayAction: clip(base.todayAction, 100),
+      insights: Array.isArray(base.insights) ? base.insights.slice(0, 3).map((item) => clip(item, 100)) : [],
+      categoryPlans,
+      missions,
+      subscriptionAdvice: Array.isArray(base.subscriptionAdvice)
+        ? base.subscriptionAdvice.slice(0, 2).map((item) => clip(item, 100))
+        : [],
+      basis: clip(base.basis, 160),
+      basisItems,
+    },
   };
 }
 
@@ -271,6 +325,53 @@ export const coachReportSchema = {
   ],
 };
 
+export const coachEnhancementSchema = {
+  type: "object",
+  additionalProperties: false,
+  properties: {
+    insights: {
+      type: "array",
+      maxItems: 3,
+      items: { type: "string" },
+    },
+    categoryCopy: {
+      type: "array",
+      maxItems: 4,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          category: { type: "string", enum: CATEGORIES },
+          reason: { type: "string" },
+          action: { type: "string" },
+        },
+        required: ["category", "reason", "action"],
+      },
+    },
+    missionCopy: {
+      type: "array",
+      maxItems: 3,
+      items: {
+        type: "object",
+        additionalProperties: false,
+        properties: {
+          id: { type: "string" },
+          title: { type: "string" },
+          reason: { type: "string" },
+          action: { type: "string" },
+        },
+        required: ["id", "title", "reason", "action"],
+      },
+    },
+    subscriptionAdvice: {
+      type: "array",
+      maxItems: 2,
+      items: { type: "string" },
+    },
+  },
+  required: ["insights", "categoryCopy", "missionCopy", "subscriptionAdvice"],
+};
+
 function extractOutputText(responseJson) {
   if (typeof responseJson.output_text === "string") {
     return responseJson.output_text;
@@ -287,7 +388,7 @@ function extractOutputText(responseJson) {
   throw new HttpError(502, "OpenAI response did not include text output.");
 }
 
-export async function createOpenAiJsonResponse({ name, schema, system, payload }) {
+export async function createOpenAiJsonResponse({ name, schema, system, payload, maxOutputTokens }) {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -299,6 +400,7 @@ export async function createOpenAiJsonResponse({ name, schema, system, payload }
   const timeoutMs = Math.min(configuredTimeout, 8000);
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   let openAiResponse;
+  const startedAt = Date.now();
 
   try {
     openAiResponse = await fetch("https://api.openai.com/v1/responses", {
@@ -314,7 +416,7 @@ export async function createOpenAiJsonResponse({ name, schema, system, payload }
           },
         ],
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
-        max_output_tokens: Number(process.env.OPENAI_MAX_OUTPUT_TOKENS) || DEFAULT_MAX_OUTPUT_TOKENS,
+        max_output_tokens: maxOutputTokens || Number(process.env.OPENAI_MAX_OUTPUT_TOKENS) || DEFAULT_MAX_OUTPUT_TOKENS,
         text: {
           format: {
             type: "json_schema",
@@ -333,6 +435,7 @@ export async function createOpenAiJsonResponse({ name, schema, system, payload }
     });
   } catch (error) {
     if (error?.name === "AbortError") {
+      console.error(JSON.stringify({ event: "money_routine_ai", name, outcome: "timeout", durationMs: Date.now() - startedAt }));
       throw new HttpError(504, "OpenAI request timed out. Showing the default analysis.");
     }
     throw error;
@@ -341,10 +444,13 @@ export async function createOpenAiJsonResponse({ name, schema, system, payload }
   }
 
   if (!openAiResponse.ok) {
+    console.error(JSON.stringify({ event: "money_routine_ai", name, outcome: "upstream_error", status: openAiResponse.status, durationMs: Date.now() - startedAt }));
     throw new HttpError(502, `OpenAI request failed with ${openAiResponse.status}.`);
   }
 
-  return JSON.parse(extractOutputText(await openAiResponse.json()));
+  const result = JSON.parse(extractOutputText(await openAiResponse.json()));
+  console.info(JSON.stringify({ event: "money_routine_ai", name, outcome: "success", durationMs: Date.now() - startedAt }));
+  return result;
 }
 
 export function handleProxyError(res, error) {

@@ -22,6 +22,8 @@ export default async function handler(req, res) {
     return;
   }
 
+  const startedAt = Date.now();
+
   try {
     assertPost(req);
     assertAiRateLimit(req, "classify");
@@ -31,10 +33,15 @@ export default async function handler(req, res) {
       payload,
       schema: classificationSchema,
       system: systemPrompt,
+      maxOutputTokens: 120,
     });
 
+    res.setHeader("Server-Timing", `openai;dur=${Date.now() - startedAt}`);
+    res.setHeader("X-Money-Routine-AI", "openai-classification");
     sendJson(res, 200, result);
   } catch (error) {
+    res.setHeader("Server-Timing", `openai;dur=${Date.now() - startedAt}`);
+    res.setHeader("X-Money-Routine-AI", "fallback-required");
     handleProxyError(res, error);
   }
 }

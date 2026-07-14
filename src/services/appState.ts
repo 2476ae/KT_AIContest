@@ -1,5 +1,5 @@
-import { DEFAULT_GOAL } from "../constants";
-import type { AppState, Goal, TabId, Transaction } from "../types";
+import { CATEGORIES, DEFAULT_GOAL } from "../constants";
+import type { AppState, Category, Goal, PaymentType, TabId, Transaction } from "../types";
 import { parseTransactionsCsvWithValidation } from "./csv";
 import { addMonths, firstDateOfMonth, formatDate, getMonthId } from "./date";
 import { normalizeFinancialFeedTransactions, type FinancialFeedTransactionInput } from "./financialFeed";
@@ -20,6 +20,13 @@ export function createInitialAppState(referenceDate = new Date()): AppState {
 export const INITIAL_APP_STATE: AppState = createInitialAppState();
 
 const MAX_STORED_TRANSACTIONS = 1200;
+export const APP_STATE_STORAGE_VERSION = 2;
+const PAYMENT_TYPES: PaymentType[] = ["card", "transport", "cash", "transfer"];
+
+interface StoredAppStateEnvelope {
+  version: number;
+  state: AppState;
+}
 
 function sortTransactionsByDate(transactions: Transaction[]) {
   return [...transactions].sort((a, b) => a.date.localeCompare(b.date));
@@ -35,6 +42,78 @@ function keepLatestTransactions(transactions: Transaction[]) {
   return sorted.slice(sorted.length - MAX_STORED_TRANSACTIONS);
 }
 
+function isValidStoredDate(value: unknown): value is string {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  const parsed = new Date(year, month - 1, day);
+  return formatDate(parsed) === value;
+}
+
+function normalizeStoredTransactions(value: unknown): Transaction[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const transactions = value.flatMap<Transaction>((candidate) => {
+    if (!candidate || typeof candidate !== "object") {
+      return [];
+    }
+
+    const item = candidate as Partial<Transaction>;
+    if (
+      typeof item.id !== "string" ||
+      !item.id.trim() ||
+      !isValidStoredDate(item.date) ||
+      typeof item.merchant !== "string" ||
+      !item.merchant.trim() ||
+      !Number.isFinite(item.amount) ||
+      Number(item.amount) <= 0 ||
+      !CATEGORIES.includes(item.category as Category) ||
+      !PAYMENT_TYPES.includes(item.paymentType as PaymentType)
+    ) {
+      return [];
+    }
+
+    return [{
+      id: item.id.slice(0, 120),
+      date: item.date,
+      merchant: item.merchant.trim().slice(0, 120),
+      amount: Math.round(Number(item.amount)),
+      memo: typeof item.memo === "string" ? item.memo.slice(0, 240) : "",
+      paymentType: item.paymentType as PaymentType,
+      category: item.category as Category,
+      isSubscription: Boolean(item.isSubscription),
+      classificationReason: typeof item.classificationReason === "string" ? item.classificationReason.slice(0, 240) : undefined,
+    }];
+  });
+
+  return keepLatestTransactions(transactions);
+}
+
+function normalizeStoredGoal(value: unknown): Goal {
+  if (!value || typeof value !== "object") {
+    return DEFAULT_GOAL;
+  }
+
+  const candidate = value as Partial<Goal>;
+  const positiveNumber = (amount: unknown, fallback: number) =>
+    Number.isFinite(Number(amount)) && Number(amount) >= 0 ? Math.round(Number(amount)) : fallback;
+  const focusCategories = Array.isArray(candidate.focusCategories)
+    ? Array.from(new Set(candidate.focusCategories.filter((category): category is Category => CATEGORIES.includes(category as Category)))).slice(0, 5)
+    : DEFAULT_GOAL.focusCategories;
+
+  return {
+    monthlyIncome: positiveNumber(candidate.monthlyIncome, DEFAULT_GOAL.monthlyIncome),
+    spendingLimit: positiveNumber(candidate.spendingLimit, DEFAULT_GOAL.spendingLimit),
+    savingGoal: positiveNumber(candidate.savingGoal, DEFAULT_GOAL.savingGoal),
+    subscriptionLimit: positiveNumber(candidate.subscriptionLimit, DEFAULT_GOAL.subscriptionLimit),
+    focusCategories,
+  };
+}
+
 export function mergeStoredState(stored: unknown, referenceDate = new Date()): AppState {
   const initialState = createInitialAppState(referenceDate);
 
@@ -42,15 +121,32 @@ export function mergeStoredState(stored: unknown, referenceDate = new Date()): A
     return initialState;
   }
 
-  const { activeTab: _storedActiveTab, ...storedState } = stored as Partial<AppState>;
+  const storedState = stored as Partial<AppState>;
+  const transactions = normalizeStoredTransactions(storedState.transactions);
 
   return {
     ...initialState,
-    ...storedState,
-    calendarMonth: initialState.calendarMonth,
-    selectedDate: initialState.selectedDate,
-    activeTab: "home",
+    transactions,
+    goal: normalizeStoredGoal(storedState.goal),
+    hasLoadedSample: Boolean(storedState.hasLoadedSample) || transactions.length > 0,
   };
+}
+
+export function restoreStoredState(stored: unknown, referenceDate = new Date()): AppState {
+  if (stored && typeof stored === "object" && "version" in stored && "state" in stored) {
+    return mergeStoredState((stored as Partial<StoredAppStateEnvelope>).state, referenceDate);
+  }
+
+  return mergeStoredState(stored, referenceDate);
+}
+
+export function serializeAppState(state: AppState) {
+  const envelope: StoredAppStateEnvelope = {
+    version: APP_STATE_STORAGE_VERSION,
+    state,
+  };
+
+  return JSON.stringify(envelope);
 }
 
 export function loadSampleState(current: AppState, transactions: Transaction[], referenceDate = new Date()): AppState {
