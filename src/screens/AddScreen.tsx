@@ -1,4 +1,4 @@
-import { CheckCircle2, FileUp, Home, Loader2, Plus, Save, Wand2 } from "lucide-react";
+import { CalendarDays, CheckCircle2, FileUp, Home, Loader2, Plus, Save, Wand2 } from "lucide-react";
 import { ChangeEvent, FormEvent, useMemo, useState } from "react";
 import { CATEGORIES } from "../constants";
 import { formatWon } from "../services/analytics";
@@ -13,6 +13,16 @@ type CategoryChoice = Category | "auto";
 
 function isCsvFile(file: File) {
   return file.name.toLowerCase().endsWith(".csv") || file.type === "text/csv";
+}
+
+function formatDateInputDisplay(value: string) {
+  const [year, month, day] = value.split("-");
+
+  if (!year || !month || !day) {
+    return "날짜 선택";
+  }
+
+  return `${Number(year)}. ${Number(month)}. ${Number(day)}.`;
 }
 
 export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
@@ -207,22 +217,28 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             </label>
             <label>
               <span>날짜</span>
-              <input
-                value={date}
-                onInput={(event) => {
-                  setDate(event.currentTarget.value);
-                  setFormErrors([]);
-                  setFormWarnings([]);
-                }}
-                onChange={(event) => {
-                  setDate(event.target.value);
-                  setFormErrors([]);
-                  setFormWarnings([]);
-                }}
-                type="date"
-                required
-                data-testid="transaction-date-input"
-              />
+              <span className="date-input-shell" data-testid="transaction-date-shell">
+                <strong aria-hidden="true">{formatDateInputDisplay(date)}</strong>
+                <CalendarDays size={18} aria-hidden="true" />
+                <input
+                  className="date-native-input"
+                  value={date}
+                  onInput={(event) => {
+                    setDate(event.currentTarget.value);
+                    setFormErrors([]);
+                    setFormWarnings([]);
+                  }}
+                  onChange={(event) => {
+                    setDate(event.target.value);
+                    setFormErrors([]);
+                    setFormWarnings([]);
+                  }}
+                  type="date"
+                  aria-label="날짜"
+                  required
+                  data-testid="transaction-date-input"
+                />
+              </span>
             </label>
           </div>
         </div>

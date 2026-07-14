@@ -60,13 +60,18 @@ async function expectInputsInsideTransactionForm(page: Page) {
     const form = document.querySelector<HTMLElement>("[data-testid='transaction-form']")?.getBoundingClientRect();
     const merchant = document.querySelector<HTMLInputElement>("[data-testid='transaction-merchant-input']")?.getBoundingClientRect();
     const date = document.querySelector<HTMLInputElement>("[data-testid='transaction-date-input']")?.getBoundingClientRect();
-    if (!form || !merchant || !date) {
+    const dateShell = document.querySelector<HTMLElement>("[data-testid='transaction-date-shell']")?.getBoundingClientRect();
+    const dateText = document.querySelector<HTMLElement>("[data-testid='transaction-date-shell'] strong")?.getBoundingClientRect();
+    if (!form || !merchant || !date || !dateShell || !dateText) {
       return false;
     }
 
     const isInside = (field: DOMRect) => field.left >= form.left && field.right <= form.right;
     const isStackedOnMobile = window.innerWidth >= 900 || merchant.bottom <= date.top;
-    return isInside(merchant) && isInside(date) && isStackedOnMobile &&
+    const shellCenter = dateShell.top + dateShell.height / 2;
+    const textCenter = dateText.top + dateText.height / 2;
+    const isDateCentered = Math.abs(shellCenter - textCenter) <= 2;
+    return isInside(merchant) && isInside(date) && isInside(dateShell) && isStackedOnMobile && isDateCentered &&
       document.documentElement.scrollWidth <= document.documentElement.clientWidth;
   })).toBe(true);
 }
@@ -366,6 +371,7 @@ test.describe("judge demo smoke flow", () => {
     }
 
     await expect(page.getByTestId("transaction-date-input")).toHaveCSS("appearance", "none");
+    await expect(page.getByTestId("transaction-date-shell")).toContainText(/\d{4}\. \d{1,2}\. \d{1,2}\./);
 
     await amountInput.focus();
     if (viewport && viewport.width <= 430) {
