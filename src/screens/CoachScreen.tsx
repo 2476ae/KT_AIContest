@@ -14,6 +14,16 @@ function statusCopy(status: BudgetStatus) {
   return "안정";
 }
 
+function planStatusCopy(status: BudgetStatus) {
+  if (status === "over") {
+    return "월 가이드 초과";
+  }
+  if (status === "watch") {
+    return "비중 상승 확인";
+  }
+  return "계획 범위";
+}
+
 export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const { coachReport, coachResponse, subscriptionCandidates, summary } = computed;
   const isOverBudget = summary.remainingBudget < 0;
@@ -27,8 +37,11 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
   const formattedGuideAmount = formatWon(guideAmount);
   const shouldShowBudgetCallout = !(guideAmountLabel === "오늘 한도" && coachReport.headline.includes(formattedGuideAmount));
   const isAiLoading = coachResponse.status === "loading";
+  const isAiFallback = coachResponse.status === "fallback" || coachResponse.status === "error";
+  const isExternalComplete = coachResponse.status === "ready" && coachResponse.provider.mode === "external";
   const attentionSubscriptions = subscriptionCandidates.filter((item) => item.recommendation !== "유지").slice(0, 2);
   const aiStatusCopy = {
+    cached: "저장된 AI 분석",
     error: "기본 분석으로 전환",
     fallback: "기본 분석으로 전환",
     loading: "응답 대기",
@@ -46,6 +59,8 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
         : "기본 분석은 앱이 목표와 소비 내역으로 직접 계산한 결과예요."
       : coachResponse.status === "loading"
         ? "최대 8초 안에 완료하거나 기본 분석으로 돌아옵니다."
+        : coachResponse.status === "cached"
+          ? "거래와 목표가 같아 마지막 OpenAI 결과를 다시 보여드려요."
         : coachResponse.provider.mode === "external"
           ? "OpenAI가 기본 계산을 참고해 분야별 계획과 문장을 보완했어요."
           : "기본 분석은 목표와 소비 내역을 앱 안에서 계산하며, OpenAI는 문장만 보완해요.";
@@ -97,17 +112,32 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
               <small>{aiStatusCopy}</small>
               <small className="ai-state-detail" data-testid="coach-ai-detail">{aiStatusDetail}</small>
             </span>
-            <button
-              className="ai-refresh-button"
-              type="button"
-              onClick={actions.requestCoachReport}
-              disabled={isAiLoading}
-              data-testid="coach-request-ai-button"
-              data-tutorial="coach-ai-update"
-            >
-              {isAiLoading ? <Loader2 className="spin-icon" size={16} /> : <RefreshCw size={16} />}
-              {isAiLoading ? "업데이트 중" : "AI 분석 업데이트"}
-            </button>
+            <div className="ai-state-actions">
+              <button
+                className="ai-refresh-button"
+                type="button"
+                onClick={actions.requestCoachReport}
+                disabled={isAiLoading || isExternalComplete || coachResponse.status === "cached"}
+                data-testid="coach-request-ai-button"
+                data-tutorial="coach-ai-update"
+              >
+                {isAiLoading ? <Loader2 className="spin-icon" size={16} /> : <RefreshCw size={16} />}
+                {isAiLoading
+                  ? "업데이트 중"
+                  : isExternalComplete
+                    ? "분석 완료"
+                    : coachResponse.status === "cached"
+                      ? "저장된 분석"
+                      : isAiFallback
+                        ? "다시 시도"
+                        : "AI 분석 업데이트"}
+              </button>
+              {isAiFallback && (
+                <button className="ai-default-button" type="button" onClick={actions.useDefaultCoachReport} data-testid="coach-use-default-button">
+                  기본 분석 유지
+                </button>
+              )}
+            </div>
           </section>
 
           <div className="section-title">
@@ -135,7 +165,7 @@ export function CoachScreen({ actions, computed }: MoneyRoutineViewModel) {
                     <article className={`category-plan-card is-${plan.status}`} key={plan.category}>
                       <div className="category-plan-head">
                         <strong>{plan.category}</strong>
-                        <span>{statusCopy(plan.status)}</span>
+                        <span>{planStatusCopy(plan.status)}</span>
                       </div>
                       {hasPattern && (
                         <div className="category-plan-trend" aria-label={`${plan.category} 지난달 ${Math.round(plan.previousRatio ?? 0)}%, 이번달 ${Math.round(plan.currentRatio ?? 0)}%, 가이드 ${Math.round(plan.guideRatio ?? 0)}%`}>

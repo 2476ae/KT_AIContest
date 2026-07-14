@@ -41,6 +41,10 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
   const displayedCsvErrors = csvErrors.length > 0 ? csvErrors : csvPreview.errors;
   const subscriptionCount = preview.filter((transaction) => transaction.isSubscription || transaction.category === "구독").length;
   const canImportCsv = preview.length > 0 && displayedCsvErrors.length === 0 && !isReadingCsv;
+  const importModeTitle = importMode === "replace" ? "기존 내역 교체" : "기존 내역과 병합";
+  const importModeDetail = importMode === "replace"
+    ? `현재 ${state.transactions.length}건을 지우고 선택한 CSV로 바꿉니다.`
+    : `현재 ${state.transactions.length}건은 유지하고 선택한 CSV를 합칩니다.`;
 
   async function submitTransaction(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -334,11 +338,12 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
         <input type="file" accept=".csv,text/csv" onChange={handleCsvFileChange} data-testid="csv-file-input" />
         <div className="input-help">필수 열은 date, merchant, amount이며 금액 콤마와 선택 열 category, memo, isSubscription을 지원합니다.</div>
         {csvFileName && <div className="file-name-line">{csvFileName}</div>}
-        <div className="segmented-control" aria-label="CSV 반영 방식">
+        <div className="segmented-control" aria-label="CSV 반영 방식" aria-describedby="csv-mode-summary">
           <button
             className={importMode === "replace" ? "is-active" : ""}
             type="button"
             onClick={() => setImportMode("replace")}
+            aria-pressed={importMode === "replace"}
             data-testid="csv-mode-replace"
           >
             교체
@@ -347,10 +352,15 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             className={importMode === "merge" ? "is-active" : ""}
             type="button"
             onClick={() => setImportMode("merge")}
+            aria-pressed={importMode === "merge"}
             data-testid="csv-mode-merge"
           >
             병합
           </button>
+        </div>
+        <div className="csv-mode-summary" id="csv-mode-summary" data-testid="csv-mode-summary">
+          <strong>{importModeTitle}</strong>
+          <span>{importModeDetail}</span>
         </div>
         {displayedCsvErrors.length > 0 && (
           <div className="field-error" data-testid="csv-validation-errors">
@@ -374,8 +384,8 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
         {preview.length > 0 && (
           <div className="upload-result">
             <span>총 {formatWon(preview.reduce((sum, item) => sum + item.amount, 0))}</span>
-            <button className="secondary-button" type="button" onClick={applyCsv} disabled={!canImportCsv} data-testid="csv-apply-button">
-              화면에 반영
+            <button className="primary-button" type="button" onClick={applyCsv} disabled={!canImportCsv} data-testid="csv-apply-button">
+              {importMode === "replace" ? "교체해서 반영" : "병합해서 반영"}
             </button>
           </div>
         )}

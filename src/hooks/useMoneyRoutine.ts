@@ -307,31 +307,48 @@ export function useMoneyRoutine() {
 
   const requestCoachReport = useCallback(() => {
     const cachedResponse = coachResponseCache.current.get(coachCacheKey);
+    if (cachedResponse?.status === "ready" && cachedResponse.provider.mode === "external") {
+      setCoachResponse({ ...cachedResponse, status: "cached" });
+      return;
+    }
     if (cachedResponse?.status === "fallback" || cachedResponse?.status === "error") {
       coachResponseCache.current.delete(coachCacheKey);
     }
+    setCoachResponse((previous) => createCoachReportLoadingResponse(coachInput, previous.data));
     setCoachRequestKey(coachCacheKey);
     setCoachRequestAttempt((current) => current + 1);
-  }, [coachCacheKey]);
+  }, [coachCacheKey, coachInput]);
+
+  const useDefaultCoachReport = useCallback(() => {
+    coachResponseCache.current.delete(coachCacheKey);
+    setCoachRequestKey(null);
+    setCoachResponse(createCoachReportPreviewResponse(coachInput));
+  }, [coachCacheKey, coachInput]);
 
   useEffect(() => {
     const cachedResponse = coachResponseCache.current.get(coachCacheKey);
     const isUserRequested = coachRequestKey === coachCacheKey;
 
     if (!shouldRequestCoachReportAi(state.activeTab, isUserRequested)) {
-      setCoachResponse(cachedResponse ?? createCoachReportPreviewResponse(coachInput));
+      setCoachResponse(
+        cachedResponse?.status === "ready" && cachedResponse.provider.mode === "external"
+          ? { ...cachedResponse, status: "cached" }
+          : cachedResponse ?? createCoachReportPreviewResponse(coachInput),
+      );
       return;
     }
 
     if (cachedResponse) {
-      setCoachResponse(cachedResponse);
+      setCoachResponse(
+        cachedResponse.status === "ready" && cachedResponse.provider.mode === "external"
+          ? { ...cachedResponse, status: "cached" }
+          : cachedResponse,
+      );
       return;
     }
 
     let isCurrent = true;
     const timeoutId = window.setTimeout(() => {
-      setCoachResponse((previous) => createCoachReportLoadingResponse(coachInput, previous.data));
-
       let request = coachRequestsInFlight.current.get(coachCacheKey);
       if (!request) {
         request = createCoachReportResponseAsync(coachInput).finally(() => {
@@ -391,6 +408,7 @@ export function useMoneyRoutine() {
       syncFinancialFeed,
       updateGoal,
       updateTransaction,
+      useDefaultCoachReport,
     },
   };
 }

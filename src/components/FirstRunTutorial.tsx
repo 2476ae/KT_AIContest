@@ -12,6 +12,8 @@ interface TutorialStep {
   description: string;
 }
 
+type TutorialMode = "sample" | "features";
+
 interface TargetRect {
   top: number;
   left: number;
@@ -24,7 +26,7 @@ type FirstRunTutorialProps = MoneyRoutineViewModel & {
   onFinish: (status: Exclude<TutorialStatus, "pending">) => void;
 };
 
-const steps: TutorialStep[] = [
+const featureSteps: TutorialStep[] = [
   {
     id: "home",
     tab: "home",
@@ -83,6 +85,37 @@ const steps: TutorialStep[] = [
   },
 ];
 
+const sampleSteps: TutorialStep[] = [
+  {
+    id: "sample-home",
+    tab: "home",
+    target: "home-summary",
+    title: "샘플 소비를 한눈에",
+    description: "불러온 예시 내역으로 월 지출, 목표 진행률과 오늘 한도를 바로 확인해요.",
+  },
+  {
+    id: "sample-calendar",
+    tab: "calendar",
+    target: "calendar-main",
+    title: "날짜별 소비 확인",
+    description: "색이 표시된 날짜를 눌러 적정 소비, 초과 지출과 정기 결제 내역을 살펴봐요.",
+  },
+  {
+    id: "sample-coach",
+    tab: "coach",
+    target: "coach-overview",
+    title: "샘플 분석 결과 보기",
+    description: "목표와 지난달 패턴을 함께 계산한 오늘 한도와 분야별 계획을 확인해요.",
+  },
+  {
+    id: "sample-notifications",
+    tab: "home",
+    target: "notifications",
+    title: "반영 소식 확인",
+    description: "새 소비와 정기 결제 반영 내역은 오른쪽 위 알림에서 확인할 수 있어요.",
+  },
+];
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -90,11 +123,13 @@ function clamp(value: number, min: number, max: number) {
 export function FirstRunTutorial({ actions, enabled, onFinish }: FirstRunTutorialProps) {
   const { loadSample: loadSampleData, setActiveTab } = actions;
   const [phase, setPhase] = useState<"welcome" | "tour">("welcome");
+  const [mode, setMode] = useState<TutorialMode | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [targetRect, setTargetRect] = useState<TargetRect | null>(null);
   const [tooltipStyle, setTooltipStyle] = useState<Record<string, number>>({});
   const layerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
+  const steps = mode === "sample" ? sampleSteps : featureSteps;
   const step = steps[stepIndex];
 
   useEffect(() => {
@@ -210,10 +245,11 @@ export function FirstRunTutorial({ actions, enabled, onFinish }: FirstRunTutoria
     return null;
   }
 
-  function beginTour(shouldLoadSample: boolean) {
-    if (shouldLoadSample) {
+  function beginTour(nextMode: TutorialMode) {
+    if (nextMode === "sample") {
       loadSampleData();
     }
+    setMode(nextMode);
     setActiveTab("home");
     setStepIndex(0);
     setPhase("tour");
@@ -242,11 +278,11 @@ export function FirstRunTutorial({ actions, enabled, onFinish }: FirstRunTutoria
           <h2 id="tutorial-welcome-title">머니루틴을 시작해볼까요?</h2>
           <p>현재 베타 버전은 실제 은행·카드 앱과 연결하지 않아요. 체험용 임시 데이터로 안전하게 둘러볼 수 있어요.</p>
           <div className="tutorial-welcome-actions">
-            <button className="primary-button" type="button" onClick={() => beginTour(true)} data-testid="tutorial-start-sample">
-              <WalletCards size={18} /> 샘플로 둘러보기
+            <button className="primary-button" type="button" onClick={() => beginTour("sample")} data-testid="tutorial-start-sample">
+              <WalletCards size={18} /> 샘플로 빠르게 체험
             </button>
-            <button className="secondary-button" type="button" onClick={() => beginTour(false)} data-testid="tutorial-start-features">
-              <Eye size={18} /> 기능만 둘러보기
+            <button className="secondary-button" type="button" onClick={() => beginTour("features")} data-testid="tutorial-start-features">
+              <Eye size={18} /> 기능 전체 안내
             </button>
           </div>
           <button className="tutorial-skip-link" type="button" onClick={() => finish("skipped")} data-testid="tutorial-skip-welcome">
@@ -281,7 +317,7 @@ export function FirstRunTutorial({ actions, enabled, onFinish }: FirstRunTutoria
         data-testid={`tutorial-step-${step.id}`}
       >
         <div className="tutorial-tooltip-head">
-          <span><Bot size={15} /> 사용 가이드</span>
+          <span><Bot size={15} /> {mode === "sample" ? "샘플 체험" : "기능 안내"}</span>
           <button type="button" onClick={() => finish("skipped")} aria-label="가이드 건너뛰기" data-testid="tutorial-skip-tour">
             <X size={18} />
           </button>
@@ -304,7 +340,7 @@ export function FirstRunTutorial({ actions, enabled, onFinish }: FirstRunTutoria
             <ChevronLeft size={19} />
           </button>
           <button className="primary-button" type="button" onClick={() => moveStep(1)} data-testid="tutorial-next">
-            {stepIndex === steps.length - 1 ? "시작하기" : "다음"}
+            {stepIndex === steps.length - 1 ? (mode === "sample" ? "체험 마치기" : "안내 마치기") : "다음"}
             {stepIndex !== steps.length - 1 && <ChevronRight size={18} />}
           </button>
         </div>

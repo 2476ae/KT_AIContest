@@ -2087,6 +2087,33 @@ button:disabled {
   font-weight: 800;
 }
 
+.upload-result .primary-button {
+  min-height: 38px;
+  padding: 0 13px;
+}
+
+.csv-mode-summary {
+  display: grid;
+  gap: 3px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface-soft);
+}
+
+.csv-mode-summary strong {
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.csv-mode-summary span {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1.4;
+}
+
 .segmented-control {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2148,6 +2175,18 @@ button:disabled {
 .goal-summary,
 .trust-panel {
   padding: 14px;
+}
+
+.trust-list {
+  display: grid;
+  gap: 3px;
+  margin: 7px 0 0;
+  padding: 0;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1.4;
+  list-style: none;
 }
 
 .ai-state-card {
@@ -2224,6 +2263,22 @@ button:disabled {
   font-size: 12px;
   font-weight: 880;
   box-shadow: var(--shadow-soft);
+}
+
+.ai-state-actions {
+  display: grid;
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.ai-default-button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 820;
 }
 
 .ai-refresh-button:disabled {
@@ -2811,6 +2866,7 @@ button:disabled {
     flex-basis: calc(100% - 48px);
   }
 
+  .ai-state-actions,
   .ai-refresh-button {
     width: 100%;
   }

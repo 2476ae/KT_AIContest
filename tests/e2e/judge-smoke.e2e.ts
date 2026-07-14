@@ -30,7 +30,9 @@ test.describe("judge demo smoke flow", () => {
     await expect(welcome).toContainText("체험용 임시 데이터");
 
     await page.getByTestId("tutorial-start-sample").click();
-    const stepIds = ["home", "goal", "add", "calendar", "coach", "ai", "notifications", "settings"];
+    const stepIds = ["sample-home", "sample-calendar", "sample-coach", "sample-notifications"];
+    await expect(page.locator(".tutorial-tooltip-head")).toContainText("샘플 체험");
+    await expect(page.locator(".hero-amount")).not.toHaveText("0원");
     for (const [index, stepId] of stepIds.entries()) {
       await expect(page.getByTestId(`tutorial-step-${stepId}`)).toBeVisible();
       await expect(page.getByTestId(`tutorial-step-${stepId}`)).toContainText(`${index + 1} / ${stepIds.length}`);
@@ -68,6 +70,36 @@ test.describe("judge demo smoke flow", () => {
     await expect(page.getByTestId("tutorial-welcome")).toBeVisible();
     await page.getByTestId("tutorial-skip-welcome").click();
     await expect(page.getByTestId("nav-home")).toHaveAttribute("aria-current", "page");
+    expect(aiRequestCount).toBe(0);
+  });
+
+  test("keeps the full feature guide separate and does not load sample data", async ({ page }) => {
+    let aiRequestCount = 0;
+    page.on("request", (request) => {
+      if (request.url().includes("/api/ai/")) {
+        aiRequestCount += 1;
+      }
+    });
+
+    await page.evaluate(() => window.localStorage.removeItem("money-routine-tutorial:v1"));
+    await page.reload();
+    await page.getByTestId("tutorial-start-features").click();
+
+    const stepIds = ["home", "goal", "add", "calendar", "coach", "ai", "notifications", "settings"];
+    await expect(page.locator(".tutorial-tooltip-head")).toContainText("기능 안내");
+    for (const [index, stepId] of stepIds.entries()) {
+      await expect(page.getByTestId(`tutorial-step-${stepId}`)).toBeVisible();
+      await expect(page.getByTestId(`tutorial-step-${stepId}`)).toContainText(`${index + 1} / ${stepIds.length}`);
+      await page.getByTestId("tutorial-next").click();
+    }
+
+    await expect(page.getByTestId("tutorial-tour")).toHaveCount(0);
+    await expect(page.locator(".hero-amount")).toHaveText("0원");
+    const storedTransactionCount = await page.evaluate(() => {
+      const stored = JSON.parse(window.localStorage.getItem("money-routine-calendar:v2") ?? "null");
+      return stored?.state?.transactions?.length ?? 0;
+    });
+    expect(storedTransactionCount).toBe(0);
     expect(aiRequestCount).toBe(0);
   });
 
@@ -122,13 +154,17 @@ test.describe("judge demo smoke flow", () => {
     await expect(page.getByText("분야별 소비 계획")).toBeVisible();
   });
 
-  test("trust notice and settings clarify that the demo does not collect financial credentials", async ({ page }) => {
+  test("trust notice and settings clarify storage, AI transmission, and reset scope", async ({ page }) => {
     await page.getByTestId("top-trust-button").click();
-    await expect(page.getByTestId("top-trust-panel")).toContainText("실제 금융 인증 없이 체험");
-    await expect(page.getByTestId("top-trust-panel")).toContainText("계좌·카드 로그인 정보를 수집하지 않습니다");
+    await expect(page.getByTestId("top-trust-panel")).toContainText("금융 인증정보를 받지 않아요");
+    await expect(page.getByTestId("top-trust-panel")).toContainText("거래·목표는 브라우저에 저장");
+    await expect(page.getByTestId("top-trust-panel")).toContainText("자동 분류는 사용처·메모");
 
     await page.getByTestId("nav-settings").click();
     await expect(page.getByText("샘플·직접 입력·CSV 전용 데모")).toBeVisible();
+    await expect(page.getByText("데이터 사용 범위")).toBeVisible();
+    await expect(page.getByText("AI 요청: 사용처·메모 또는 소비 요약 전송")).toBeVisible();
+    await expect(page.getByText("앱 초기화: 거래·목표 기록 삭제")).toBeVisible();
   });
 
   test("shows empty-month actions and reports an invalid CSV date only once", async ({ page }) => {
@@ -147,6 +183,17 @@ test.describe("judge demo smoke flow", () => {
     const dateError = "2행: 날짜는 YYYY-MM-DD 형식의 실제 날짜여야 합니다.";
     await expect(page.getByTestId("csv-validation-errors")).toContainText(dateError);
     await expect(page.getByText(dateError, { exact: true })).toHaveCount(1);
+
+    await page.getByTestId("csv-file-input").setInputFiles({
+      name: "valid.csv",
+      mimeType: "text/csv",
+      buffer: Buffer.from("date,merchant,amount\n2026-02-28,테스트 카페,4300", "utf8"),
+    });
+    await expect(page.getByTestId("csv-mode-summary")).toContainText("기존 내역 교체");
+    await expect(page.getByRole("button", { name: "교체해서 반영" })).toBeVisible();
+    await page.getByTestId("csv-mode-merge").click();
+    await expect(page.getByTestId("csv-mode-summary")).toContainText("기존 내역과 병합");
+    await expect(page.getByRole("button", { name: "병합해서 반영" })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   });
 
@@ -219,9 +266,20 @@ test.describe("judge demo smoke flow", () => {
 
     await expect(page.getByText("AI 상태")).toBeVisible();
     await expect(page.getByText("분석 중", { exact: true })).toHaveCount(0);
+    await expect(page.getByTestId("coach-request-ai-button")).toHaveText(/다시 시도/);
+    await expect(page.getByTestId("coach-use-default-button")).toBeVisible();
+
+    await page.getByTestId("coach-use-default-button").click();
+    await expect(page.getByText("기본 분석 표시", { exact: true })).toBeVisible();
 
     await page.getByTestId("coach-request-ai-button").click();
     await expect(page.getByText("OpenAI 분석 완료", { exact: true })).toBeVisible();
+    expect(coachRequestCount).toBe(2);
+
+    await page.getByTestId("nav-home").click();
+    await page.getByTestId("nav-coach").click();
+    await expect(page.getByText("저장된 AI 분석", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("coach-request-ai-button")).toHaveText(/저장된 분석/);
     expect(coachRequestCount).toBe(2);
   });
 

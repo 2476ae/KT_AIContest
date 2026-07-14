@@ -329,47 +329,35 @@ export const coachEnhancementSchema = {
   type: "object",
   additionalProperties: false,
   properties: {
-    insights: {
-      type: "array",
-      maxItems: 3,
-      items: { type: "string" },
-    },
     categoryCopy: {
       type: "array",
-      maxItems: 4,
+      maxItems: 3,
       items: {
         type: "object",
         additionalProperties: false,
         properties: {
           category: { type: "string", enum: CATEGORIES },
-          reason: { type: "string" },
           action: { type: "string" },
         },
-        required: ["category", "reason", "action"],
+        required: ["category", "action"],
       },
     },
     missionCopy: {
       type: "array",
-      maxItems: 3,
+      maxItems: 2,
       items: {
         type: "object",
         additionalProperties: false,
         properties: {
           id: { type: "string" },
           title: { type: "string" },
-          reason: { type: "string" },
           action: { type: "string" },
         },
-        required: ["id", "title", "reason", "action"],
+        required: ["id", "title", "action"],
       },
     },
-    subscriptionAdvice: {
-      type: "array",
-      maxItems: 2,
-      items: { type: "string" },
-    },
   },
-  required: ["insights", "categoryCopy", "missionCopy", "subscriptionAdvice"],
+  required: ["categoryCopy", "missionCopy"],
 };
 
 function extractOutputText(responseJson) {
@@ -417,6 +405,7 @@ export async function createOpenAiJsonResponse({ name, schema, system, payload, 
         ],
         model: process.env.OPENAI_MODEL || "gpt-4.1-mini",
         max_output_tokens: maxOutputTokens || Number(process.env.OPENAI_MAX_OUTPUT_TOKENS) || DEFAULT_MAX_OUTPUT_TOKENS,
+        store: false,
         text: {
           format: {
             type: "json_schema",

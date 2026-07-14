@@ -1,4 +1,4 @@
-import { CircleHelp, Download, RotateCcw, ShieldCheck, WalletCards } from "lucide-react";
+import { CircleHelp, Database, Download, RotateCcw, ShieldCheck, WalletCards } from "lucide-react";
 import { useState } from "react";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
@@ -92,6 +92,20 @@ export function SettingsScreen({ actions, computed, onStartTutorial, state }: Se
         <span>
           <strong>샘플·직접 입력·CSV 전용 데모</strong>
           <small>현재 제출 버전은 은행·카드 로그인을 요청하지 않고 금융 인증정보를 저장하지 않습니다.</small>
+        </span>
+      </section>
+
+      <section className="trust-panel card">
+        <span className="trust-icon">
+          <Database size={22} />
+        </span>
+        <span>
+          <strong>데이터 사용 범위</strong>
+          <ul className="trust-list">
+            <li>브라우저: 거래와 목표 저장</li>
+            <li>AI 요청: 사용처·메모 또는 소비 요약 전송</li>
+            <li>앱 초기화: 거래·목표 기록 삭제</li>
+          </ul>
         </span>
       </section>
 

@@ -27,7 +27,7 @@ export type MaybePromise<T> = T | Promise<T>;
 
 export type AiProviderMode = "local" | "external";
 
-export type AiResponseStatus = "ready" | "loading" | "fallback" | "error";
+export type AiResponseStatus = "ready" | "cached" | "loading" | "fallback" | "error";
 
 export interface AiProviderMetadata {
   id: string;

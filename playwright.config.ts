@@ -1,17 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
 const useExternalWebServer = process.env.MONEY_ROUTINE_E2E_EXTERNAL_SERVER === "1";
+const baseUrl = process.env.MONEY_ROUTINE_E2E_BASE_URL ?? "http://127.0.0.1:5173";
 
 export default defineConfig({
   testDir: "./tests/e2e",
   testMatch: "**/*.e2e.ts",
+  fullyParallel: true,
+  workers: 2,
   timeout: 30_000,
   expect: {
     timeout: 5_000,
   },
   reporter: [["list"]],
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL: baseUrl,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },
@@ -22,7 +25,7 @@ export default defineConfig({
         env: {
           VITE_AI_PROVIDER: "openai-proxy",
         },
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: false,
         timeout: 60_000,
         url: "http://127.0.0.1:5173",
       },

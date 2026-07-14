@@ -214,8 +214,8 @@ export function AppShell({ children, state, actions }: AppShellProps) {
                 <ShieldCheck size={19} />
               </span>
               <span className="top-popover-copy">
-                <strong>실제 금융 인증 없이 체험</strong>
-                <small>제출 버전은 샘플, 직접 입력, CSV만 사용하며 계좌·카드 로그인 정보를 수집하지 않습니다.</small>
+                <strong>금융 인증정보를 받지 않아요</strong>
+                <small>거래·목표는 브라우저에 저장됩니다. 자동 분류는 사용처·메모, AI 코치는 소비 요약만 서버로 보내며 앱 초기화 시 거래·목표 기록이 삭제됩니다.</small>
               </span>
               <button className="top-popover-action" type="button" onClick={() => moveFromPanel("settings")}>
                 설정
