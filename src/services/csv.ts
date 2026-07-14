@@ -8,6 +8,13 @@ export interface CsvValidationResult {
   errors: string[];
 }
 
+export function getTransactionFingerprint(
+  transaction: Pick<Transaction, "date" | "merchant" | "amount">,
+) {
+  const merchant = transaction.merchant.trim().replace(/\s+/g, " ").toLocaleLowerCase("ko-KR");
+  return JSON.stringify([transaction.date, merchant, Math.round(transaction.amount)]);
+}
+
 const requiredHeaders = ["date", "merchant", "amount"];
 
 function splitCsvLine(line: string) {

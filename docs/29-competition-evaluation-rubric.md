@@ -215,8 +215,8 @@
 
 현재 기준선(실행 시 최신 결과로 대체):
 
-- Vitest 13개 파일, 67개 테스트
-- Playwright 브라우저 smoke flow
+- Vitest 13개 파일, 68개 테스트
+- Playwright 브라우저 smoke flow 24개
 - Vite production build
 - GitHub Pages base build
 

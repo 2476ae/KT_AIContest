@@ -282,6 +282,43 @@ test.describe("judge demo smoke flow", () => {
     await expect(page.getByText("분야별 소비 계획")).toBeVisible();
   });
 
+  test("persists a changed sample category after reload", async ({ page }) => {
+    await page.getByTestId("home-load-sample").click();
+    const sampleDate = await page.evaluate(() => {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      return `${now.getFullYear()}-${month}-02`;
+    });
+
+    await page.getByTestId("nav-calendar").click();
+    await page.getByTestId(`calendar-day-${sampleDate}`).click();
+    const categorySelect = page.getByTestId("transaction-category-tx-003");
+    await expect(categorySelect).toHaveValue("교통");
+    await categorySelect.selectOption("식비");
+    await expect(categorySelect).toHaveValue("식비");
+
+    await page.reload();
+    await page.getByTestId("nav-calendar").click();
+    await page.getByTestId(`calendar-day-${sampleDate}`).click();
+    await expect(page.getByTestId("transaction-category-tx-003")).toHaveValue("식비");
+  });
+
+  test("restores and saves the recommended goal defaults", async ({ page }) => {
+    await page.getByTestId("top-goal-button").click();
+    await page.getByTestId("goal-spending-limit-input").fill("650000");
+    await page.getByTestId("goal-saving-input").fill("250000");
+    await page.getByTestId("goal-reset-button").click();
+
+    await expect(page.getByTestId("goal-spending-limit-input")).toHaveValue("720,000");
+    await expect(page.getByTestId("goal-saving-input")).toHaveValue("200,000");
+    await expect(page.getByText("초기 권장 목표를 기본값으로 저장했어요.")).toBeVisible();
+
+    await page.reload();
+    await page.getByTestId("top-goal-button").click();
+    await expect(page.getByTestId("goal-spending-limit-input")).toHaveValue("720,000");
+    await expect(page.getByTestId("goal-saving-input")).toHaveValue("200,000");
+  });
+
   test("trust notice and settings clarify storage, AI transmission, and reset scope", async ({ page }) => {
     await page.getByTestId("top-trust-button").click();
     await expect(page.getByTestId("top-trust-panel")).toContainText("금융 인증정보를 받지 않아요");
@@ -312,16 +349,29 @@ test.describe("judge demo smoke flow", () => {
     await expect(page.getByTestId("csv-validation-errors")).toContainText(dateError);
     await expect(page.getByText(dateError, { exact: true })).toHaveCount(1);
 
-    await page.getByTestId("csv-file-input").setInputFiles({
+    const validCsv = {
       name: "valid.csv",
       mimeType: "text/csv",
       buffer: Buffer.from("date,merchant,amount\n2026-02-28,테스트 카페,4300", "utf8"),
-    });
+    };
+    await page.getByTestId("csv-file-input").setInputFiles(validCsv);
     await expect(page.getByTestId("csv-mode-summary")).toContainText("기존 내역 교체");
     await expect(page.getByRole("button", { name: "교체해서 반영" })).toBeVisible();
     await page.getByTestId("csv-mode-merge").click();
     await expect(page.getByTestId("csv-mode-summary")).toContainText("기존 내역과 병합");
     await expect(page.getByRole("button", { name: "병합해서 반영" })).toBeVisible();
+    await page.getByTestId("csv-apply-button").click();
+    await expect(page.getByText("1건을 병합했어요.")).toBeVisible();
+    await expect(page.getByTestId("csv-apply-button")).toHaveCount(0);
+
+    await page.getByTestId("csv-file-input").setInputFiles(validCsv);
+    await expect(page.getByTestId("csv-duplicate-note")).toContainText("이미 저장된 내역 1건");
+    await expect(page.getByTestId("csv-apply-button")).toBeDisabled();
+    const storedTransactionCount = await page.evaluate(() => {
+      const stored = JSON.parse(window.localStorage.getItem("money-routine-calendar:v2") ?? "null");
+      return stored?.state?.transactions?.length ?? 0;
+    });
+    expect(storedTransactionCount).toBe(1);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)).toBe(false);
   });
 

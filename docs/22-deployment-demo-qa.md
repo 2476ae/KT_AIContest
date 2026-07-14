@@ -41,11 +41,11 @@ npm run test:e2e
 
 검증 범위:
 
-- Vitest: 13개 파일, 67개 테스트
+- Vitest: 13개 파일, 68개 테스트
 - TypeScript build
 - Vite production build
 - GitHub Pages base path build
-- Playwright 브라우저 smoke flow: 샘플 로드, 목표 수정, 거래 추가, 캘린더 반영, AI 코치 진입, 금융 인증정보 미수집 안내
+- Playwright 브라우저 smoke flow 24개: 샘플 로드, 목표 수정, 거래 추가, 캘린더 반영, AI 코치 진입, 금융 인증정보 미수집 안내
 - 핵심 상태 흐름 테스트: 샘플 로드, 탭/월 이동, 직접 거래 추가/수정/삭제, 목표 수정/초기화, CSV 교체/병합
 
 자동 QA 보조 기준:

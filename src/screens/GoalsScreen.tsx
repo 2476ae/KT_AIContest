@@ -113,8 +113,12 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
   }
 
   function resetGoal() {
+    setDraftGoal({
+      ...DEFAULT_GOAL,
+      focusCategories: [...DEFAULT_GOAL.focusCategories],
+    });
     actions.resetGoal();
-    setGoalMessage("기본 목표로 초기화했어요.");
+    setGoalMessage("초기 권장 목표를 기본값으로 저장했어요.");
     setSaveAttempted(false);
   }
 
@@ -218,11 +222,11 @@ export function GoalsScreen({ actions, computed, state }: MoneyRoutineViewModel)
           </button>
           <button className="secondary-button" type="button" onClick={discardGoal} disabled={!isDirty} data-testid="goal-discard-button">
             <Undo2 size={16} />
-            되돌리기
+            입력 되돌리기
           </button>
           <button className="secondary-button" type="button" onClick={resetGoal} data-testid="goal-reset-button">
             <RotateCcw size={16} />
-            기본값
+            기본값 저장
           </button>
         </div>
       </section>

@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { CATEGORIES, DEFAULT_GOAL } from "../constants";
-import { loadCurrentSampleTransactions } from "../data";
+import { isSampleTransactionId, loadCurrentSampleTransactions } from "../data";
 import type { Transaction } from "../types";
 import { getSummary } from "./analytics";
 import {
   addTransactionState,
+  alignSampleTransactionsState,
   applyImportedTransactionsState,
   createInitialAppState,
   deleteTransactionState,
@@ -155,6 +156,30 @@ describe("app state service", () => {
     expect(deleted.transactions).toHaveLength(0);
   });
 
+  it("keeps a changed sample category when sample dates are realigned", () => {
+    const referenceDate = new Date(2026, 6, 15);
+    const samples = loadCurrentSampleTransactions(referenceDate);
+    const loaded = loadSampleState(createInitialAppState(referenceDate), samples, referenceDate);
+    const target = loaded.transactions.find((item) => item.id === "tx-003");
+
+    expect(target).toBeDefined();
+    const changed = updateTransactionState(loaded, {
+      ...target!,
+      category: "식비",
+      classificationReason: "식비로 직접 변경했어요.",
+    });
+    const aligned = alignSampleTransactionsState(
+      changed,
+      loadCurrentSampleTransactions(referenceDate),
+      isSampleTransactionId,
+    );
+
+    expect(aligned.transactions.find((item) => item.id === "tx-003")).toMatchObject({
+      category: "식비",
+      classificationReason: "식비로 직접 변경했어요.",
+    });
+  });
+
   it("updates and resets goal settings", () => {
     const customGoal = {
       ...DEFAULT_GOAL,
@@ -190,6 +215,21 @@ describe("app state service", () => {
     expect(merged.transactions).toHaveLength(2);
     expect(merged.transactions.find((item) => item.id === "tx-existing")?.amount).toBe(5000);
     expect(merged.transactions.find((item) => item.id === "tx-new")?.isSubscription).toBe(true);
+
+    const duplicateWithNewId = {
+      ...imported.find((item) => item.id === "tx-new")!,
+      id: "tx-new-copy",
+    };
+    const duplicateMerge = applyImportedTransactionsState(merged, [duplicateWithNewId], "merge");
+    expect(duplicateMerge).toBe(merged);
+    expect(duplicateMerge.transactions).toHaveLength(2);
+
+    const categoryUpdate = {
+      ...imported.find((item) => item.id === "tx-new")!,
+      category: CATEGORIES[0],
+    };
+    const updatedById = applyImportedTransactionsState(merged, [categoryUpdate], "merge");
+    expect(updatedById.transactions.find((item) => item.id === "tx-new")?.category).toBe(CATEGORIES[0]);
   });
 
   it("syncs real-time financial feed transactions without duplicates", () => {

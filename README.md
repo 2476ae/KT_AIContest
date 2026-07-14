@@ -24,7 +24,7 @@ npm run verify
 npm run verify:full
 ```
 
-2026-07-15 기준 `npm run verify`는 Vitest 13개 파일, 67개 테스트와 Vite production build를 통과합니다. GitHub Pages 백업 번들은 `npm run build:github-pages`로 확인합니다. `npm run test:e2e`는 데스크톱·모바일 20개 시나리오를 2개 워커로 검증하며, 전체 로컬 게이트는 `npm run verify:full`로 확인합니다.
+2026-07-15 기준 `npm run verify`는 Vitest 13개 파일, 68개 테스트와 Vite production build를 통과합니다. GitHub Pages 백업 번들은 `npm run build:github-pages`로 확인합니다. `npm run test:e2e`는 데스크톱·모바일 24개 시나리오를 2개 워커로 검증하며, 전체 로컬 게이트는 `npm run verify:full`로 확인합니다.
 
 ## 배포
 

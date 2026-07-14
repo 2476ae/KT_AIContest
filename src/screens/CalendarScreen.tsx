@@ -5,6 +5,7 @@ import { TransactionList } from "../components/TransactionList";
 import { CATEGORIES } from "../constants";
 import { formatWon, getTopCategory } from "../services/analytics";
 import { formatFullDate, formatMonthLabel } from "../services/date";
+import { getManualCategoryCopy } from "../services/transactionCopy";
 import type { DayStatus } from "../types";
 import type { MoneyRoutineViewModel } from "./screenTypes";
 
@@ -131,7 +132,11 @@ export function CalendarScreen({ actions, computed, state }: MoneyRoutineViewMod
         <TransactionList
           transactions={selectedDay?.transactions ?? []}
           categories={CATEGORIES}
-          onCategoryChange={(transaction, category) => actions.updateTransaction({ ...transaction, category })}
+          onCategoryChange={(transaction, category) => actions.updateTransaction({
+            ...transaction,
+            category,
+            classificationReason: getManualCategoryCopy(category),
+          })}
           onDelete={actions.deleteTransaction}
           emptyText="선택한 날짜에 거래가 없습니다."
         />

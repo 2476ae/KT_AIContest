@@ -1,9 +1,10 @@
 import { CalendarDays, CheckCircle2, FileUp, Home, Loader2, Plus, Save, Wand2 } from "lucide-react";
-import { ChangeEvent, FormEvent, useMemo, useState } from "react";
+import { ChangeEvent, FormEvent, useMemo, useRef, useState } from "react";
 import { CATEGORIES } from "../constants";
 import { formatWon } from "../services/analytics";
 import { classifyTransactionResponseAsync } from "../services/aiAdapter";
 import { parseTransactionsCsvWithValidation } from "../services/csv";
+import { getMergeableImportedTransactions } from "../services/appState";
 import { formatMoneyInput, parseMoneyInput, validateTransactionDraft } from "../services/formValidation";
 import { getManualCategoryCopy } from "../services/transactionCopy";
 import type { Category } from "../types";
@@ -42,6 +43,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
   const [csvErrors, setCsvErrors] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const [isReadingCsv, setIsReadingCsv] = useState(false);
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
 
   const csvPreview = useMemo(
     () => (csvText ? parseTransactionsCsvWithValidation(csvText) : { transactions: [], errors: [] }),
@@ -49,8 +51,16 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
   );
   const preview = csvPreview.transactions;
   const displayedCsvErrors = csvErrors.length > 0 ? csvErrors : csvPreview.errors;
+  const mergeablePreview = useMemo(
+    () => getMergeableImportedTransactions(state.transactions, preview),
+    [preview, state.transactions],
+  );
+  const csvDuplicateCount = importMode === "merge" ? preview.length - mergeablePreview.length : 0;
   const subscriptionCount = preview.filter((transaction) => transaction.isSubscription || transaction.category === "구독").length;
-  const canImportCsv = preview.length > 0 && displayedCsvErrors.length === 0 && !isReadingCsv;
+  const canImportCsv = preview.length > 0
+    && displayedCsvErrors.length === 0
+    && !isReadingCsv
+    && (importMode === "replace" || mergeablePreview.length > 0);
   const importModeTitle = importMode === "replace" ? "기존 내역 교체" : "기존 내역과 병합";
   const importModeDetail = importMode === "replace"
     ? `현재 ${state.transactions.length}건을 지우고 선택한 CSV로 바꿉니다.`
@@ -166,9 +176,14 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
 
     try {
       const imported = actions.importCsv(csvText, importMode);
-      setCsvMessage(
-        `${imported.length}건을 ${importMode === "replace" ? "교체" : "병합"}했어요. 캘린더와 AI 코치 화면이 다시 계산됩니다.`,
-      );
+      const appliedCount = importMode === "merge" ? mergeablePreview.length : imported.length;
+      const duplicateMessage = csvDuplicateCount > 0 ? ` 중복 ${csvDuplicateCount}건은 건너뛰었어요.` : "";
+      setCsvMessage(`${appliedCount}건을 ${importMode === "replace" ? "교체" : "병합"}했어요.${duplicateMessage} 캘린더와 AI 코치 화면이 다시 계산됩니다.`);
+      setCsvText("");
+      setCsvFileName("");
+      if (csvFileInputRef.current) {
+        csvFileInputRef.current.value = "";
+      }
     } catch (error) {
       setCsvErrors([error instanceof Error ? error.message : "CSV를 반영하지 못했습니다."]);
     }
@@ -353,7 +368,7 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
             </small>
           </span>
         </div>
-        <input type="file" accept=".csv,text/csv" onChange={handleCsvFileChange} data-testid="csv-file-input" />
+        <input ref={csvFileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvFileChange} data-testid="csv-file-input" />
         <div className="input-help">필수 열은 date, merchant, amount이며 금액 콤마와 선택 열 category, memo, isSubscription을 지원합니다.</div>
         {csvFileName && <div className="file-name-line">{csvFileName}</div>}
         <div className="segmented-control" aria-label="CSV 반영 방식" aria-describedby="csv-mode-summary">
@@ -380,6 +395,11 @@ export function AddScreen({ actions, state }: MoneyRoutineViewModel) {
           <strong>{importModeTitle}</strong>
           <span>{importModeDetail}</span>
         </div>
+        {importMode === "merge" && csvDuplicateCount > 0 && (
+          <div className="input-help" data-testid="csv-duplicate-note">
+            이미 저장된 내역 {csvDuplicateCount}건은 중복으로 추가하지 않아요.
+          </div>
+        )}
         {displayedCsvErrors.length > 0 && (
           <div className="field-error" data-testid="csv-validation-errors">
             {displayedCsvErrors.slice(0, 3).map((error) => (

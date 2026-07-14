@@ -1,6 +1,6 @@
 import { CATEGORIES, DEFAULT_GOAL } from "../constants";
 import type { AppState, Category, Goal, PaymentType, TabId, Transaction } from "../types";
-import { parseTransactionsCsvWithValidation } from "./csv";
+import { getTransactionFingerprint, parseTransactionsCsvWithValidation } from "./csv";
 import { addMonths, firstDateOfMonth, formatDate, getMonthId } from "./date";
 import { normalizeFinancialFeedTransactions, type FinancialFeedTransactionInput } from "./financialFeed";
 
@@ -234,6 +234,39 @@ export function updateTransactionState(current: AppState, transaction: Transacti
   };
 }
 
+export function alignSampleTransactionsState(
+  current: AppState,
+  alignedSamples: Transaction[],
+  isSampleId: (id: string) => boolean,
+): AppState {
+  const storedSamples = new Map(
+    current.transactions
+      .filter((transaction) => isSampleId(transaction.id))
+      .map((transaction) => [transaction.id, transaction]),
+  );
+
+  if (storedSamples.size === 0) {
+    return current;
+  }
+
+  const userTransactions = current.transactions.filter((transaction) => !isSampleId(transaction.id));
+  const sampleTransactions = alignedSamples.map((sample) => {
+    const stored = storedSamples.get(sample.id);
+    return stored
+      ? {
+          ...sample,
+          category: stored.category,
+          classificationReason: stored.classificationReason,
+        }
+      : sample;
+  });
+
+  return {
+    ...current,
+    transactions: sortTransactionsByDate([...userTransactions, ...sampleTransactions]),
+  };
+}
+
 export function deleteTransactionState(current: AppState, id: string): AppState {
   return {
     ...current,
@@ -260,18 +293,65 @@ export function applyImportedTransactionsState(
   imported: Transaction[],
   mode: "replace" | "merge" = "replace",
 ): AppState {
+  const applied = mode === "merge" ? getMergeableImportedTransactions(current.transactions, imported) : imported;
+
+  if (mode === "merge" && applied.length === 0) {
+    return current;
+  }
+
   return {
     ...current,
     transactions:
       mode === "merge"
-        ? [...current.transactions.filter((item) => !imported.some((incoming) => incoming.id === item.id)), ...imported].sort((a, b) =>
+        ? [...current.transactions.filter((item) => !applied.some((incoming) => incoming.id === item.id)), ...applied].sort((a, b) =>
             a.date.localeCompare(b.date),
           )
-        : imported,
-    calendarMonth: imported[imported.length - 1]?.date ? getMonthId(imported[imported.length - 1].date) : current.calendarMonth,
-    selectedDate: imported[imported.length - 1]?.date ?? current.selectedDate,
-    hasLoadedSample: imported.length > 0,
+        : applied,
+    calendarMonth: applied[applied.length - 1]?.date ? getMonthId(applied[applied.length - 1].date) : current.calendarMonth,
+    selectedDate: applied[applied.length - 1]?.date ?? current.selectedDate,
+    hasLoadedSample: applied.length > 0,
   };
+}
+
+export function getMergeableImportedTransactions(
+  current: Transaction[],
+  imported: Transaction[],
+) {
+  const currentById = new Map(current.map((transaction) => [transaction.id, transaction]));
+  const fingerprints = new Set(current.map(getTransactionFingerprint));
+  const mergeable: Transaction[] = [];
+
+  imported.forEach((transaction) => {
+    const existingWithId = currentById.get(transaction.id);
+    const fingerprint = getTransactionFingerprint(transaction);
+
+    if (existingWithId) {
+      const hasChanges =
+        existingWithId.date !== transaction.date
+        || existingWithId.merchant !== transaction.merchant
+        || existingWithId.amount !== transaction.amount
+        || existingWithId.memo !== transaction.memo
+        || existingWithId.paymentType !== transaction.paymentType
+        || existingWithId.category !== transaction.category
+        || existingWithId.isSubscription !== transaction.isSubscription;
+
+      if (hasChanges) {
+        mergeable.push(transaction);
+        fingerprints.add(fingerprint);
+      }
+      return;
+    }
+
+    if (fingerprints.has(fingerprint)) {
+      return;
+    }
+
+    mergeable.push(transaction);
+    currentById.set(transaction.id, transaction);
+    fingerprints.add(fingerprint);
+  });
+
+  return mergeable;
 }
 
 function mergeTransactions(current: Transaction[], incoming: Transaction[]) {

@@ -6,6 +6,7 @@ import {
   applyFinancialFeedTransactionsState,
   applyImportedTransactionsState,
   addTransactionState,
+  alignSampleTransactionsState,
   createInitialAppState,
   deleteTransactionState,
   INITIAL_APP_STATE,
@@ -43,17 +44,11 @@ interface FinancialFeedEventDetail {
 }
 
 function alignStoredSampleTransactions(state: AppState, referenceDate: Date) {
-  if (!state.transactions.some((transaction) => isSampleTransactionId(transaction.id))) {
-    return state;
-  }
-
-  const userTransactions = state.transactions.filter((transaction) => !isSampleTransactionId(transaction.id));
-  const sampleTransactions = loadCurrentSampleTransactions(referenceDate);
-
-  return {
-    ...state,
-    transactions: [...userTransactions, ...sampleTransactions].sort((a, b) => a.date.localeCompare(b.date)),
-  };
+  return alignSampleTransactionsState(
+    state,
+    loadCurrentSampleTransactions(referenceDate),
+    isSampleTransactionId,
+  );
 }
 
 function readStoredState(): AppState {
