@@ -3,6 +3,7 @@
 초기 초안을 실제 구현과 공식 신청서 항목에 맞춰 최종 정리했습니다.
 
 - 복사·붙여넣기용 최종 문안: [`submission/K-AI_지원서_최종문안.md`](../submission/K-AI_지원서_최종문안.md)
+- 500자 제한 실제 입력본: [`submission/K-AI_지원서_500자_입력본.md`](../submission/K-AI_지원서_500자_입력본.md)
 - 제출 순서와 누락 점검: [`submission/최종_제출_체크리스트.md`](../submission/최종_제출_체크리스트.md)
 - 세부 AI 경계와 프롬프트: [`docs/03-ai-design.md`](03-ai-design.md)
 
